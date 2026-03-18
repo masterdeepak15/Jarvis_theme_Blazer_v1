@@ -1,0 +1,182 @@
+@* ================================================================
+   JBootScreen — JARVIS UI Cinematic Boot Sequence
+   5-phase animated startup overlay. Triggered on app load.
+   Pure Blazor state machine + CSS transitions. No JS.
+
+   USAGE:
+   <JBootScreen SystemName="JARVIS" Version="v4.2.1"
+                OnComplete="HandleBootComplete" />
+================================================================ *@
+
+@using JarvisUI.Tokens
+@using System.Timers
+@namespace JarvisUI.Components
+@implements IDisposable
+
+@if (_visible)
+{
+<div style="@_overlayStyle">
+
+    @* ── Phase 0 & 1: Full screen scanline ── *@
+    @if (_phase <= 1)
+    {
+        <div style="position:absolute;left:0;right:0;height:2px;
+                    background:linear-gradient(90deg,transparent,#00e5ff,transparent);
+                    box-shadow:0 0 16px #00e5ff;
+                    top:@(_scanPos)%;
+                    transition:top 0.8s linear;
+                    z-index:10;pointer-events:none;"></div>
+    }
+
+    @* ── Corner frame brackets (draw in at Phase 1) ── *@
+    <div style="@_cornerStyle("top:0;left:0;border-top-width:2px;border-left-width:2px;", _phase >= 1)"></div>
+    <div style="@_cornerStyle("top:0;right:0;border-top-width:2px;border-right-width:2px;", _phase >= 1)"></div>
+    <div style="@_cornerStyle("bottom:0;left:0;border-bottom-width:2px;border-left-width:2px;", _phase >= 1)"></div>
+    <div style="@_cornerStyle("bottom:0;right:0;border-bottom-width:2px;border-right-width:2px;", _phase >= 1)"></div>
+
+    @* ── Phase 2: Boot log lines type in ── *@
+    @if (_phase >= 2)
+    {
+        <div style="position:absolute;top:30%;left:10%;right:10%;">
+            @for (int i = 0; i < _visibleLines; i++)
+            {
+                int idx = i;
+                <div style="font-size:10px;color:#22d3ee88;letter-spacing:0.10em;
+                            margin-bottom:4px;
+                            animation:j-slide-in 0.3s ease-out both;
+                            animation-delay:@(idx * 0.12)s;">
+                    @_bootLines[idx % _bootLines.Length]
+                </div>
+            }
+        </div>
+    }
+
+    @* ── Phase 3: System name + spinner spin up ── *@
+    @if (_phase >= 3)
+    {
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+                    text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;">
+
+            <JSpinner Size="80px" Label="@SystemName" Color="JColor.Cyan"
+                      State="@(_phase >= 4 ? JState.Active : JState.Processing)" />
+
+            <div style="font-size:11px;color:#22d3ee88;letter-spacing:0.16em;text-transform:uppercase;
+                        animation:j-pulse 1.5s ease-in-out infinite;">
+                INITIALISING SYSTEMS...
+            </div>
+        </div>
+    }
+
+    @* ── Phase 4: Ready state — system name + version ── *@
+    @if (_phase >= 4)
+    {
+        <div style="position:absolute;bottom:12%;left:0;right:0;text-align:center;">
+            <div style="font-size:22px;font-weight:600;color:#e0f7ff;
+                        letter-spacing:0.16em;text-transform:uppercase;
+                        text-shadow:0 0 20px #00e5ff;
+                        animation:j-glitch 4s ease-in-out infinite;">
+                @SystemName
+            </div>
+            <div style="font-size:9px;color:#22d3ee66;letter-spacing:0.20em;text-transform:uppercase;margin-top:4px;">
+                @Version · ONLINE
+            </div>
+        </div>
+
+        @* HUD bottom bar *@
+        <div style="position:absolute;bottom:0;left:0;right:0;">
+            <JHudBar Position="JHudBar.JHudBarPosition.Bottom"
+                     ShowWaveform="true"
+                     ShowTicks="true"
+                     ShowRec="true"
+                     WaveformMaxWidth="200px" />
+        </div>
+    }
+
+</div>
+}
+
+@code {
+    [Parameter] public string        SystemName  { get; set; } = "JARVIS";
+    [Parameter] public string        Version     { get; set; } = "v4.2.1";
+    [Parameter] public int           Duration    { get; set; } = 4000; // total ms
+    [Parameter] public EventCallback OnComplete  { get; set; }
+
+    private bool   _visible      = true;
+    private int    _phase        = 0;    // 0–4
+    private int    _scanPos      = 0;
+    private int    _visibleLines = 0;
+    private Timer? _timer;
+
+    private static readonly string[] _bootLines = new[]
+    {
+        "> LOADING NEURAL CORE............. [OK]",
+        "> SPEECH ENGINE INIT.............. [OK]",
+        "> SKILL REGISTRY SCAN............. [12 FOUND]",
+        "> OLLAMA BRIDGE................... [CONNECTED]",
+        "> VOICE PIPELINE.................. [READY]",
+        "> MEMORY SUBSYSTEM................ [OK]",
+        "> HUD CALIBRATION................. [OK]",
+        "> ALL SYSTEMS NOMINAL............. [GO]",
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        await RunBootSequence();
+    }
+
+    private async Task RunBootSequence()
+    {
+        // Phase 0: black + scanline
+        _phase = 0; _scanPos = 0;
+        StateHasChanged();
+        await Task.Delay(100);
+        _scanPos = 95;
+        StateHasChanged();
+        await Task.Delay(700);
+
+        // Phase 1: corner brackets draw
+        _phase = 1;
+        StateHasChanged();
+        await Task.Delay(600);
+
+        // Phase 2: boot log lines type in
+        _phase = 2;
+        for (int i = 1; i <= _bootLines.Length; i++)
+        {
+            _visibleLines = i;
+            StateHasChanged();
+            await Task.Delay(180);
+        }
+        await Task.Delay(200);
+
+        // Phase 3: spinner + system name
+        _phase = 3;
+        StateHasChanged();
+        await Task.Delay(900);
+
+        // Phase 4: ready
+        _phase = 4;
+        StateHasChanged();
+        await Task.Delay(800);
+
+        // Complete — fade out
+        _visible = false;
+        StateHasChanged();
+        await OnComplete.InvokeAsync();
+    }
+
+    private string _overlayStyle =>
+        "position:fixed;inset:0;z-index:9999;" +
+        "background:#020d18;" +
+        "font-family:'Courier New',monospace;";
+
+    private string _cornerStyle(string pos, bool visible) =>
+        $"position:absolute;{pos}" +
+        $"width:{(visible ? "24px" : "0")};height:{(visible ? "24px" : "0")};" +
+        $"border-color:#00e5ff;border-style:solid;border-width:0;" +
+        $"filter:drop-shadow(0 0 4px #00e5ff);" +
+        $"transition:width 0.4s ease-out,height 0.4s ease-out;";
+
+    public void Dispose() => _timer?.Dispose();
+}

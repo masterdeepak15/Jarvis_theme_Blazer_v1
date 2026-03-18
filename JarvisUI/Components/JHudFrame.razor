@@ -1,0 +1,76 @@
+@* ================================================================
+   JHudFrame — JARVIS UI Full-Screen HUD Frame
+   Corner bracket overlay for the whole app — like LINKS Mark II
+   outer border frame with animated corners, top/bottom bars.
+
+   USAGE:
+   <JHudFrame SystemLabel="JARVIS · SYS" ShowBottom="true">
+       @Body
+   </JHudFrame>
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div style="position:relative;min-height:100vh;@_bgStyle">
+
+    @* ── Animated corner brackets (4 corners) ── *@
+    <div class="j-hf-corner tl" style="@_cornerBase top:8px;left:8px;border-top-width:2px;border-left-width:2px;animation-delay:0s;"></div>
+    <div class="j-hf-corner tr" style="@_cornerBase top:8px;right:8px;border-top-width:2px;border-right-width:2px;animation-delay:0.4s;"></div>
+    <div class="j-hf-corner bl" style="@_cornerBase bottom:8px;left:8px;border-bottom-width:2px;border-left-width:2px;animation-delay:0.8s;"></div>
+    <div class="j-hf-corner br" style="@_cornerBase bottom:8px;right:8px;border-bottom-width:2px;border-right-width:2px;animation-delay:1.2s;"></div>
+
+    @* ── Thin edge lines connecting corners ── *@
+    <div style="position:absolute;top:8px;left:36px;right:36px;height:1px;background:linear-gradient(90deg,var(--j-cyan),transparent 40%,transparent 60%,var(--j-cyan));opacity:0.15;pointer-events:none;"></div>
+    <div style="position:absolute;bottom:8px;left:36px;right:36px;height:1px;background:linear-gradient(90deg,var(--j-cyan),transparent 40%,transparent 60%,var(--j-cyan));opacity:0.15;pointer-events:none;"></div>
+
+    @* ── Top HUD bar ── *@
+    @if (ShowTop)
+    {
+        <JHudBar Position="JHudBar.JHudBarPosition.Top"
+                 Color="@Color"
+                 SystemLabel="@SystemLabel"
+                 ShowDots="@ShowDots"
+                 ShowLive="@ShowLive">
+            @TopContent
+        </JHudBar>
+    }
+
+    @* ── Main content ── *@
+    <div style="@_contentStyle">
+        @ChildContent
+    </div>
+
+    @* ── Bottom HUD bar ── *@
+    @if (ShowBottom)
+    {
+        <JHudBar Position="JHudBar.JHudBarPosition.Bottom"
+                 Color="@Color"
+                 ShowWaveform="@ShowWaveform"
+                 ShowTicks="@ShowTicks"
+                 ShowRec="@ShowRec">
+            @BottomContent
+        </JHudBar>
+    }
+
+</div>
+
+@code {
+    [Parameter] public JColor          Color        { get; set; } = JColor.Cyan;
+    [Parameter] public string?         SystemLabel  { get; set; } = "JARVIS · SYS";
+    [Parameter] public bool            ShowTop      { get; set; } = true;
+    [Parameter] public bool            ShowBottom   { get; set; } = true;
+    [Parameter] public bool            ShowDots     { get; set; } = true;
+    [Parameter] public bool            ShowLive     { get; set; } = false;
+    [Parameter] public bool            ShowWaveform { get; set; } = false;
+    [Parameter] public bool            ShowTicks    { get; set; } = false;
+    [Parameter] public bool            ShowRec      { get; set; } = false;
+    [Parameter] public string          ContentPadding { get; set; } = "16px";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? TopContent   { get; set; }
+    [Parameter] public RenderFragment? BottomContent{ get; set; }
+
+    private string _bgStyle    => "background:var(--j-bg,#020d18);font-family:'Courier New',monospace;";
+    private string _cornerBase => "position:absolute;width:24px;height:24px;border-color:var(--j-cyan,#00e5ff);border-style:solid;border-width:0;filter:drop-shadow(0 0 4px var(--j-cyan,#00e5ff));animation:j-corner-blink 3s ease-in-out infinite;";
+    private string _contentStyle => $"padding:{ContentPadding};";
+}

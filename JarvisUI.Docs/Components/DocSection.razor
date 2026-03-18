@@ -1,0 +1,92 @@
+@* ================================================================
+   DocSection — Docs App Section Component
+   Wraps a preview area + collapsible code snippet.
+================================================================ *@
+@namespace JarvisUI.Docs.Components
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+
+<div style="margin-bottom:32px;">
+
+    @* Section heading *@
+    @if (!string.IsNullOrWhiteSpace(Title))
+    {
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+            <h3 style="font-size:12px;font-weight:600;color:#22d3ee;
+                       letter-spacing:0.14em;text-transform:uppercase;margin:0;">
+                @Title
+            </h3>
+            @if (!string.IsNullOrWhiteSpace(Badge))
+            {
+                <JBadge Color="JColor.Cyan" Size="JSize.Xs">@Badge</JBadge>
+            }
+        </div>
+    }
+
+    @* Description *@
+    @if (!string.IsNullOrWhiteSpace(Description))
+    {
+        <p style="font-size:11px;color:#475569;letter-spacing:0.04em;
+                  line-height:1.6;margin:0 0 12px;">
+            @Description
+        </p>
+    }
+
+    @* Preview area *@
+    <div style="position:relative;background:#030f1e;overflow:hidden;
+                border:1px solid rgba(0,229,255,0.12);padding:24px;
+                display:flex;flex-wrap:wrap;gap:12px;align-items:@Align; justify-content:center;">
+
+        @* Scan line on preview *@
+        <div style="position:absolute;left:0;right:0;height:1px;top:-1px;
+                    background:linear-gradient(90deg,transparent,#22d3ee44,transparent);
+                    animation:j-scan-v 5s ease-in-out infinite;pointer-events:none;"></div>
+
+        @* Corner accent *@
+        <div style="position:absolute;top:0;left:0;width:8px;height:8px;
+                    border-top:1px solid #22d3ee44;border-left:1px solid #22d3ee44;"></div>
+
+        @Preview
+    </div>
+
+    @* Code block *@
+    @if (!string.IsNullOrWhiteSpace(Code))
+    {
+        <div style="margin-top:0;">
+            <button @onclick="ToggleCode"
+                    style="width:100%;padding:6px 14px;background:#020d18;
+                           border:1px solid rgba(0,229,255,0.10);border-top:none;
+                           color:#334155;font-size:9px;letter-spacing:0.12em;
+                           text-transform:uppercase;cursor:pointer;text-align:left;
+                           font-family:'Courier New',monospace;
+                           transition:color 0.15s;"
+                    onmouseover="this.style.color='#22d3ee'"
+                    onmouseout="this.style.color='#334155'">
+                @(_showCode ? "▲ hide code" : "▼ show code")
+            </button>
+
+            @if (_showCode)
+            {
+                <div style="background:#020d18;border:1px solid rgba(0,229,255,0.10);
+                            border-top:none;padding:14px 16px;overflow-x:auto;">
+                    <pre style="margin:0;font-size:11px;color:#94a3b8;
+                                font-family:'Courier New',monospace;line-height:1.6;
+                                white-space:pre-wrap;word-break:break-word;">@Code</pre>
+                </div>
+            }
+        </div>
+    }
+
+</div>
+
+@code {
+    [Parameter] public string?         Title       { get; set; }
+    [Parameter] public string?         Description { get; set; }
+    [Parameter] public string?         Badge       { get; set; }
+    [Parameter] public string?         Code        { get; set; }
+    [Parameter] public string          Align       { get; set; } = "center";
+    [Parameter] public RenderFragment? Preview     { get; set; }
+
+    private bool _showCode = false;
+    private void ToggleCode() => _showCode = !_showCode;
+}

@@ -1,0 +1,196 @@
+@page "/tabs"
+@page "/accordion"
+@page "/cmdpalette"
+@page "/table"
+@page "/datarow"
+@page "/pagination"
+@page "/divider"
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+@using JarvisUI.Docs.Components
+
+<PageTitle>Navigation & Data — JarvisUI Docs</PageTitle>
+
+<DocsPageHeader Title="Navigation & Data"
+                Category="Navigation"
+                Description="Tabs, accordions, command palette, data tables, pagination, and dividers. All HUD-styled with angular shapes and living animations." />
+
+<DocSection Title="JTabs — Tab Strip"
+            Code="@jtabsMarkup">
+    <Preview>
+        <div style="width:100%;">
+            <JTabs @bind-ActiveTab="_activeTab">
+                <JTab Key="system"  Label="System"  Icon="⊞">
+                    <div style="padding:16px 0;display:flex;gap:10px;flex-wrap:wrap;">
+                        <JStatCard Title="CPU"    Value="74%"  Sub="nominal" Style="JCardStyle.SideRail" Style_Css="min-width:120px;" />
+                        <JStatCard Title="Memory" Value="91%"  Sub="high"    Style="JCardStyle.SideRail" State="JState.Warning" Style_Css="min-width:120px;" />
+                        <JStatCard Title="Uptime" Value="4h"   Sub="running" Style="JCardStyle.SideRail" Style_Css="min-width:120px;" />
+                    </div>
+                </JTab>
+                <JTab Key="skills"  Label="Skills"  Icon="⚡" Badge="12">
+                    <div style="padding:16px 0;">
+                        <JDataRow Key="TTS Engine"     Value="Online"  BarPercent="100" />
+                        <JDataRow Key="Speech Input"   Value="Online"  BarPercent="100" />
+                        <JDataRow Key="Vision"         Value="Offline" BarPercent="0"   State="JState.Error" />
+                        <JDataRow Key="Web Search"     Value="Online"  BarPercent="85"  />
+                    </div>
+                </JTab>
+                <JTab Key="logs"    Label="Logs"    Icon="≡">
+                    <div style="padding:16px 0;">
+                        <JAlert State="JState.Success">Boot sequence completed in 3.2s</JAlert>
+                        <div style="height:6px;"></div>
+                        <JAlert State="JState.Active">12 skills loaded from registry</JAlert>
+                    </div>
+                </JTab>
+            </JTabs>
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="JAccordion — Collapsible Panels"
+            Code="@jaccordionMarkup">
+    <Preview>
+        <div style="width:100%;max-width:400px;display:flex;flex-direction:column;gap:4px;">
+            <JAccordion Title="System Information" Icon="⊞" DefaultOpen="true">
+                <JDataRow Key="OS"       Value="Ubuntu 24.04" BarPercent="null" />
+                <JDataRow Key="Kernel"   Value="6.8.0-41" />
+                <JDataRow Key="Uptime"   Value="4h 32m" BarPercent="60" />
+            </JAccordion>
+            <JAccordion Title="Skill Registry" Icon="⚡" Badge="12">
+                <JDataRow Key="TTS Engine"   Value="v2.1.0" BarPercent="100" />
+                <JDataRow Key="Voice Input"  Value="v3.0.1" BarPercent="100" />
+                <JDataRow Key="Vision"       Value="v1.0.0" BarPercent="0" State="JState.Error" />
+            </JAccordion>
+            <JAccordion Title="Warnings" Icon="⚠" State="JState.Warning" Badge="2">
+                <JAlert State="JState.Warning">High memory usage detected</JAlert>
+                <div style="height:4px;"></div>
+                <JAlert State="JState.Warning">CPU temperature approaching limit</JAlert>
+            </JAccordion>
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="JCommandPalette — Command Overlay"
+            Code="@jcommandPaletteMarkup">
+    <Preview>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start;">
+            <JButton Shape="JButtonShape.LeftNotch" OnClick="() => _cmdOpen = true"
+                     Icon="⌕">Open Command Palette</JButton>
+            <p style="font-size:10px;color:#334155;letter-spacing:0.06em;">
+                ↑↓ navigate · Enter execute · Esc close · Type to filter
+            </p>
+        </div>
+    </Preview>
+</DocSection>
+
+<JCommandPalette @bind-Visible="_cmdOpen"
+                 Commands="@_commands"
+                 OnExecute="HandleCommand"
+                 Placeholder="Type a command..." />
+
+<DocSection Title="JTable — HUD Data Table"
+            Code="@jtableMarkup">
+    <Preview>
+        <div style="width:100%;">
+            <JTable Columns="@_cols" Rows="@_rows" StateColumn="status" ShowFooter="true" FooterLabel="SKILL REGISTRY" />
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="JPagination — Page Navigator"
+            Code="@jpaginationMarkup">
+    <Preview>
+        <div style="display:flex;flex-direction:column;gap:12px;align-items:flex-start;">
+            <JPagination @bind-Page="_page1" TotalPages="6" ShowInfo="true" />
+            <JPagination @bind-Page="_page2" TotalPages="24" ShowFirstLast="true" ShowInfo="true" />
+            <JPagination @bind-Page="_page3" TotalPages="4"  ShowInfo="true" Color="JColor.Amber" />
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="JDivider — Separator"
+            Code="@jdividerMarkup">
+    <Preview>
+        <div style="width:100%;display:flex;flex-direction:column;gap:16px;">
+            <JDivider />
+            <JDivider Label="System Config" />
+            <JDivider Color="JColor.Amber" Label="Warning Zone" />
+            <JDivider Color="JColor.Red" />
+            <div style="display:flex;gap:16px;align-items:center;height:50px;">
+                <span class="j-text-xs">Left</span>
+                <JDivider Orientation="JDivider.JDividerOrientation.Vertical" Height="40px" />
+                <span class="j-text-xs">Mid</span>
+                <JDivider Orientation="JDivider.JDividerOrientation.Vertical" Height="40px" Color="JColor.Amber" />
+                <span class="j-text-xs">Right</span>
+            </div>
+        </div>
+    </Preview>
+</DocSection>
+
+@code {
+    string? _activeTab = "system";
+    bool    _cmdOpen   = false;
+    int     _page1 = 2, _page2 = 5, _page3 = 1;
+
+    private void HandleCommand(JCommandPalette.JCommand cmd) { }
+
+    private List<JCommandPalette.JCommand> _commands = new()
+    {
+        new("Open Dashboard",   "dashboard",  "⊞", "Navigation"),
+        new("Skill Registry",   "skills",     "⚡", "Navigation"),
+        new("Voice Settings",   "voice",      "🎙", "Settings"),
+        new("Model Config",     "model",      "⚙", "Settings"),
+        new("Clear Logs",       "clear-logs", "≡", "System"),
+        new("Restart Engine",   "restart",    "↻", "System", JState.Warning),
+        new("Shutdown JARVIS",  "shutdown",   "⏻", "System", JState.Error, "Terminates all processes"),
+    };
+
+    private List<JTable.JTableColumn> _cols = new()
+    {
+        new("ID",      "id",      Width: "50px"),
+        new("Skill",   "name"),
+        new("Version", "version", Width: "80px"),
+        new("Status",  "status",  Align: "center", IsBadge: true),
+    };
+
+    private List<Dictionary<string, object>> _rows = new()
+    {
+        new() { ["id"]="001", ["name"]="TTS Engine",   ["version"]="2.1.0", ["status"]="active"  },
+        new() { ["id"]="002", ["name"]="Voice Input",  ["version"]="3.0.1", ["status"]="active"  },
+        new() { ["id"]="003", ["name"]="Web Search",   ["version"]="1.4.2", ["status"]="active"  },
+        new() { ["id"]="004", ["name"]="Vision",       ["version"]="1.0.0", ["status"]="error"   },
+        new() { ["id"]="005", ["name"]="Email",        ["version"]="2.0.0", ["status"]="warning" },
+        new() { ["id"]="006", ["name"]="Calendar",     ["version"]="1.2.0", ["status"]="idle"    },
+    };
+
+    string jtabsMarkup = @"
+<JTabs @bind-ActiveTab=""tab"">
+    <JTab Key=""sys"" Label=""System"" Icon=""⊞""><p>System content</p></JTab>
+    <JTab Key=""skills"" Label=""Skills"" Badge=""12""><p>Skills content</p></JTab>
+</JTabs>
+";
+
+    string jaccordionMarkup = @"
+<JAccordion Title=""System Info"" DefaultOpen=""true"" Icon=""⊞"">
+    <JDataRow Key=""OS"" Value=""Ubuntu 24.04"" />
+</JAccordion>
+";
+
+    string jcommandPaletteMarkup = @"
+<JCommandPalette @bind-Visible=""open"" Commands=""@cmds"" OnExecute=""Run"" />
+";
+
+    string jdividerMarkup = @"
+<JDivider />
+<JDivider Label=""Section Label"" />
+<JDivider Orientation=""JDivider.JDividerOrientation.Vertical"" Height=""60px"" />
+";
+
+    string jtableMarkup = @"
+<JTable Columns=""@cols"" Rows=""@rows"" StateColumn=""status"" ShowFooter=""true"" />
+";
+
+    string jpaginationMarkup = @"
+<JPagination @bind-Page=""page"" TotalPages=""24"" ShowFirstLast=""true"" />
+";
+}

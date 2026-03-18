@@ -1,0 +1,97 @@
+@* ================================================================
+   JDivider — JARVIS UI Divider
+   Horizontal or vertical themed divider with optional dot accent.
+
+   USAGE:
+   <JDivider />
+   <JDivider Label="System Config" />
+   <JDivider Orientation="JDividerOrientation.Vertical" Height="60px" />
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+@if (Orientation == JDividerOrientation.Horizontal)
+{
+    <div style="@_hStyle">
+        @* Left line *@
+        <div style="flex:1;height:1px;
+                    background:linear-gradient(90deg,transparent,@_accentHex);
+                    opacity:@_opacity;"></div>
+
+        @* Center dot or label *@
+        @if (!string.IsNullOrWhiteSpace(Label))
+        {
+            <span style="font-size:8px;color:@_accentHex;letter-spacing:0.14em;
+                         text-transform:uppercase;padding:0 10px;opacity:0.7;
+                         white-space:nowrap;">
+                @Label
+            </span>
+        }
+        else if (ShowDot)
+        {
+            <div style="width:5px;height:5px;flex-shrink:0;
+                        background:@_accentHex;
+                        clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+                        box-shadow:0 0 6px @_accentHex;
+                        animation:j-pulse 2.5s ease-in-out infinite;
+                        margin:0 8px;">
+            </div>
+        }
+
+        @* Right line *@
+        <div style="flex:1;height:1px;
+                    background:linear-gradient(90deg,@_accentHex,transparent);
+                    opacity:@_opacity;"></div>
+    </div>
+}
+else
+{
+    <div style="@_vStyle">
+        <div style="flex:1;width:1px;
+                    background:linear-gradient(180deg,transparent,@_accentHex);
+                    opacity:@_opacity;"></div>
+        @if (ShowDot)
+        {
+            <div style="width:5px;height:5px;flex-shrink:0;
+                        background:@_accentHex;
+                        clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+                        box-shadow:0 0 6px @_accentHex;
+                        animation:j-pulse 2.5s ease-in-out infinite;
+                        margin:6px 0;">
+            </div>
+        }
+        <div style="flex:1;width:1px;
+                    background:linear-gradient(180deg,@_accentHex,transparent);
+                    opacity:@_opacity;"></div>
+    </div>
+}
+
+@code {
+    public enum JDividerOrientation { Horizontal, Vertical }
+
+    [Parameter] public JDividerOrientation Orientation { get; set; } = JDividerOrientation.Horizontal;
+    [Parameter] public JColor              Color       { get; set; } = JColor.Cyan;
+    [Parameter] public string?             Label       { get; set; }
+    [Parameter] public bool                ShowDot     { get; set; } = true;
+    [Parameter] public string              Height      { get; set; } = "40px";
+    [Parameter] public string              Margin      { get; set; } = "8px 0";
+    [Parameter] public string              Opacity     { get; set; } = "0.30";
+
+    private string _opacity => Opacity;
+
+    private string _accentHex => Color switch
+    {
+        JColor.Amber => "#f97316",
+        JColor.Red   => "#ef4444",
+        JColor.Green => "#22c55e",
+        _            => "#00e5ff",
+    };
+
+    private string _hStyle =>
+        $"display:flex;align-items:center;margin:{Margin};width:100%;";
+
+    private string _vStyle =>
+        $"display:flex;flex-direction:column;align-items:center;" +
+        $"height:{Height};margin:0 8px;";
+}

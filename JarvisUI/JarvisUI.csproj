@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>JarvisUI</RootNamespace>
+    <AssemblyName>JarvisUI</AssemblyName>
+
+    <!-- NuGet package metadata -->
+    <PackageId>JarvisUI</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Your Name</Authors>
+    <Description>
+      A cinematic JARVIS / HUD-style Blazor Server component library.
+      9 card frame styles, 8 button shapes, full animation vocabulary.
+      Pure CSS animations — zero JavaScript.
+    </Description>
+    <PackageTags>blazor;hud;jarvis;sci-fi;ui;components;tailwind</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="wwwroot\css\jarvis-ui.css">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

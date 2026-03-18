@@ -1,0 +1,199 @@
+@* ================================================================
+   JCard — JARVIS UI Card Component
+   Supports all 9 HUD frame styles with full animation vocabulary.
+
+   USAGE:
+   <JCard Style="JCardStyle.Notched" Title="CPU Load" Color="JColor.Cyan">
+       <p class="j-text-val">74%</p>
+   </JCard>
+
+   <JCard Style="JCardStyle.DangerPulse" State="JState.Error" Title="Threat">
+       <p class="j-text-val j-text-err">Alert</p>
+   </JCard>
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div class="@_rootClass" style="@Style_Css">
+
+    @* ── Style-specific inner structure ── *@
+    @switch (Style)
+    {
+        case JCardStyle.CornerBracket:
+            <div class="j-c-tl"></div>
+            <div class="j-c-tr"></div>
+            <div class="j-c-bl"></div>
+            <div class="j-c-br"></div>
+            <div class="j-inner-border"></div>
+            if (ShowScan) { <div class="j-scan-v"></div> }
+            break;
+
+        case JCardStyle.Notched:
+            <div class="j-notch-border"></div>
+            <div class="j-tri-tl"></div>
+            <div class="j-tri-br"></div>
+            if (ShowScan) { <div class="j-scan-v"></div> }
+            if (ShowScan) { <div class="j-scan-h"></div> }
+            break;
+
+        case JCardStyle.SideRail:
+            <div class="j-rail"></div>
+            <div class="j-tab-top"></div>
+            <div class="j-tab-bot"></div>
+            if (ShowScan) { <div class="j-scan-v"></div> }
+            break;
+
+        case JCardStyle.GlowBorder:
+            <div class="j-inner-radial"></div>
+            if (ShowScan) { <div class="j-scan-v"></div> }
+            break;
+
+        case JCardStyle.PartialBorder:
+            <div class="j-pb-tl"></div>
+            <div class="j-pb-br"></div>
+            <div class="j-pb-roving-dot"></div>
+            break;
+
+        case JCardStyle.DangerPulse:
+            <div class="j-tri-tl"></div>
+            if (ShowScan) { <div class="j-scan-v"></div> }
+            break;
+
+        case JCardStyle.Hexagonal:
+            <div class="j-hex-ring"></div>
+            break;
+
+        case JCardStyle.Radar:
+            <div class="j-radar-sweep"></div>
+            <div class="j-radar-r1"></div>
+            <div class="j-radar-r2"></div>
+            <div class="j-radar-r3"></div>
+            @foreach (var ping in RadarPings)
+            {
+                <div class="j-radar-ping" style="top:@ping.Top;left:@ping.Left;animation-delay:@ping.Delay;"></div>
+            }
+            break;
+
+        case JCardStyle.DoubleFrame:
+            <div class="j-df-corner"></div>
+            break;
+    }
+
+    @* ── Content wrapper — S9 needs inner frame, others render direct ── *@
+    @if (Style == JCardStyle.DoubleFrame)
+    {
+        <div class="j-inner-frame">
+            @_cardContent
+        </div>
+    }
+    else if (Style == JCardStyle.Radar)
+    {
+        <div class="j-radar-center"></div>
+        @* Radar cards show content in center overlay *@
+        <div style="position:relative;z-index:2;text-align:center;">
+            @_cardContent
+        </div>
+    }
+    else
+    {
+        @_cardContent
+    }
+
+</div>
+
+@code {
+    // ── Parameters ────────────────────────────────────────────────
+
+    /// <summary>Frame style — one of 9 HUD designs</summary>
+    [Parameter] public JCardStyle Style { get; set; } = JCardStyle.CornerBracket;
+
+    /// <summary>Active color — drives --j-accent CSS variable</summary>
+    [Parameter] public JColor Color { get; set; } = JColor.Cyan;
+
+    /// <summary>System state — overrides color + animation speed</summary>
+    [Parameter] public JState State { get; set; } = JState.Active;
+
+    /// <summary>Animation speed scale</summary>
+    [Parameter] public JAnimSpeed AnimSpeed { get; set; } = JAnimSpeed.Normal;
+
+    /// <summary>Show animated scan line overlay</summary>
+    [Parameter] public bool ShowScan { get; set; } = true;
+
+    /// <summary>Optional title label rendered above child content</summary>
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>Optional sub-label rendered below value</summary>
+    [Parameter] public string? SubLabel { get; set; }
+
+    /// <summary>Inline style override (e.g. width, min-height)</summary>
+    [Parameter] public string? Style_Css { get; set; }
+
+    /// <summary>Additional CSS classes to merge onto root element</summary>
+    [Parameter] public string? Class { get; set; }
+
+    /// <summary>Child content — place your value, data rows, etc.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Override the full inner content (replaces Title/SubLabel/ChildContent).
+    /// Gives complete layout control.
+    /// </summary>
+    [Parameter] public RenderFragment? ContentTemplate { get; set; }
+
+    /// <summary>Radar ping dot positions (only used for Radar style)</summary>
+    [Parameter] public List<RadarPing> RadarPings { get; set; } = new()
+    {
+        new RadarPing("25%", "65%", "0.3s"),
+        new RadarPing("60%", "30%", "1.1s"),
+    };
+
+    // ── Computed class ────────────────────────────────────────────
+    private string _rootClass => JarvisClasses.Combine(
+        "j-card",
+        JarvisClasses.CardStyle(Style),
+        JarvisClasses.Color(Color),
+        JarvisClasses.State(State),
+        JarvisClasses.AnimSpeed(AnimSpeed),
+        Class
+    );
+
+    // ── Inner content builder ─────────────────────────────────────
+    private RenderFragment _cardContent => builder =>
+    {
+        if (ContentTemplate != null)
+        {
+            ContentTemplate(builder);
+            return;
+        }
+
+        int seq = 0;
+
+        // Title label
+        if (!string.IsNullOrWhiteSpace(Title))
+        {
+            builder.OpenElement(seq++, "div");
+            builder.AddAttribute(seq++, "class", "j-text-xs");
+            builder.AddContent(seq++, Title);
+            builder.CloseElement();
+        }
+
+        // Child content (values, data rows etc.)
+        if (ChildContent != null)
+        {
+            builder.AddContent(seq++, ChildContent);
+        }
+
+        // Sub label
+        if (!string.IsNullOrWhiteSpace(SubLabel))
+        {
+            builder.OpenElement(seq++, "div");
+            builder.AddAttribute(seq++, "class", "j-text-sub");
+            builder.AddContent(seq++, SubLabel);
+            builder.CloseElement();
+        }
+    };
+
+    // ── Radar ping model ──────────────────────────────────────────
+    public record RadarPing(string Top, string Left, string Delay);
+}

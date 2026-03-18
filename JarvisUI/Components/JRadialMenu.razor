@@ -1,0 +1,206 @@
+@* ================================================================
+   JRadialMenu — JARVIS UI Radial Fly-Out Menu
+   The LINKS Mark II signature element — items fly out radially
+   from center when triggered. Pure CSS + Blazor positioning.
+
+   USAGE:
+   <JRadialMenu @bind-Open="menuOpen" TriggerLabel="MENU">
+       <JRadialItem Icon="⊞" Label="Dashboard" OnClick="GoToDash" Angle="0"   />
+       <JRadialItem Icon="⚡" Label="Skills"    OnClick="GoToSkills" Angle="60"  />
+       <JRadialItem Icon="⚙" Label="Settings"  OnClick="GoToSettings" Angle="120" />
+       <JRadialItem Icon="📊" Label="Metrics"   OnClick="GoToMetrics" Angle="180" />
+       <JRadialItem Icon="🎙" Label="Voice"     OnClick="ToggleVoice" Angle="240" />
+       <JRadialItem Icon="⏻" Label="Shutdown"  OnClick="Shutdown" Angle="300" State="JState.Error" />
+   </JRadialMenu>
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div style="position:relative;display:inline-flex;align-items:center;justify-content:center;">
+
+    @* ── Radial item slots ── *@
+    <CascadingValue Value="this">
+        @ChildContent
+    </CascadingValue>
+
+    @* ── Rendered radial items ── *@
+    @foreach (var item in _items)
+    {
+        var (x, y) = GetItemPosition(item.Angle);
+        bool hovered = _hoveredKey == item.Key;
+
+        <div style="@_itemWrapStyle(x, y, Open)"
+             @onmouseenter="() => { _hoveredKey = item.Key; _hoverLabel = item.Label; }"
+             @onmouseleave="() => { _hoveredKey = null; _hoverLabel = null; }"
+             @onclick="async () => { await item.OnClick.InvokeAsync(); await Close(); }">
+
+            @* Item circle *@
+            <div style="@_itemCircleStyle(hovered, item.State)">
+                <span style="font-style:normal;font-size:16px;
+                             filter:@(hovered ? $"drop-shadow(0 0 6px {_itemAccent(item.State)})" : "none");">
+                    @item.Icon
+                </span>
+            </div>
+
+            @* Connector line to center *@
+            @if (Open)
+            {
+                <div style="@_connectorStyle(item.Angle, hovered, item.State)"></div>
+            }
+
+        </div>
+    }
+
+    @* ── Center trigger button ── *@
+    <div style="@_centerStyle" @onclick="Toggle">
+
+        @* Rotating ring behind center *@
+        <div style="position:absolute;inset:-4px;border-radius:50%;
+                    border:1px solid @_accentHex;opacity:0.3;
+                    animation:j-spin @(Open ? "2s" : "4s") linear infinite;"></div>
+        <div style="position:absolute;inset:-10px;border-radius:50%;
+                    border:1px dashed @_accentHex;opacity:0.15;
+                    animation:j-spin-rev 6s linear infinite;"></div>
+
+        <div style="position:relative;z-index:1;text-align:center;">
+            <div style="font-size:10px;font-weight:600;color:#e0f7ff;
+                        letter-spacing:0.12em;text-transform:uppercase;
+                        animation:@(Open ? "j-glitch 3s ease-in-out infinite" : "none");">
+                @(Open ? "CLOSE" : TriggerLabel)
+            </div>
+        </div>
+
+    </div>
+
+    @* ── Hover label ── *@
+    @if (!string.IsNullOrWhiteSpace(_hoverLabel) && Open)
+    {
+        <div style="position:absolute;top:calc(50% + 70px);left:50%;transform:translateX(-50%);
+                    font-size:9px;color:@_accentHex;letter-spacing:0.14em;text-transform:uppercase;
+                    white-space:nowrap;pointer-events:none;
+                    text-shadow:0 0 8px @_accentHex;animation:j-pulse 1s ease-in-out infinite;">
+            @_hoverLabel
+        </div>
+    }
+
+</div>
+
+@code {
+    public record JRadialItemDef(
+        string       Key,
+        string       Icon,
+        string       Label,
+        double       Angle,
+        JState       State,
+        EventCallback OnClick
+    );
+
+    [Parameter] public bool            Open          { get; set; } = false;
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter] public string          TriggerLabel  { get; set; } = "MENU";
+    [Parameter] public double          Radius        { get; set; } = 90;
+    [Parameter] public string          CenterSize    { get; set; } = "64px";
+    [Parameter] public JColor          Color         { get; set; } = JColor.Cyan;
+    [Parameter] public RenderFragment? ChildContent  { get; set; }
+
+    internal List<JRadialItemDef> _items    = new();
+    private  string?              _hoveredKey  = null;
+    private  string?              _hoverLabel  = null;
+
+    private string _accentHex => Color switch
+    {
+        JColor.Amber => "#f97316",
+        JColor.Red   => "#ef4444",
+        _            => "#00e5ff",
+    };
+
+    internal void RegisterItem(JRadialItemDef item)
+    {
+        if (!_items.Any(i => i.Key == item.Key))
+        {
+            _items.Add(item);
+            StateHasChanged();
+        }
+    }
+
+    private (double x, double y) GetItemPosition(double angleDeg)
+    {
+        double rad = (angleDeg - 90) * Math.PI / 180;
+        return (Radius * Math.Cos(rad), Radius * Math.Sin(rad));
+    }
+
+    private async Task Toggle()
+    {
+        Open = !Open;
+        _hoveredKey = null;
+        _hoverLabel = null;
+        await OpenChanged.InvokeAsync(Open);
+    }
+
+    private async Task Close()
+    {
+        Open = false;
+        _hoveredKey = null;
+        _hoverLabel = null;
+        await OpenChanged.InvokeAsync(false);
+    }
+
+    private string _itemAccent(JState state) => state switch
+    {
+        JState.Warning => "#f97316",
+        JState.Error   => "#ef4444",
+        JState.Success => "#22c55e",
+        _              => _accentHex,
+    };
+
+    private string _itemWrapStyle(double x, double y, bool open)
+    {
+        string transform = open
+            ? $"translate(calc(-50% + {x:F0}px), calc(-50% + {y:F0}px))"
+            : "translate(-50%, -50%)";
+        return $"position:absolute;top:50%;left:50%;" +
+               $"transform:{transform};" +
+               $"transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1)," +
+               $"opacity 0.3s ease;" +
+               $"opacity:{(open ? "1" : "0")};" +
+               "cursor:pointer;z-index:10;";
+    }
+
+    private string _itemCircleStyle(bool hovered, JState state)
+    {
+        string accent = _itemAccent(state);
+        return $"width:40px;height:40px;border-radius:50%;" +
+               $"background:{(hovered ? $"{accent}22" : "#030f1e")};" +
+               $"border:1.5px solid {(hovered ? accent : $"{accent}55")};" +
+               $"box-shadow:{(hovered ? $"0 0 16px {accent}55,inset 0 0 12px {accent}22" : "none")};" +
+               "display:flex;align-items:center;justify-content:center;" +
+               "transition:all 0.2s;";
+    }
+
+    private string _connectorStyle(double angleDeg, bool hovered, JState state)
+    {
+        string accent = _itemAccent(state);
+        double rad    = (angleDeg - 90) * Math.PI / 180;
+        double dx     = Math.Cos(rad);
+        double dy     = Math.Sin(rad);
+        double rotateDeg = angleDeg - 90;
+
+        return $"position:absolute;top:50%;left:50%;" +
+               $"width:{Radius - 20:F0}px;height:1px;" +
+               $"transform-origin:0 50%;" +
+               $"transform:rotate({rotateDeg:F0}deg);" +
+               $"background:linear-gradient(90deg,{accent}88,transparent);" +
+               $"opacity:{(hovered ? "0.8" : "0.2")};" +
+               "transition:opacity 0.2s;pointer-events:none;";
+    }
+
+    private string _centerStyle =>
+        $"position:relative;width:{CenterSize};height:{CenterSize};" +
+        "border-radius:50%;" +
+        $"background:radial-gradient(circle at 40% 36%, {_accentHex}18, #020d18 70%);" +
+        $"border:1.5px solid {_accentHex}66;" +
+        $"box-shadow:0 0 20px {_accentHex}33,inset 0 0 16px {_accentHex}11;" +
+        "display:flex;align-items:center;justify-content:center;" +
+        "cursor:pointer;z-index:20;flex-shrink:0;";
+}

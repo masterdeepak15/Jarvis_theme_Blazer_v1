@@ -1,0 +1,148 @@
+@page "/alerts"
+@page "/toasts"
+@page "/progress"
+@page "/modal"
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+@using JarvisUI.Docs.Components
+
+<PageTitle>Feedback — JarvisUI Docs</PageTitle>
+
+<DocsPageHeader Title="Feedback Components"
+                Category="Feedback"
+                Description="Alerts, toast notifications, progress bars, and modal dialogs. All HUD-styled with angular shapes and state-driven animations." />
+
+<DocSection Title="JAlert — Inline alerts"
+            Code="@jAlertCode">
+    <Preview>
+        <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
+            <JAlert State="JState.Active">JARVIS is online and listening for commands.</JAlert>
+            <JAlert State="JState.Warning" Title="Warning" Dismissible="true">Microphone noise level is high.</JAlert>
+            <JAlert State="JState.Error"   Title="Critical" Blink="true">Speech recognition engine failed.</JAlert>
+            <JAlert State="JState.Success" Title="Complete">Skill package loaded successfully.</JAlert>
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="JProgress — Bar and Tick styles"
+            Code="@jProgressCode">
+    <Preview>
+        <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:360px;">
+            <JProgress Value="@_progVal" Label="System load" ShowPercent="true" />
+            <JProgress Value="@_progVal" Label="Warning level" State="JState.Warning" />
+            <JProgress Value="@_progVal" Label="Critical" State="JState.Error" />
+            <JProgress Value="12" Label="Skills loaded" ProgressStyle="JProgress.JProgressStyle.Ticks" Total="16" />
+            <JProgress Indeterminate="true" Label="Processing..." />
+            <JButton Shape="JButtonShape.BracketFrame" Size="JSize.Sm" OnClick='CycleProgress'>Cycle Value</JButton>
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="JToast — Notification stack"
+            Description="Inject JToastService. Call Toast.Show(). Place &lt;JToastProvider /&gt; in App.razor once."
+            Code="@jToastCode">
+    <Preview>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Color="JColor.Cyan"
+                     OnClick='() => _toast.Show("Skill loaded successfully", JState.Success)'>
+                ✓ Success
+            </JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Color="JColor.Cyan"
+                     OnClick='() => _toast.Show("High memory usage", JState.Warning, title: "Warning")'>
+                ⚠ Warning
+            </JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Color="JColor.Red"
+                     OnClick='() => _toast.Show("Speech engine failed", JState.Error, title: "Critical", duration: 8000)'>
+                ✕ Error
+            </JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm"
+                     OnClick='() => _toast.Show("JARVIS online and listening")'>
+                ℹ Info
+            </JButton>
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="JModal — Dialog"
+            Code="@jModalCode">
+    <Preview>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <JButton Shape="JButtonShape.LeftNotch" OnClick='() => _modal1 = true'>Open Modal</JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Red" OnClick='() => _modal2 = true'>Danger Modal</JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Amber" OnClick='() => _modal3 = true'>Warning Modal</JButton>
+        </div>
+    </Preview>
+</DocSection>
+
+@* Modals rendered outside preview area *@
+<JModal @bind-Visible="_modal1" Title="Confirm Action" SubTitle="System Command">
+    <ChildContent> 
+        <p style="color:#94a3b8;font-size:12px;line-height:1.6;">
+        This will execute the selected command across all connected subsystems.
+        Confirm to proceed.
+        </p> 
+    </ChildContent>
+    <FooterContent>
+        <JButton Shape="JButtonShape.LeftNotch" Variant="JVariant.Solid" Size="JSize.Sm"
+                 OnClick='() => _modal1 = false'>Confirm</JButton>
+        <JButton Shape="JButtonShape.GhostSkew" Size="JSize.Sm"
+                 OnClick='() => _modal1 = false'>Cancel</JButton>
+    </FooterContent>
+</JModal>
+
+<JModal @bind-Visible="_modal2" Title="Shutdown JARVIS" State="JState.Error" SubTitle="Critical Action">
+    <ChildContent>
+        <p style="color:#f87171;font-size:12px;line-height:1.6;">
+            All active processes will be terminated. Voice pipeline will go offline.
+            This action cannot be undone during active session.
+        </p>
+    </ChildContent>
+    <FooterContent>
+        <JButton Shape="JButtonShape.LeftNotch" Variant="JVariant.Danger" Size="JSize.Sm"
+                 OnClick='() => _modal2 = false'>Shutdown</JButton>
+        <JButton Shape="JButtonShape.GhostSkew" Size="JSize.Sm"
+                 OnClick='() => _modal2 = false'>Abort</JButton>
+    </FooterContent>
+</JModal>
+
+<JModal @bind-Visible="_modal3" Title="High Memory Usage" State="JState.Warning" SubTitle="System Alert">
+    <ChildContent>
+        <p style="color:#fb923c;font-size:12px;line-height:1.6;">
+            Memory usage has reached 91%. Consider closing unused skill plugins or restarting the memory subsystem.
+        </p>
+    </ChildContent>
+    <FooterContent>
+        <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Amber" Size="JSize.Sm"
+                 OnClick='() => _modal3 = false'>Acknowledge</JButton>
+    </FooterContent>
+</JModal>
+
+@code {
+    [Inject] private JToastService _toast { get; set; } = default!;
+
+    int  _progVal = 72;
+    bool _modal1, _modal2, _modal3;
+
+    void CycleProgress() => _progVal = (_progVal + 15) % 105;
+
+    // -------------------- Code snippets as strings --------------------
+    private string jAlertCode = @"<JAlert State=""JState.Active"">JARVIS is online.</JAlert>";
+    private string jProgressCode = @"<JProgress Value=""72"" Label=""System Load"" />
+<JProgress Value=""12"" ProgressStyle=""JProgress.JProgressStyle.Ticks"" Total=""16"" />";
+    private string jToastCode = @"// Program.cs — already registered by AddJarvisUI()
+// App.razor
+<JToastProvider />
+
+// Any component
+@inject JToastService Toast
+Toast.Show(""Skill loaded"", JState.Success);
+Toast.Show(""Memory high"",  JState.Warning, duration: 6000);
+Toast.Show(""Engine error"", JState.Error,   title: ""Critical"");";
+    private string jModalCode = @"<JButton OnClick='() => showModal = true'>Open</JButton>
+<JModal @bind-Visible=""showModal"" Title=""Confirm Shutdown"">
+    <p>Are you sure?</p>
+    <FooterContent>
+        <JButton Variant=""JVariant.Danger"">Confirm</JButton>
+    </FooterContent>
+</JModal>";
+}

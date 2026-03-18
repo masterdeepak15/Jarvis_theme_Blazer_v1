@@ -1,0 +1,72 @@
+@namespace JarvisUI.Docs.Components
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+
+<div style="margin-bottom:28px;padding-bottom:16px;
+            border-bottom:1px solid rgba(0,229,255,0.12);">
+
+    @* Breadcrumb *@
+    <div style="font-size:8px;color:#334155;letter-spacing:0.14em;
+                text-transform:uppercase;margin-bottom:8px;">
+        JarvisUI › @Category
+    </div>
+
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+            <h1 style="font-size:20px;font-weight:600;color:#e0f7ff;
+                       letter-spacing:0.10em;text-transform:uppercase;
+                       margin:0 0 4px;text-shadow:0 0 16px rgba(0,229,255,0.3);
+                       animation:j-glitch 10s ease-in-out infinite;">
+                @Title
+            </h1>
+            @if (!string.IsNullOrWhiteSpace(Description))
+            {
+                <p style="font-size:11px;color:#475569;letter-spacing:0.04em;
+                          line-height:1.6;margin:0;max-width:560px;">
+                    @Description
+                </p>
+            }
+        </div>
+
+        @* Component tag badge *@
+        @if (!string.IsNullOrWhiteSpace(ComponentTag))
+        {
+            <div style="flex-shrink:0;">
+                <JBadge Color="JColor.Cyan">@ComponentTag</JBadge>
+            </div>
+        }
+    </div>
+
+    @* Parameter quick-ref *@
+    @if (Parameters != null && Parameters.Count > 0)
+    {
+        <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;">
+            @foreach (var p in Parameters)
+            {
+                <div style="font-size:9px;background:rgba(0,229,255,0.06);
+                            border:1px solid rgba(0,229,255,0.15);
+                            padding:3px 8px;color:#22d3ee88;letter-spacing:0.06em;
+                            font-family:'Courier New',monospace;">
+                    <span style="color:#22d3ee;">@p.Name</span>
+                    <span style="color:#334155;"> : </span>
+                    <span style="color:#94a3b8;">@p.Type</span>
+                    @if (!string.IsNullOrWhiteSpace(p.Default))
+                    {
+                        <span style="color:#334155;"> = @p.Default</span>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+</div>
+
+@code {
+    public record DocParam(string Name, string Type, string? Default = null);
+
+    [Parameter] public string             Title        { get; set; } = "";
+    [Parameter] public string?            Description  { get; set; }
+    [Parameter] public string             Category     { get; set; } = "Component";
+    [Parameter] public string?            ComponentTag { get; set; }
+    [Parameter] public List<DocParam>?    Parameters   { get; set; }
+}

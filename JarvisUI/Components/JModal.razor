@@ -1,0 +1,159 @@
+@* ================================================================
+   JModal — JARVIS UI Modal Dialog
+   Notched-corner dialog with corner-bracket draw-in on open,
+   scan line, backdrop blur. Pure Blazor state — no JS.
+
+   USAGE:
+   <JModal @bind-Visible="showModal" Title="Confirm Shutdown">
+       <p>Are you sure you want to shut down all systems?</p>
+       <FooterContent>
+           <JButton Shape="JButtonShape.LeftNotch" Variant="JVariant.Danger"
+                    OnClick="HandleConfirm">Confirm</JButton>
+           <JButton Shape="JButtonShape.GhostSkew"
+                    OnClick="() => showModal = false">Cancel</JButton>
+       </FooterContent>
+   </JModal>
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+@if (Visible)
+{
+    @* Backdrop *@
+    <div style="@_backdropStyle" @onclick="HandleBackdropClick"></div>
+
+    @* Dialog *@
+    <div style="@_dialogStyle" @onclick:stopPropagation="true">
+
+        @* Scan line *@
+        <div style="position:absolute;left:0;right:0;height:1px;top:-1px;
+                    background:linear-gradient(90deg,transparent,var(--j-cyan),transparent);
+                    box-shadow:0 0 10px var(--j-cyan);
+                    animation:j-scan-v 3s ease-in-out infinite;
+                    pointer-events:none;"></div>
+
+        @* Corner brackets *@
+        <div style="@_corner("top:0;left:0;border-top-width:2px;border-left-width:2px;")"></div>
+        <div style="@_corner("top:0;right:0;border-top-width:2px;border-right-width:2px;")"></div>
+        <div style="@_corner("bottom:0;left:0;border-bottom-width:2px;border-left-width:2px;")"></div>
+        <div style="@_corner("bottom:0;right:0;border-bottom-width:2px;border-right-width:2px;")"></div>
+
+        @* Triangle accent *@
+        <div style="position:absolute;top:0;left:0;
+                    border:@NotchSize solid transparent;
+                    border-top-color:@_accentHex;
+                    border-left-color:@_accentHex;
+                    animation:j-pulse var(--j-dur-pulse) ease-in-out infinite;
+                    pointer-events:none;"></div>
+
+        @* ── Header ── *@
+        <div style="padding:14px 18px 10px;
+                    border-bottom:1px solid rgba(0,229,255,0.12);
+                    display:flex;align-items:center;justify-content:space-between;">
+            <div>
+                @if (!string.IsNullOrWhiteSpace(SubTitle))
+                {
+                    <div style="font-size:8px;color:@_accentHex;letter-spacing:0.16em;
+                                text-transform:uppercase;margin-bottom:3px;opacity:0.7;">
+                        @SubTitle
+                    </div>
+                }
+                <div style="font-size:13px;font-weight:600;color:#e0f7ff;
+                            letter-spacing:0.10em;text-transform:uppercase;">
+                    @Title
+                </div>
+            </div>
+
+            @if (Closable)
+            {
+                <button @onclick="Close"
+                        style="background:transparent;border:none;cursor:pointer;
+                               color:#475569;font-size:16px;padding:0;
+                               transition:color 0.15s;font-family:inherit;"
+                        onmouseover="this.style.color='#00e5ff'"
+                        onmouseout="this.style.color='#475569'">
+                    ✕
+                </button>
+            }
+        </div>
+
+        @* ── Body ── *@
+        <div style="padding:16px 18px;color:#94a3b8;font-size:12px;
+                    line-height:1.6;letter-spacing:0.04em;">
+            @ChildContent
+        </div>
+
+        @* ── Footer ── *@
+        @if (FooterContent != null)
+        {
+            <div style="padding:10px 18px 14px;
+                        border-top:1px solid rgba(0,229,255,0.08);
+                        display:flex;align-items:center;gap:10px;
+                        justify-content:flex-end;">
+                @FooterContent
+            </div>
+        }
+
+    </div>
+}
+
+@code {
+    [Parameter] public bool            Visible        { get; set; } = false;
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public string          Title          { get; set; } = "";
+    [Parameter] public string?         SubTitle       { get; set; }
+    [Parameter] public bool            Closable       { get; set; } = true;
+    [Parameter] public bool            CloseOnBackdrop{ get; set; } = true;
+    [Parameter] public string          Width          { get; set; } = "480px";
+    [Parameter] public string          NotchSize      { get; set; } = "18px";
+    [Parameter] public JColor          Color          { get; set; } = JColor.Cyan;
+    [Parameter] public JState          State          { get; set; } = JState.Active;
+    [Parameter] public RenderFragment? ChildContent   { get; set; }
+    [Parameter] public RenderFragment? FooterContent  { get; set; }
+
+    private string _accentHex => State switch
+    {
+        JState.Warning => "#f97316",
+        JState.Error   => "#ef4444",
+        JState.Success => "#22c55e",
+        _ => Color switch
+        {
+            JColor.Amber => "#f97316",
+            JColor.Red   => "#ef4444",
+            _            => "#00e5ff",
+        },
+    };
+
+    private async Task Close()
+    {
+        Visible = false;
+        await VisibleChanged.InvokeAsync(false);
+    }
+
+    private async Task HandleBackdropClick()
+    {
+        if (CloseOnBackdrop) await Close();
+    }
+
+    private string _backdropStyle =>
+        "position:fixed;inset:0;z-index:1000;" +
+        "background:rgba(2,13,24,0.85);" +
+        "backdrop-filter:blur(2px);";
+
+    private string _dialogStyle =>
+        "position:fixed;z-index:1001;" +
+        "top:50%;left:50%;transform:translate(-50%,-50%);" +
+        $"width:{Width};max-width:calc(100vw - 32px);" +
+        "background:#030f1e;overflow:hidden;" +
+        $"clip-path:polygon({NotchSize} 0%,100% 0%,100% calc(100% - {NotchSize}),calc(100% - {NotchSize}) 100%,0% 100%,0% {NotchSize});" +
+        $"border:1px solid {_accentHex}33;" +
+        $"box-shadow:0 0 30px {_accentHex}22,0 0 60px {_accentHex}11,inset 0 0 30px rgba(0,0,0,0.5);" +
+        "font-family:'Courier New',monospace;";
+
+    private string _corner(string pos) =>
+        $"position:absolute;{pos}width:14px;height:14px;" +
+        $"border-color:{_accentHex};border-style:solid;border-width:0;" +
+        $"filter:drop-shadow(0 0 4px {_accentHex});" +
+        "animation:j-corner-blink 3s ease-in-out infinite;";
+}

@@ -1,0 +1,135 @@
+@* ================================================================
+   JPagination — JARVIS UI Page Navigator
+   Angular page buttons with tick-segment style indicators.
+
+   USAGE:
+   <JPagination @bind-Page="currentPage" TotalPages="12" />
+   <JPagination @bind-Page="page" TotalPages="@totalPages"
+                ShowFirstLast="true" PageSize="5" />
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div style="display:flex;align-items:center;gap:6px;font-family:'Courier New',monospace;">
+
+    @* First / Prev *@
+    @if (ShowFirstLast)
+    {
+        <button @onclick="() => GoTo(1)" disabled="@(Page <= 1)"
+                style="@_btnStyle(false, Page <= 1)">«</button>
+    }
+    <button @onclick="() => GoTo(Page - 1)" disabled="@(Page <= 1)"
+            style="@_btnStyle(false, Page <= 1)">‹</button>
+
+    @* Page ticks / numbers *@
+    @if (TotalPages <= 10)
+    {
+        @* Show as tick bars for small counts *@
+        <div style="display:flex;align-items:flex-end;gap:3px;">
+            @for (int i = 1; i <= TotalPages; i++)
+            {
+                int p    = i;
+                bool cur = i == Page;
+                int  h   = cur ? 18 : 10;
+                <div @onclick="() => GoTo(p)"
+                     style="width:6px;height:@(h)px;cursor:pointer;
+                            background:@(cur ? _accentHex : "#1e3a4a");
+                            clip-path:polygon(0 15%,100% 0,100% 100%,0 85%);
+                            box-shadow:@(cur ? $"0 0 8px {_accentHex}" : "none");
+                            transition:all 0.2s;
+                            @(cur ? "animation:j-pulse 2s ease-in-out infinite;" : "")">
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        @* Show as numbered buttons for large counts *@
+        @foreach (int p in _visiblePages)
+        {
+            if (p == -1)
+            {
+                <span style="color:#334155;font-size:10px;padding:0 4px;">···</span>
+            }
+            else
+            {
+                int pageNum = p;
+                bool cur = pageNum == Page;
+                <button @onclick="() => GoTo(pageNum)"
+                        style="@_btnStyle(cur, false)">
+                    @pageNum
+                </button>
+            }
+        }
+    }
+
+    @* Next / Last *@
+    <button @onclick="() => GoTo(Page + 1)" disabled="@(Page >= TotalPages)"
+            style="@_btnStyle(false, Page >= TotalPages)">›</button>
+    @if (ShowFirstLast)
+    {
+        <button @onclick="() => GoTo(TotalPages)" disabled="@(Page >= TotalPages)"
+                style="@_btnStyle(false, Page >= TotalPages)">»</button>
+    }
+
+    @* Page info *@
+    @if (ShowInfo)
+    {
+        <span style="font-size:9px;color:#334155;letter-spacing:0.10em;
+                     text-transform:uppercase;margin-left:8px;">
+            @Page / @TotalPages
+        </span>
+    }
+
+</div>
+
+@code {
+    [Parameter] public int             Page          { get; set; } = 1;
+    [Parameter] public EventCallback<int> PageChanged { get; set; }
+    [Parameter] public int             TotalPages    { get; set; } = 1;
+    [Parameter] public int             PageSize      { get; set; } = 5;
+    [Parameter] public bool            ShowFirstLast { get; set; } = false;
+    [Parameter] public bool            ShowInfo      { get; set; } = true;
+    [Parameter] public JColor          Color         { get; set; } = JColor.Cyan;
+
+    private async Task GoTo(int p)
+    {
+        p = Math.Clamp(p, 1, TotalPages);
+        if (p == Page) return;
+        Page = p;
+        await PageChanged.InvokeAsync(p);
+    }
+
+    private string _accentHex => Color switch
+    {
+        JColor.Amber => "#f97316",
+        _            => "#00e5ff",
+    };
+
+    private IEnumerable<int> _visiblePages
+    {
+        get
+        {
+            var pages = new List<int>();
+            int half  = PageSize / 2;
+            int start = Math.Max(1, Page - half);
+            int end   = Math.Min(TotalPages, start + PageSize - 1);
+            start = Math.Max(1, end - PageSize + 1);
+
+            if (start > 1) { pages.Add(1); if (start > 2) pages.Add(-1); }
+            for (int i = start; i <= end; i++) pages.Add(i);
+            if (end < TotalPages) { if (end < TotalPages - 1) pages.Add(-1); pages.Add(TotalPages); }
+            return pages;
+        }
+    }
+
+    private string _btnStyle(bool active, bool disabled) =>
+        $"padding:5px 10px;background:{(active ? $"{_accentHex}18" : "transparent")};" +
+        $"border:1px solid {(active ? _accentHex : (disabled ? "#0f2333" : "#1e3a4a"))};" +
+        $"color:{(active ? _accentHex : (disabled ? "#1e3a4a" : "#475569"))};" +
+        $"box-shadow:{(active ? $"0 0 8px {_accentHex}44" : "none")};" +
+        "font-size:11px;font-family:'Courier New',monospace;letter-spacing:0.08em;" +
+        $"clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);" +
+        $"cursor:{(disabled ? "not-allowed" : "pointer")};transition:all 0.15s;";
+}

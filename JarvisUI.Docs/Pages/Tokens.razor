@@ -1,0 +1,110 @@
+@page "/tokens"
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+@using JarvisUI.Docs.Components
+
+<PageTitle>Tokens — JarvisUI Docs</PageTitle>
+
+<DocsPageHeader Title="Design Tokens"
+                Category="Foundation"
+                Description="All design decisions are expressed as C# enums and CSS custom properties. Components reference only these — no magic strings anywhere." />
+
+<DocSection Title="JColor — Color Intent" Description="Maps each semantic color to CSS variable ramps. Set via Color parameter on all components.">
+    <Preview>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            @foreach (var (color, hex, name) in _colors)
+            {
+                <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                    <div style="width:40px;height:40px;background:@hex;
+                                clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+                                box-shadow:0 0 12px @hex;">
+                    </div>
+                    <span style="font-size:8px;color:#475569;letter-spacing:0.10em;text-transform:uppercase;">
+                        @name
+                    </span>
+                    <span style="font-size:8px;color:#22d3ee44;letter-spacing:0.06em;">@hex</span>
+                </div>
+            }
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="JState — System States" Description="States override color and animation speed on any component.">
+    <Preview>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <JStatusPill State="JState.Active">Active</JStatusPill>
+            <JStatusPill State="JState.Processing">Processing</JStatusPill>
+            <JStatusPill State="JState.Warning">Warning</JStatusPill>
+            <JStatusPill State="JState.Error" Blink="true">Error</JStatusPill>
+            <JStatusPill State="JState.Success">Success</JStatusPill>
+            <JStatusPill State="JState.Idle">Idle</JStatusPill>
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="JSize — Size Scale" Description="Uniform size scale from Xs to Xl. Height / padding / font-size all scale together.">
+    <Preview>
+        <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Xs">Xs</JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm">Sm</JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Md">Md</JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Lg">Lg</JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Xl">Xl</JButton>
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="JAnimSpeed — Animation Speed" Description="Controls all animation durations globally via CSS variable overrides.">
+    <Preview>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <div class="j-anim-slow">
+                <JStatCard Title="Slow" Value="2×" Sub="slower" Style="JCardStyle.Notched" Style_Css="min-width:100px;" />
+            </div>
+            <div class="j-anim-normal">
+                <JStatCard Title="Normal" Value="1×" Sub="default" Style="JCardStyle.Notched" Style_Css="min-width:100px;" />
+            </div>
+            <div class="j-anim-fast">
+                <JStatCard Title="Fast" Value="1.5×" Sub="faster" Style="JCardStyle.Notched" Style_Css="min-width:100px;" />
+            </div>
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="CSS Custom Properties" Description="Override in your own CSS to re-theme the entire library instantly."
+            Code="@cssRoot">
+    <Preview>
+        <div style="font-size:10px;color:#475569;letter-spacing:0.06em;line-height:1.8;">
+            Override any property to retheme the entire library.<br/>
+            <span style="color:#22d3ee;">--j-cyan</span> changes the primary accent everywhere.<br/>
+            <span style="color:#22d3ee;">--j-dur-scan</span> speeds up or slows all scan lines.<br/>
+            <span style="color:#22d3ee;">--j-notch-lg</span> changes corner cut depth on all cards.
+        </div>
+    </Preview>
+</DocSection>
+
+@code {
+    private List<(JColor, string, string)> _colors = new()
+    {
+        (JColor.Cyan,  "#00e5ff", "Cyan"),
+        (JColor.Blue,  "#0891b2", "Blue"),
+        (JColor.Amber, "#f97316", "Amber"),
+        (JColor.Red,   "#ef4444", "Red"),
+        (JColor.Green, "#22c55e", "Green"),
+        (JColor.Ghost, "rgba(255,255,255,0.3)", "Ghost"),
+        (JColor.White, "#ffffff", "White"),
+    };
+
+    string cssRoot = @":root {
+      --j-cyan:      #00e5ff;   /* Primary HUD color  */
+      --j-amber:     #f97316;   /* Warning             */
+      --j-red:       #ef4444;   /* Danger / error      */
+      --j-green:     #22c55e;   /* Success             */
+      --j-bg:        #020d18;   /* Root background     */
+      --j-bg-card:   #030f1e;   /* Card background     */
+      --j-dur-scan:  3.5s;      /* Scan line speed     */
+      --j-dur-pulse: 2.8s;      /* Pulse speed         */
+      --j-notch:     14px;      /* Corner notch size   */
+      --j-notch-lg:  20px;      /* Large notch size    */
+    }";
+}
+

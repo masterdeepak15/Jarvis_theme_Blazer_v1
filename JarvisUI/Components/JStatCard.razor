@@ -1,0 +1,153 @@
+@* ================================================================
+   JStatCard — JARVIS UI Stat / Metric Card
+   Pre-wired layout: label → big value → sub-text → optional bar.
+   Wraps JCard for all 9 style support.
+
+   USAGE:
+   <JStatCard Title="CPU" Value="74%" Sub="8 cores · nominal"
+              Style="JCardStyle.Notched" BarValue="74" />
+
+   <JStatCard Title="Threat" Value="Alert" Sub="sector 4 breach"
+              Style="JCardStyle.DangerPulse" State="JState.Error" />
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<JCard Style="@Style"
+       Color="@Color"
+       State="@State"
+       AnimSpeed="@AnimSpeed"
+       ShowScan="@ShowScan"
+       Class="@Class"
+       Style_Css="@Style_Css">
+
+    <ContentTemplate>
+
+        @* ── Header: title + optional badge ── *@
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <div class="j-text-xs">@Title</div>
+            @if (!string.IsNullOrWhiteSpace(Badge))
+            {
+                <JBadge Color="@BadgeColor" Size="JSize.Xs">@Badge</JBadge>
+            }
+        </div>
+
+        @* ── Main value ── *@
+        <div class="@_valueClass">@Value</div>
+
+        @* ── Sub text ── *@
+        @if (!string.IsNullOrWhiteSpace(Sub))
+        {
+            <div class="j-text-sub @_subColorClass">
+                @if (ShowStatusDot)
+                {
+                    <span class="j-status-dot" style="@_dotStyle"></span>
+                    <span>&nbsp;</span>
+                }
+                @Sub
+            </div>
+        }
+
+        @* ── Optional progress bar ── *@
+        @if (BarValue.HasValue)
+        {
+            <div style="margin-top:8px;">
+                <div class="j-data-bar" style="height:3px;">
+                    <div class="j-data-bar-fill" style="--j-w:@(BarValue)%;"></div>
+                </div>
+            </div>
+        }
+
+        @* ── Optional data rows ── *@
+        @if (DataRows != null && DataRows.Count > 0)
+        {
+            <div style="margin-top:8px;">
+                @foreach (var row in DataRows)
+                {
+                    <div class="j-data-row">
+                        <span class="j-data-key">@row.Key</span>
+                        @if (row.BarPercent.HasValue)
+                        {
+                            <div class="j-data-bar">
+                                <div class="j-data-bar-fill" style="--j-w:@(row.BarPercent)%;"></div>
+                            </div>
+                        }
+                        <span class="j-data-val">@row.Value</span>
+                    </div>
+                }
+            </div>
+        }
+
+        @* ── Slot for extra content ── *@
+        @if (ChildContent != null)
+        {
+            @ChildContent
+        }
+
+    </ContentTemplate>
+
+</JCard>
+
+@code {
+    // ── Card frame ───────────────────────────────────────────────
+    [Parameter] public JCardStyle Style    { get; set; } = JCardStyle.CornerBracket;
+    [Parameter] public JColor     Color    { get; set; } = JColor.Cyan;
+    [Parameter] public JState     State    { get; set; } = JState.Active;
+    [Parameter] public JAnimSpeed AnimSpeed{ get; set; } = JAnimSpeed.Normal;
+    [Parameter] public bool       ShowScan { get; set; } = true;
+    [Parameter] public string?    Class    { get; set; }
+    [Parameter] public string?    Style_Css { get; set; }
+
+    // ── Content ──────────────────────────────────────────────────
+    [Parameter] public string  Title   { get; set; } = "";
+    [Parameter] public string  Value   { get; set; } = "";
+    [Parameter] public string? Sub     { get; set; }
+
+    /// <summary>Optional badge text shown top-right of card</summary>
+    [Parameter] public string? Badge      { get; set; }
+    [Parameter] public JColor  BadgeColor { get; set; } = JColor.Cyan;
+
+    /// <summary>Show diamond status dot before sub text</summary>
+    [Parameter] public bool ShowStatusDot { get; set; } = false;
+
+    /// <summary>0–100 — shows a progress bar below value if set</summary>
+    [Parameter] public int? BarValue { get; set; }
+
+    /// <summary>Key/value data rows shown below value</summary>
+    [Parameter] public List<JDataRow>? DataRows { get; set; }
+
+    /// <summary>Extra slot content rendered below all built-in content</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    // ── Computed helpers ─────────────────────────────────────────
+    private string _valueClass => JarvisClasses.Combine(
+        "j-text-val",
+        State switch
+        {
+            JState.Warning => "j-text-warn",
+            JState.Error   => "j-text-err",
+            JState.Success => "j-text-ok",
+            _              => null,
+        }
+    );
+
+    private string _subColorClass => State switch
+    {
+        JState.Warning => "j-text-warn",
+        JState.Error   => "j-text-err",
+        JState.Success => "j-text-ok",
+        _              => "",
+    };
+
+    private string _dotStyle => State switch
+    {
+        JState.Warning => "background:var(--j-amber);",
+        JState.Error   => "background:var(--j-red);",
+        JState.Success => "background:var(--j-green);",
+        _              => "",
+    };
+
+    // ── Data row model ────────────────────────────────────────────
+    public record JDataRow(string Key, string Value, int? BarPercent = null);
+}

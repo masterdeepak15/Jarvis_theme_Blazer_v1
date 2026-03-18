@@ -1,0 +1,24 @@
+@* Individual tab registration — used inside JTabs *@
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+@* No visible output — registers definition and renders content when active *@
+@if (_parent?.ActiveTab == Key)
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter] public string          Key          { get; set; } = "";
+    [Parameter] public string          Label        { get; set; } = "";
+    [Parameter] public string?         Icon         { get; set; }
+    [Parameter] public string?         Badge        { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [CascadingParameter] private JTabs? _parent { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _parent?.RegisterTab(new JTabs.JTabDefinition(Key, Label, Icon, Badge));
+    }
+}

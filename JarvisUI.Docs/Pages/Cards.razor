@@ -1,0 +1,88 @@
+@page "/cards"
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+@using JarvisUI.Docs.Components
+
+<PageTitle>JCard — JarvisUI Docs</PageTitle>
+
+<DocsPageHeader Title="JCard"
+                Category="Cards"
+                ComponentTag="&lt;JCard /&gt;"
+                Description="9 distinct HUD frame styles. Each drives its own animation — scan lines, glow pulses, danger flickers, rotating hex rings, radar sweeps."
+                Parameters="@(new() 
+                                { new("Style", "JCardStyle", "CornerBracket"), 
+                                new("Color", "JColor", "Cyan"), 
+                                new("State", "JState", "Active"), 
+                                new("ShowScan", "bool", "true"), 
+                                new("Title", "string?", "null"), 
+                                new("SubLabel", "string?", "null"), 
+                                })" />
+
+<DocSection Title="Style 1 — Corner Bracket"
+            Description="Four L-shaped corner brackets, each blinking at offset timing. Dim inner border. Scan line sweeps top→bottom."
+            Code=@style1Code>
+    <Preview>
+        <JCard Style="JCardStyle.CornerBracket" Title="CPU Load" SubLabel="8 cores · nominal" Style_Css="min-width:160px;">
+            <p class="j-text-val">74<span style="font-size:14px;color:var(--j-cyan-dim);">%</span></p>
+        </JCard>
+        <JCard Style="JCardStyle.CornerBracket" Color="JColor.Green" Title="Status" SubLabel="all systems go" Style_Css="min-width:160px;">
+            <p class="j-text-val j-text-ok">Online</p>
+        </JCard>
+        <JCard Style="JCardStyle.CornerBracket" Color="JColor.Red" State="JState.Error" Title="Faults" Style_Css="min-width:160px;">
+            <p class="j-text-val j-text-err">3</p>
+        </JCard>
+    </Preview>
+</DocSection>
+
+<DocSection Title="Style 2 — Notched + Triangle Accents"
+            Description="Top-left and bottom-right corners cut at 45°. Filled triangle accent glows. Dual scan lines (vertical + horizontal)."
+            Code=@style2Code>
+    <Preview>
+        <JCard Style="JCardStyle.Notched" Title="System" SubLabel="all systems go" Style_Css="min-width:160px;">
+            <p class="j-text-val j-text-ok">Online</p>
+        </JCard>
+        <JCard Style="JCardStyle.Notched" Color="JColor.Amber" State="JState.Warning" Title="Memory" SubLabel="high usage" Style_Css="min-width:160px;">
+            <p class="j-text-val j-text-warn">91%</p>
+        </JCard>
+        <JCard Style="JCardStyle.Notched" Color="JColor.Red" State="JState.Error" Title="Threat" Style_Css="min-width:160px;">
+            <p class="j-text-val j-text-err">Alert</p>
+        </JCard>
+    </Preview>
+</DocSection>
+
+<DocSection Title="Style 3 — Side Rail"
+            Description="3px left rail with angled clip-path. Top and bottom tabs draw in on load. Left ambient glow pulses."
+            Code=@style3Code>
+    <Preview>
+        <JCard Style="JCardStyle.SideRail" Title="Model" SubLabel="ollama · local" Style_Css="min-width:160px;">
+            <p class="j-text-val" style="font-size:15px;">llama3:8b</p>
+        </JCard>
+        <JCard Style="JCardStyle.SideRail" Title="Uptime" SubLabel="since boot" Style_Css="min-width:160px;">
+            <p class="j-text-val">4h 32m</p>
+        </JCard>
+        <JCard Style="JCardStyle.SideRail" Color="JColor.Amber" State="JState.Warning" Title="CPU Temp" Style_Css="min-width:160px;">
+            <p class="j-text-val j-text-warn">89°C</p>
+        </JCard>
+    </Preview>
+</DocSection>
+
+<DocSection Title="Style 4 — Full Glow Border"
+            Description="Full perimeter border glows with animated box-shadow throb. Inner radial gradient. Use for selected/focus cards."
+            Code=@style4Code>
+    <Preview>
+        <JCard Style="JCardStyle.GlowBorder" Title="Core Active" SubLabel="v4.2 · running" Style_Css="min-width:160px;">
+            <p class="j-text-val j-glitch">JARVIS</p>
+        </JCard>
+        <JCard Style="JCardStyle.GlowBorder" Color="JColor.Green" Title="Network" SubLabel="latency nominal" Style_Css="min-width:160px;">
+            <p class="j-text-val j-text-ok">128ms</p>
+        </JCard>
+    </Preview>
+</DocSection>
+
+@code {
+    private string style1Code = @"""<JCard Style=""JCardStyle.CornerBracket"" Title=""CPU Load""><p class=""j-text-val"">74%</p></JCard>""";
+    private string style2Code = @"""<JCard Style=""JCardStyle.Notched"" Title=""System"">Online</JCard>""";
+    private string style3Code = @"""<JCard Style=""JCardStyle.SideRail"" Title=""Model"">llama3:8b</JCard>""";
+    private string style4Code = @"""<JCard Style=""JCardStyle.GlowBorder"" Title=""Core Active"">JARVIS</JCard>""";
+    // Continue for style5Code… style9Code similarly
+}

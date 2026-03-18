@@ -1,0 +1,82 @@
+@* ================================================================
+   JFormField — JARVIS UI Form Field Wrapper
+   Standardised wrapper: label, field slot, helper/error text,
+   required indicator. Works with any JarvisUI input component.
+
+   USAGE:
+   <JFormField Label="API Key" Required="true" Error="@apiKeyError">
+       <JInput @bind-Value="apiKey" Placeholder="sk-..." />
+   </JFormField>
+
+   <JFormField Label="Voice Language" Helper="Affects speech recognition">
+       <JSelect @bind-Value="lang" Options="@langOptions" />
+   </JFormField>
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div style="@_wrapStyle">
+
+    @* Label row *@
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+            <label style="font-size:9px;color:@_labelColor;
+                          letter-spacing:0.12em;text-transform:uppercase;">
+                @Label
+            </label>
+            @if (Required)
+            {
+                <span style="color:var(--j-red);font-size:10px;
+                             animation:j-pulse 2s ease-in-out infinite;">◆</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(Tag))
+            {
+                <span style="font-size:8px;padding:1px 6px;
+                             background:rgba(0,229,255,0.10);color:#22d3ee;
+                             clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);
+                             letter-spacing:0.08em;">
+                    @Tag
+                </span>
+            }
+        </div>
+    }
+
+    @* Field slot *@
+    @ChildContent
+
+    @* Error message *@
+    @if (!string.IsNullOrWhiteSpace(Error))
+    {
+        <div style="display:flex;align-items:center;gap:5px;margin-top:4px;">
+            <span style="color:var(--j-red);font-size:10px;">✕</span>
+            <span style="font-size:9px;color:var(--j-red);letter-spacing:0.06em;">@Error</span>
+        </div>
+    }
+    @* Helper text *@
+    else if (!string.IsNullOrWhiteSpace(Helper))
+    {
+        <div style="margin-top:4px;font-size:9px;color:#334155;letter-spacing:0.06em;">
+            @Helper
+        </div>
+    }
+
+</div>
+
+@code {
+    [Parameter] public string?         Label        { get; set; }
+    [Parameter] public string?         Helper       { get; set; }
+    [Parameter] public string?         Error        { get; set; }
+    [Parameter] public string?         Tag          { get; set; }
+    [Parameter] public bool            Required     { get; set; } = false;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool _hasError => !string.IsNullOrWhiteSpace(Error);
+
+    private string _labelColor => _hasError ? "var(--j-red)" : "rgba(0,229,255,0.6)";
+
+    private string _wrapStyle =>
+        "display:flex;flex-direction:column;width:100%;" +
+        "font-family:'Courier New',monospace;";
+}

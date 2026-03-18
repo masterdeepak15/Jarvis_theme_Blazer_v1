@@ -1,0 +1,53 @@
+@* ================================================================
+   JWaveform — JARVIS UI Audio Waveform Visualizer
+   Animated bars like the LINKS Mark II bottom bar / mic level.
+
+   USAGE:
+   <JWaveform />
+   <JWaveform BarCount="30" Height="40px" Color="JColor.Amber" />
+   <JWaveform Active="false" />
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div class="j-waveform @_colorClass" style="height:@Height;@_activeStyle">
+    @for (int i = 0; i < BarCount; i++)
+    {
+        int h   = _heights[i % _heights.Length];
+        string dur = _durs[i % _durs.Length];
+        string dly = $"{i * 0.04:F2}s";
+        string accentHex = _accentHex;
+
+        <div class="j-wv"
+             style="height:@(h)px;
+                    --j-wv-dur:@dur;
+                    --j-wv-dly:@dly;
+                    background:@accentHex;
+                    @(Active ? "" : "transform:scaleY(0.15);animation-play-state:paused;")">
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int       BarCount { get; set; } = 20;
+    [Parameter] public string    Height   { get; set; } = "32px";
+    [Parameter] public JColor    Color    { get; set; } = JColor.Cyan;
+    [Parameter] public bool      Active   { get; set; } = true;
+
+    private string _colorClass  => JarvisClasses.Color(Color);
+    private string _activeStyle => Active ? "" : "opacity:0.3;";
+
+    private string _accentHex => Color switch
+    {
+        JColor.Cyan  => "#00e5ff",
+        JColor.Blue  => "#0891b2",
+        JColor.Amber => "#f97316",
+        JColor.Red   => "#ef4444",
+        JColor.Green => "#22c55e",
+        _            => "#00e5ff",
+    };
+
+    private static readonly int[]    _heights = { 6,14,22,18,28,20,30,24,28,22,16,20,26,18,12,22,28,18,10,14 };
+    private static readonly string[] _durs    = { ".4s",".5s",".6s",".4s",".7s",".5s",".6s",".4s",".8s",".5s" };
+}

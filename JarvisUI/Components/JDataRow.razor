@@ -1,0 +1,49 @@
+@* ================================================================
+   JDataRow — JARVIS UI Data Row
+   Key → animated fill bar → value. Used inside cards and panels.
+
+   USAGE:
+   <JDataRow Key="CPU"     Value="74%"     BarPercent="74" />
+   <JDataRow Key="Uptime"  Value="4h 32m"  />
+   <JDataRow Key="Model"   Value="llama3"  BarPercent="80" Color="JColor.Green" />
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div class="j-data-row">
+    <span class="j-data-key">@Key</span>
+
+    @if (BarPercent.HasValue)
+    {
+        <div class="j-data-bar">
+            <div class="j-data-bar-fill" style="--j-w:@(BarPercent)%;@_barColor"></div>
+        </div>
+    }
+
+    <span class="j-data-val" style="@_valColor">@Value</span>
+</div>
+
+@code {
+    [Parameter] public string  Key        { get; set; } = "";
+    [Parameter] public string  Value      { get; set; } = "";
+    [Parameter] public int?    BarPercent { get; set; }
+    [Parameter] public JColor  Color      { get; set; } = JColor.Cyan;
+    [Parameter] public JState  State      { get; set; } = JState.Active;
+
+    private string _barColor => State switch
+    {
+        JState.Warning => "background:linear-gradient(90deg,#92400e,var(--j-amber));",
+        JState.Error   => "background:linear-gradient(90deg,#7f1d1d,var(--j-red));",
+        JState.Success => "background:linear-gradient(90deg,#14532d,var(--j-green));",
+        _              => "",
+    };
+
+    private string _valColor => State switch
+    {
+        JState.Warning => "color:var(--j-amber);",
+        JState.Error   => "color:var(--j-red);",
+        JState.Success => "color:var(--j-green);",
+        _              => "",
+    };
+}

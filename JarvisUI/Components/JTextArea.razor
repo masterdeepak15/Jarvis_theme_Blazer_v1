@@ -1,0 +1,103 @@
+@* ================================================================
+   JTextArea — JARVIS UI Multi-line Text Input
+   Angular clip-path textarea with corner brackets + line count.
+
+   USAGE:
+   <JTextArea @bind-Value="prompt" Label="Command input" Rows="4" />
+   <JTextArea @bind-Value="notes" Label="Mission log" ShowLineCount="true" />
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div style="width:100%;">
+
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <label style="font-size:9px;color:@_accentDim;
+                          letter-spacing:0.12em;text-transform:uppercase;">
+                @Label
+            </label>
+            @if (ShowLineCount && !string.IsNullOrWhiteSpace(Value))
+            {
+                <span style="font-size:9px;color:#334155;letter-spacing:0.08em;">
+                    @_lineCount LN
+                </span>
+            }
+        </div>
+    }
+
+    <div style="position:relative;">
+        @* Corner brackets *@
+        <div style="position:absolute;top:0;left:0;width:8px;height:8px;
+                    border-top:1.5px solid @_accentHex;border-left:1.5px solid @_accentHex;
+                    z-index:1;pointer-events:none;filter:drop-shadow(0 0 3px @_accentHex);"></div>
+        <div style="position:absolute;bottom:0;right:0;width:8px;height:8px;
+                    border-bottom:1.5px solid @_accentHex;border-right:1.5px solid @_accentHex;
+                    z-index:1;pointer-events:none;filter:drop-shadow(0 0 3px @_accentHex);"></div>
+        <div style="position:absolute;top:0;right:0;width:8px;height:8px;
+                    border-top:1.5px solid @_accentHex;border-right:1.5px solid @_accentHex;
+                    z-index:1;pointer-events:none;opacity:0.4;"></div>
+        <div style="position:absolute;bottom:0;left:0;width:8px;height:8px;
+                    border-bottom:1.5px solid @_accentHex;border-left:1.5px solid @_accentHex;
+                    z-index:1;pointer-events:none;opacity:0.4;"></div>
+
+        <textarea rows="@Rows"
+                  placeholder="@Placeholder"
+                  disabled="@Disabled"
+                  maxlength="@MaxLength"
+                  @bind="Value"
+                  @bind:event="oninput"
+                  style="@_style">
+        </textarea>
+    </div>
+
+    @if (MaxLength < int.MaxValue)
+    {
+        <div style="text-align:right;font-size:8px;color:#334155;
+                    letter-spacing:0.08em;margin-top:3px;">
+            @(Value?.Length ?? 0) / @MaxLength
+        </div>
+    }
+
+</div>
+
+@code {
+    [Parameter] public string?         Value        { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public string          Placeholder  { get; set; } = "";
+    [Parameter] public string?         Label        { get; set; }
+    [Parameter] public JColor          Color        { get; set; } = JColor.Cyan;
+    [Parameter] public int             Rows         { get; set; } = 4;
+    [Parameter] public bool            Disabled     { get; set; } = false;
+    [Parameter] public bool            ShowLineCount{ get; set; } = false;
+    [Parameter] public int             MaxLength    { get; set; } = int.MaxValue;
+
+    private int _lineCount => (Value?.Split('\n').Length ?? 0);
+
+    private async Task OnInput(ChangeEventArgs e)
+    {
+        Value = e.Value?.ToString();
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+    private string _accentHex => Color switch
+    {
+        JColor.Amber => "#f97316",
+        JColor.Red   => "#ef4444",
+        JColor.Green => "#22c55e",
+        _            => "#00e5ff",
+    };
+    private string _accentDim => $"{_accentHex}66";
+
+    private string _style =>
+        "width:100%;padding:10px 12px;" +
+        "background:#030f1e;" +
+        $"border:1px solid {_accentHex}33;" +
+        "border-radius:0;color:#e0f7ff;" +
+        "font-size:12px;font-family:'Courier New',monospace;" +
+        "letter-spacing:0.04em;outline:none;resize:vertical;" +
+        "box-sizing:border-box;line-height:1.6;" +
+        (Disabled ? "opacity:0.4;cursor:not-allowed;" : "");
+}

@@ -1,0 +1,130 @@
+@* ================================================================
+   JSidebar — JARVIS UI Left Navigation Sidebar
+   Full HUD-styled sidebar: top brand, nav slot, footer system info.
+   Right edge uses notched cut + scan line.
+
+   USAGE:
+   <JSidebar SystemName="JARVIS" Version="v4.2.1" State="JState.Active">
+       <NavContent>
+           <JNavItem Href="/dashboard" Icon="⊞" Label="Dashboard" Active="true" />
+           <JNavItem Href="/skills"    Icon="⚡" Label="Skills"    Badge="12" />
+           <JNavItem Href="/settings"  Icon="⚙" Label="Settings" />
+       </NavContent>
+       <FooterContent>
+           <JStatCard Title="CPU" Value="74%" Style="JCardStyle.SideRail" />
+       </FooterContent>
+   </JSidebar>
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<aside style="@_sidebarStyle">
+
+    @* Right-edge notch border *@
+    <div style="position:absolute;top:0;bottom:0;right:0;width:1px;
+                background:linear-gradient(180deg,var(--j-cyan),rgba(0,229,255,0.1) 60%,transparent);
+                opacity:0.4;pointer-events:none;"></div>
+
+    @* Scan line sweeping top→bottom *@
+    <div style="position:absolute;left:0;right:0;height:1px;top:-1px;
+                background:linear-gradient(90deg,transparent,var(--j-cyan),transparent);
+                box-shadow:0 0 8px var(--j-cyan);
+                animation:j-scan-v 4s ease-in-out infinite;
+                pointer-events:none;"></div>
+
+    @* ── Brand header ── *@
+    <div style="padding:16px 14px 12px;border-bottom:1px solid rgba(0,229,255,0.10);
+                display:flex;align-items:center;gap:10px;">
+        <JSpinner Size="32px" Color="@Color" State="@State" ShowLabel="false" />
+        <div>
+            <div style="font-size:13px;font-weight:600;color:#e0f7ff;
+                        letter-spacing:0.14em;text-transform:uppercase;
+                        text-shadow:0 0 12px @_accentHex;
+                        animation:j-glitch 8s ease-in-out infinite;">
+                @SystemName
+            </div>
+            <div style="font-size:9px;color:@_accentHex;letter-spacing:0.12em;opacity:0.7;">
+                @Version
+            </div>
+        </div>
+        @* Status dot *@
+        <div style="margin-left:auto;">
+            <div class="j-status-dot" style="@_stateDotStyle"></div>
+        </div>
+    </div>
+
+    @* ── Section label ── *@
+    @if (!string.IsNullOrWhiteSpace(NavLabel))
+    {
+        <div style="padding:10px 14px 4px;font-size:8px;color:#334155;
+                    letter-spacing:0.16em;text-transform:uppercase;">
+            @NavLabel
+        </div>
+    }
+
+    @* ── Navigation slot ── *@
+    <nav style="flex:1;overflow-y:auto;padding:4px 0;">
+        @NavContent
+    </nav>
+
+    @* ── Divider ── *@
+    <div style="height:1px;background:linear-gradient(90deg,rgba(0,229,255,0.2),transparent);
+                margin:0 14px;"></div>
+
+    @* ── Footer slot ── *@
+    @if (FooterContent != null)
+    {
+        <div style="padding:10px 10px 12px;">
+            @FooterContent
+        </div>
+    }
+
+    @* ── Footer system label ── *@
+    <div style="padding:8px 14px;border-top:1px solid rgba(0,229,255,0.08);
+                display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:8px;color:#334155;letter-spacing:0.12em;text-transform:uppercase;">
+            SYS · @_timeLabel
+        </span>
+        <span style="font-size:8px;color:@_accentHex;animation:j-blink 2s step-end infinite;">
+            ● LIVE
+        </span>
+    </div>
+
+</aside>
+
+@code {
+    [Parameter] public string          SystemName  { get; set; } = "JARVIS";
+    [Parameter] public string          Version     { get; set; } = "v4.2.1";
+    [Parameter] public string?         NavLabel    { get; set; } = "Navigation";
+    [Parameter] public string          Width       { get; set; } = "220px";
+    [Parameter] public JColor          Color       { get; set; } = JColor.Cyan;
+    [Parameter] public JState          State       { get; set; } = JState.Active;
+    [Parameter] public RenderFragment? NavContent  { get; set; }
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+
+    private string _accentHex => Color switch
+    {
+        JColor.Amber => "#f97316",
+        JColor.Red   => "#ef4444",
+        JColor.Green => "#22c55e",
+        _            => "#00e5ff",
+    };
+
+    private string _timeLabel => DateTime.Now.ToString("HH:mm");
+
+    private string _stateDotStyle => State switch
+    {
+        JState.Processing => "background:var(--j-cyan);animation-duration:0.8s;",
+        JState.Warning    => "background:var(--j-amber);",
+        JState.Error      => "background:var(--j-red);animation-duration:0.5s;",
+        JState.Idle       => "background:#334155;animation:none;",
+        _                 => "",
+    };
+
+    private string _sidebarStyle =>
+        $"position:relative;width:{Width};min-height:100vh;" +
+        "background:#020d18;display:flex;flex-direction:column;" +
+        "font-family:'Courier New',monospace;overflow:hidden;" +
+        "flex-shrink:0;";
+}

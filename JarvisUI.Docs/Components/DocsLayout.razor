@@ -1,0 +1,97 @@
+@inherits LayoutComponentBase
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+
+<JPageLayout SystemName="JARVIS UI"
+             Version="v1.0.0"
+             State="JState.Active"
+             ShowSidebar="true"
+             ShowTicks="true"
+             ShowWaveform="false"
+             ContentPadding="0">
+
+    <SidebarNav>
+        <div style="padding:0 0 8px;">
+            <JDivider Label="Foundation" />
+        </div>
+        <JNavItem Href="/"            Icon="⊞" Label="Overview"     Active="@_isHome" />
+        <JNavItem Href="/tokens"      Icon="◈" Label="Tokens" />
+
+        <div style="padding:8px 0;">
+            <JDivider Label="Identity" />
+        </div>
+        <JNavItem Href="/orb"         Icon="◎" Label="Orb" />
+        <JNavItem Href="/arcmeter"    Icon="▶" Label="Arc Meter" />
+        <JNavItem Href="/spinner"     Icon="↻" Label="Spinner" />
+        <JNavItem Href="/waveform"    Icon="∿" Label="Waveform" />
+        <JNavItem Href="/bootscreen"  Icon="⏻" Label="Boot Screen" />
+        <JNavItem Href="/radialmenu"  Icon="✦" Label="Radial Menu" />
+
+        <div style="padding:8px 0;">
+            <JDivider Label="Cards" />
+        </div>
+        <JNavItem Href="/cards"       Icon="▣" Label="JCard"       Badge="9" />
+        <JNavItem Href="/statcard"    Icon="▤" Label="Stat Card" />
+
+        <div style="padding:8px 0;">
+            <JDivider Label="Actions" />
+        </div>
+        <JNavItem Href="/buttons"     Icon="▷" Label="JButton"     Badge="9" />
+        <JNavItem Href="/badge"       Icon="◆" Label="Badge" />
+        <JNavItem Href="/statuspill"  Icon="◈" Label="Status Pill" />
+
+        <div style="padding:8px 0;">
+            <JDivider Label="Forms" />
+        </div>
+        <JNavItem Href="/input"       Icon="⌨" Label="Input" />
+        <JNavItem Href="/select"      Icon="▾" Label="Select" />
+        <JNavItem Href="/toggle"      Icon="⏻" Label="Toggle" />
+        <JNavItem Href="/slider"      Icon="⊟" Label="Slider" />
+        <JNavItem Href="/checkbox"    Icon="✓" Label="Checkbox" />
+        <JNavItem Href="/radio"       Icon="◉" Label="Radio" />
+        <JNavItem Href="/textarea"    Icon="≡" Label="Text Area" />
+        <JNavItem Href="/formfield"   Icon="⊡" Label="Form Field" />
+
+        <div style="padding:8px 0;">
+            <JDivider Label="Feedback" />
+        </div>
+        <JNavItem Href="/alerts"      Icon="⚠" Label="Alert" />
+        <JNavItem Href="/toasts"      Icon="◱" Label="Toast" />
+        <JNavItem Href="/progress"    Icon="▬" Label="Progress" />
+        <JNavItem Href="/modal"       Icon="▫" Label="Modal" />
+
+        <div style="padding:8px 0;">
+            <JDivider Label="Navigation" />
+        </div>
+        <JNavItem Href="/tabs"        Icon="⊞" Label="Tabs" />
+        <JNavItem Href="/accordion"   Icon="⊟" Label="Accordion" />
+        <JNavItem Href="/cmdpalette"  Icon="⌕" Label="Command Palette" />
+
+        <div style="padding:8px 0;">
+            <JDivider Label="Data" />
+        </div>
+        <JNavItem Href="/table"       Icon="⊟" Label="Table" />
+        <JNavItem Href="/datarow"     Icon="―" Label="Data Row" />
+        <JNavItem Href="/pagination"  Icon="›" Label="Pagination" />
+        <JNavItem Href="/divider"     Icon="—" Label="Divider" />
+    </SidebarNav>
+
+    <MainContent>
+        <div style="padding:20px 24px;min-height:100%;">
+            @Body
+        </div>
+    </MainContent>
+
+</JPageLayout>
+
+@code {
+    private bool IsActive(string href) =>
+        NavigationManager.Uri.EndsWith(href, StringComparison.OrdinalIgnoreCase);
+
+    private bool _isHome =>
+        NavigationManager.Uri.TrimEnd('/').Equals(
+            NavigationManager.BaseUri.TrimEnd('/'),
+            StringComparison.OrdinalIgnoreCase);
+
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+}

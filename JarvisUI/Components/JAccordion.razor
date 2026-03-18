@@ -1,0 +1,138 @@
+@* ================================================================
+   JAccordion — JARVIS UI Collapsible Panel
+   Notched header with expand/collapse animation. Scan on open.
+
+   USAGE:
+   <JAccordion Title="System Information" DefaultOpen="true">
+       <JDataRow Key="OS"      Value="Ubuntu 24.04" />
+       <JDataRow Key="Kernel"  Value="6.8.0" />
+   </JAccordion>
+
+   <JAccordion Title="Skill Config" State="JState.Warning">
+       <p>Configuration content here...</p>
+   </JAccordion>
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div style="@_wrapStyle">
+
+    @* ── Header ── *@
+    <div style="@_headerStyle" @onclick="Toggle">
+
+        @* Left rail *@
+        <div style="position:absolute;top:0;bottom:0;left:0;width:2px;
+                    background:@_accentHex;
+                    box-shadow:0 0 8px @_accentHex;
+                    clip-path:polygon(0 6px,2px 0,2px 100%,0 calc(100% - 6px));"></div>
+
+        @* Icon *@
+        @if (!string.IsNullOrWhiteSpace(Icon))
+        {
+            <span style="font-style:normal;font-size:13px;color:@_accentHex;
+                         filter:drop-shadow(0 0 4px @_accentHex);flex-shrink:0;">
+                @Icon
+            </span>
+        }
+
+        @* Title *@
+        <span style="flex:1;font-size:11px;color:@(IsOpen ? "#e0f7ff" : "#94a3b8");
+                     letter-spacing:0.10em;text-transform:uppercase;
+                     transition:color 0.2s;">@Title</span>
+
+        @* Badge *@
+        @if (!string.IsNullOrWhiteSpace(Badge))
+        {
+            <span style="@_badgeStyle">
+                @Badge
+            </span>
+        }
+
+        @* Chevron — diamond rotates on open *@
+        <div style="width:8px;height:8px;
+                    background:@_accentHex;
+                    clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+                    opacity:@(IsOpen ? "1" : "0.4");
+                    transform:rotate(@(IsOpen ? "0deg" : "45deg"));
+                    transition:transform 0.3s,opacity 0.2s;
+                    box-shadow:@(IsOpen ? $"0 0 8px {_accentHex}" : "none");
+                    flex-shrink:0;">
+        </div>
+
+    </div>
+
+    @* ── Body ── *@
+    @if (IsOpen)
+    {
+        <div style="@_bodyStyle">
+            @* Scan line on open *@
+            <div style="position:absolute;left:0;right:0;height:1px;top:-1px;
+                        background:linear-gradient(90deg,transparent,@_accentHex,transparent);
+                        box-shadow:0 0 6px @_accentHex;
+                        animation:j-scan-v 3s ease-in-out infinite;
+                        pointer-events:none;"></div>
+            @ChildContent
+        </div>
+    }
+
+</div>
+
+@code {
+    [Parameter] public string          Title        { get; set; } = "";
+    [Parameter] public string?         Icon         { get; set; }
+    [Parameter] public string?         Badge        { get; set; }
+    [Parameter] public bool            DefaultOpen  { get; set; } = false;
+    [Parameter] public bool            IsOpen       { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public JColor          Color        { get; set; } = JColor.Cyan;
+    [Parameter] public JState          State        { get; set; } = JState.Active;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (DefaultOpen && !IsOpen) IsOpen = true;
+    }
+
+    private async Task Toggle()
+    {
+        IsOpen = !IsOpen;
+        await IsOpenChanged.InvokeAsync(IsOpen);
+    }
+
+    private string _accentHex => State switch
+    {
+        JState.Warning => "#f97316",
+        JState.Error   => "#ef4444",
+        JState.Success => "#22c55e",
+        _ => Color switch
+        {
+            JColor.Amber => "#f97316",
+            JColor.Red   => "#ef4444",
+            _            => "#00e5ff",
+        },
+    };
+
+    private string _wrapStyle =>
+        "border:1px solid rgba(0,229,255,0.10);overflow:hidden;" +
+        "font-family:'Courier New',monospace;";
+
+    private string _badgeStyle =>
+        $"font-size:8px;color:{_accentHex};" +
+        $"background:{_accentHex}18;" +
+        "padding:1px 6px;" +
+        "clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);";
+
+    private string _headerStyle =>
+        "position:relative;display:flex;align-items:center;gap:10px;" +
+        "padding:10px 14px 10px 16px;cursor:pointer;" +
+        $"background:{(IsOpen ? "rgba(0,229,255,0.06)" : "transparent")};" +
+        "transition:background 0.2s;" +
+        "user-select:none;";
+
+    private string _bodyStyle =>
+        "position:relative;padding:12px 14px 12px 16px;" +
+        "border-top:1px solid rgba(0,229,255,0.10);" +
+        "background:rgba(0,229,255,0.02);overflow:hidden;" +
+        "animation:j-slide-in 0.25s ease-out;";
+}

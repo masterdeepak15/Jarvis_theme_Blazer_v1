@@ -1,0 +1,110 @@
+@* ================================================================
+   JProgress — JARVIS UI Progress Bar
+   Two styles: angular skewed bar OR tick-segment row.
+
+   USAGE:
+   <JProgress Value="72" Label="System Load" />
+   <JProgress Value="72" Style="JProgressStyle.Ticks" Total="16" />
+   <JProgress Indeterminate="true" Label="Processing..." />
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+@if (!string.IsNullOrWhiteSpace(Label))
+{
+    <div style="font-size:9px;color:rgba(0,229,255,0.6);letter-spacing:0.10em;text-transform:uppercase;margin-bottom:4px;display:flex;justify-content:space-between;">
+        <span>@Label</span>
+        @if (ShowPercent && !Indeterminate)
+        {
+            <span style="color:#e0f7ff;">@Value%</span>
+        }
+    </div>
+}
+
+@if (ProgressStyle == JProgressStyle.Bar)
+{
+    @if (Indeterminate)
+    {
+        <div style="@_trackStyle;position:relative;overflow:hidden;">
+            <div style="position:absolute;top:0;left:-40px;bottom:0;width:40px;
+                        background:linear-gradient(90deg,transparent,@_accentB,transparent);
+                        animation:j-scan-h 1.4s ease-in-out infinite;">
+            </div>
+            <div style="@_indeterminateBase"></div>
+        </div>
+    }
+    else
+    {
+        <div style="@_trackStyle">
+            <div style="width:@Value%;height:100%;@_fillStyle;transition:width 0.6s ease-out;"></div>
+        </div>
+    }
+}
+else
+{
+    @* Tick segment style *@
+    <div class="j-tick-row">
+        @for (int i = 0; i < Total; i++)
+        {
+            bool active = i < _activeTicks;
+            int h = _tickHeights[i % _tickHeights.Length];
+            <div class="j-tk @(active ? "" : "off")" style="height:@(h)px;@_tickColor"></div>
+        }
+    </div>
+}
+
+@code {
+    public enum JProgressStyle { Bar, Ticks }
+
+    [Parameter] public int              Value         { get; set; } = 0;  // 0–100
+    [Parameter] public string?          Label         { get; set; }
+    [Parameter] public JColor           Color         { get; set; } = JColor.Cyan;
+    [Parameter] public JState           State         { get; set; } = JState.Active;
+    [Parameter] public JProgressStyle   ProgressStyle { get; set; } = JProgressStyle.Bar;
+    [Parameter] public bool             Indeterminate { get; set; } = false;
+    [Parameter] public bool             ShowPercent   { get; set; } = true;
+    [Parameter] public int              Total         { get; set; } = 16;   // for Ticks style
+
+    private int _activeTicks => (int)Math.Round(Value / 100.0 * Total);
+
+    // ── Colors ────────────────────────────────────────────────────
+    private string _accentA => State switch
+    {
+        JState.Warning => "#92400e",
+        JState.Error   => "#7f1d1d",
+        JState.Success => "#14532d",
+        _              => "#0891b2",
+    };
+    private string _accentB => State switch
+    {
+        JState.Warning => "var(--j-amber)",
+        JState.Error   => "var(--j-red)",
+        JState.Success => "var(--j-green)",
+        _              => "var(--j-cyan)",
+    };
+
+    // ── Bar styles ────────────────────────────────────────────────
+    private string _trackStyle =>
+        "height:5px;background:#0f2333;" +
+        "clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);";
+
+    private string _fillStyle =>
+        $"background:linear-gradient(90deg,{_accentA},{_accentB});" +
+        "clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);";
+
+    private string _indeterminateBase =>
+        $"position:absolute;inset:0;background:{_accentB};opacity:0.15;" +
+        "clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);";
+
+    // ── Tick styles ───────────────────────────────────────────────
+    private static readonly int[] _tickHeights = { 12, 8, 14, 10, 6, 14, 16, 10, 12, 8, 16, 10 };
+
+    private string _tickColor => State switch
+    {
+        JState.Warning => "background:var(--j-amber);",
+        JState.Error   => "background:var(--j-red);",
+        JState.Success => "background:var(--j-green);",
+        _              => "",
+    };
+}

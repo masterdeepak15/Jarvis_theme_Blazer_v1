@@ -1,0 +1,203 @@
+@* ================================================================
+   JTable — JARVIS UI Data Table
+   HUD-styled table: angular headers, scan-flash on hover,
+   state-colored rows, animated border.
+
+   USAGE:
+   <JTable Columns="@cols" Rows="@rows" />
+
+   var cols = new List<JTableColumn> {
+       new("ID", "id", width: "60px"),
+       new("Name", "name"),
+       new("Status", "status", align: "center"),
+   };
+   var rows = new List<Dictionary<string,object>> {
+       new() { ["id"]="001", ["name"]="TTS Engine",   ["status"]="Online"  },
+       new() { ["id"]="002", ["name"]="Speech Input",  ["status"]="Warning" },
+   };
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div style="@_wrapStyle">
+
+    @* Top accent bar + scan *@
+    <div style="position:relative;height:2px;
+                background:linear-gradient(90deg,var(--j-cyan),rgba(0,229,255,0.1));
+                overflow:hidden;">
+        <div style="position:absolute;inset:0;width:60px;
+                    background:linear-gradient(90deg,transparent,#fff,transparent);
+                    animation:j-scan-h 2.5s ease-in-out infinite;"></div>
+    </div>
+
+    <div style="overflow-x:auto;">
+        <table style="@_tableStyle">
+
+            @* ── Header ── *@
+            <thead>
+                <tr>
+                    @foreach (var col in Columns)
+                    {
+                        <th style="@_thStyle(col)">
+                            @col.Label
+                        </th>
+                    }
+                </tr>
+            </thead>
+
+            @* ── Body ── *@
+            <tbody>
+                @if (Rows == null || !Rows.Any())
+                {
+                    <tr>
+                        <td colspan="@Columns.Count" style="@_emptyStyle">
+                            <JSpinner Size="24px" ShowLabel="false" />
+                            <span style="margin-left:10px;font-size:10px;color:#334155;letter-spacing:0.10em;">
+                                NO DATA
+                            </span>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    int rowIdx = 0;
+                    foreach (var row in Rows)
+                    {
+                        int idx = rowIdx++;
+                        var rowState = GetRowState(row);
+                        <tr style="@_trStyle(idx, rowState)"
+                            @onmouseenter="() => _hoveredRow = idx"
+                            @onmouseleave="() => _hoveredRow = -1">
+                            @foreach (var col in Columns)
+                            {
+                                var val = row.ContainsKey(col.Key) ? row[col.Key]?.ToString() ?? "" : "";
+                                <td style="@_tdStyle(col, rowState)">
+                                    @if (col.Key == StateColumn)
+                                    {
+                                        <JStatusPill State="@rowState">@val</JStatusPill>
+                                    }
+                                    else if (col.IsBadge)
+                                    {
+                                        <JBadge Color="@(rowState == JState.Active ? JColor.Cyan : rowState == JState.Warning ? JColor.Amber : JColor.Red)">
+                                            @val
+                                        </JBadge>
+                                    }
+                                    else
+                                    {
+                                        @val
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                }
+            </tbody>
+
+        </table>
+    </div>
+
+    @* Bottom accent line *@
+    <div style="height:1px;background:linear-gradient(90deg,rgba(0,229,255,0.3),transparent);"></div>
+
+    @* Row count *@
+    @if (ShowFooter && Rows != null)
+    {
+        <div style="padding:6px 14px;font-size:8px;color:#334155;
+                    letter-spacing:0.10em;text-transform:uppercase;
+                    display:flex;justify-content:space-between;">
+            <span>@Rows.Count RECORDS</span>
+            @if (!string.IsNullOrWhiteSpace(FooterLabel))
+            {
+                <span>@FooterLabel</span>
+            }
+        </div>
+    }
+
+</div>
+
+@code {
+    public record JTableColumn(
+        string Label,
+        string Key,
+        string? Width    = null,
+        string  Align    = "left",
+        bool    IsBadge  = false
+    );
+
+    [Parameter] public List<JTableColumn>              Columns     { get; set; } = new();
+    [Parameter] public List<Dictionary<string,object>> Rows        { get; set; } = new();
+    [Parameter] public string?                         StateColumn { get; set; }
+    [Parameter] public bool                            ShowFooter  { get; set; } = true;
+    [Parameter] public string?                         FooterLabel { get; set; }
+    [Parameter] public JColor                          Color       { get; set; } = JColor.Cyan;
+
+    private int _hoveredRow = -1;
+
+    private JState GetRowState(Dictionary<string,object> row)
+    {
+        if (StateColumn == null || !row.ContainsKey(StateColumn)) return JState.Active;
+        return row[StateColumn]?.ToString()?.ToLower() switch
+        {
+            "warning" or "warn"  => JState.Warning,
+            "error"   or "danger"=> JState.Error,
+            "success" or "ok"    => JState.Success,
+            "idle"   or "offline"=> JState.Idle,
+            _                    => JState.Active,
+        };
+    }
+
+    private string _accentHex => "#00e5ff";
+
+    private string _wrapStyle =>
+        "position:relative;background:#030f1e;overflow:hidden;" +
+        "border:1px solid rgba(0,229,255,0.12);";
+
+    private string _tableStyle =>
+        "width:100%;border-collapse:collapse;" +
+        "font-family:'Courier New',monospace;font-size:11px;";
+
+    private string _thStyle(JTableColumn col) =>
+        $"padding:8px 14px;text-align:{col.Align};" +
+        "color:#22d3ee;font-size:9px;font-weight:600;" +
+        "letter-spacing:0.14em;text-transform:uppercase;" +
+        "background:rgba(0,229,255,0.06);" +
+        "border-bottom:1px solid rgba(0,229,255,0.20);" +
+        (col.Width != null ? $"width:{col.Width};" : "");
+
+    private string _trStyle(int idx, JState state)
+    {
+        bool hovered = idx == _hoveredRow;
+        string bg = hovered
+            ? "rgba(0,229,255,0.06)"
+            : idx % 2 == 0
+                ? "transparent"
+                : "rgba(0,229,255,0.02)";
+
+        string border = state switch
+        {
+            JState.Warning => "border-left:2px solid #f97316;",
+            JState.Error   => "border-left:2px solid #ef4444;",
+            JState.Success => "border-left:2px solid #22c55e;",
+            _              => hovered ? "border-left:2px solid rgba(0,229,255,0.6);" : "border-left:2px solid transparent;",
+        };
+
+        return $"background:{bg};transition:background 0.12s;{border}";
+    }
+
+    private string _tdStyle(JTableColumn col, JState state) =>
+        $"padding:8px 14px;text-align:{col.Align};" +
+        "border-bottom:1px solid rgba(0,229,255,0.06);" +
+        (state switch
+        {
+            JState.Warning => "color:#fb923c;",
+            JState.Error   => "color:#f87171;",
+            JState.Success => "color:#4ade80;",
+            JState.Idle    => "color:#475569;",
+            _              => "color:#94a3b8;",
+        });
+
+    private string _emptyStyle =>
+        "padding:24px;text-align:center;color:#334155;" +
+        "display:flex;align-items:center;justify-content:center;";
+}

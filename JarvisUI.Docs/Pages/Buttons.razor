@@ -1,0 +1,117 @@
+@page "/buttons"
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+@using JarvisUI.Docs.Components
+
+<PageTitle>JButton — JarvisUI Docs</PageTitle>
+
+<DocsPageHeader Title="JButton"
+                Category="Actions"
+                ComponentTag="&lt;JButton /&gt;"
+                Description="9 angular HUD button shapes. SVG polygon backgrounds, scan-shine animation, glow on hover. All shapes work with all colors and variants."
+                Parameters="@(new() {
+                    new("Shape",   "JButtonShape", "LeftNotch"),
+                    new("Variant", "JVariant",     "Outline"),
+                    new("Color",   "JColor",       "Cyan"),
+                    new("Size",    "JSize",        "Md"),
+                    new("Icon",    "string?",      "null"),
+                    new("Disabled","bool",         "false"),
+                    new("OnClick", "EventCallback"),
+                })" />
+
+<DocSection Title="Shape 1 — Left Notch" Description="Cut top-left corner with filled triangle accent. The primary action button."
+            Code="@Shape1">
+    <Preview>
+        <JButton Shape="JButtonShape.LeftNotch">Execute</JButton>
+        <JButton Shape="JButtonShape.LeftNotch" Variant="JVariant.Solid">Confirm</JButton>
+        <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Amber">Warning</JButton>
+        <JButton Shape="JButtonShape.LeftNotch" Variant="JVariant.Danger" Color="JColor.Red">Shutdown</JButton>
+        <JButton Shape="JButtonShape.LeftNotch" Disabled="true">Disabled</JButton>
+    </Preview>
+</DocSection>
+
+<DocSection Title="Shape 2 — Right Notch" Description="Cut top-right corner variant."
+            Code="@Shape2">
+    <Preview>
+        <JButton Shape="JButtonShape.RightNotch">Configure</JButton>
+        <JButton Shape="JButtonShape.RightNotch" Color="JColor.Green">Deploy</JButton>
+        <JButton Shape="JButtonShape.RightNotch" Color="JColor.Red" Variant="JVariant.Danger">Abort</JButton>
+    </Preview>
+</DocSection>
+
+<DocSection Title="Shape 3 — Both Notch" Description="Both corners cut. Most angular appearance."
+            Code="@Shape3">
+    <Preview>
+        <JButton Shape="JButtonShape.BothNotch">Analyze</JButton>
+        <JButton Shape="JButtonShape.BothNotch" Color="JColor.Amber">Scan</JButton>
+    </Preview>
+</DocSection>
+
+<DocSection Title="Shape 4 — Parallelogram" Description="Skewed 11° with left accent rail and glow."
+            Code="@Shape4">
+    <Preview>
+        <JButton Shape="JButtonShape.Parallelogram">Scan</JButton>
+        <JButton Shape="JButtonShape.Parallelogram" Color="JColor.Amber">Monitor</JButton>
+        <JButton Shape="JButtonShape.GhostSkew">Cancel</JButton>
+    </Preview>
+</DocSection>
+
+<DocSection Title="Shape 5 — Bracket Frame" Description="Double L-bracket with no diagonal cuts."
+            Code="@Shape5">
+    <Preview>
+        <JButton Shape="JButtonShape.BracketFrame">Settings</JButton>
+        <JButton Shape="JButtonShape.BracketFrame" Color="JColor.Amber">Debug</JButton>
+        <JButton Shape="JButtonShape.BracketFrame" Color="JColor.Red">Abort</JButton>
+    </Preview>
+</DocSection>
+
+<DocSection Title="Shape 6 — Hexagonal" Description="Hexagon clip-path. Ideal for toggle states."
+            Code="@Shape6">
+    <Preview>
+        <JButton Shape="JButtonShape.Hexagonal">ON</JButton>
+        <JButton Shape="JButtonShape.Hexagonal" Color="JColor.Amber">WRN</JButton>
+        <JButton Shape="JButtonShape.Hexagonal" Color="JColor.Red">OFF</JButton>
+        <JButton Shape="JButtonShape.Hexagonal" Color="JColor.Green">OK</JButton>
+    </Preview>
+</DocSection>
+
+<DocSection Title="Shape 7 — Icon Square" Description="Small square with cut corner. Icon-only actions."
+            Code="@Shape7">
+    <Preview>
+        <JButton Shape="JButtonShape.IconSquare" Icon="⚙" />
+        <JButton Shape="JButtonShape.IconSquare" Icon="▶" />
+        <JButton Shape="JButtonShape.IconSquare" Icon="◼" />
+        <JButton Shape="JButtonShape.IconSquare" Icon="✕" Color="JColor.Red" />
+        <JButton Shape="JButtonShape.IconSquare" Icon="⚠" Color="JColor.Amber" />
+        <JButton Shape="JButtonShape.IconSquare" Icon="🎙" />
+    </Preview>
+</DocSection>
+
+<DocSection Title="Shape 8+9 — Scan Full + Sizes" Description="Full-width scan sweep, and all size variants."
+            Code="@Shape8">
+    <Preview>
+        <div style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:220px;">
+            <JButton Shape="JButtonShape.ScanFull" Variant="JVariant.Scan">Identify</JButton>
+            <JButton Shape="JButtonShape.ScanFull" Variant="JVariant.Scan" Color="JColor.Amber">Execute Scan</JButton>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start;">
+            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Xs">XSmall</JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm">Small</JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Md">Medium</JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Lg">Large</JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Xl">XLarge</JButton>
+        </div>
+    </Preview>
+</DocSection>
+
+@code 
+{
+    string Shape1 = "<JButton Shape=\"JButtonShape.LeftNotch\">Execute</JButton>";
+    string Shape2 = "<JButton Shape=\"JButtonShape.RightNotch\">Configure</JButton>";
+    string Shape3 = "<JButton Shape=\"JButtonShape.BothNotch\">Analyze</JButton>";
+    string Shape4 = "<JButton Shape=\"JButtonShape.Parallelogram\">Scan</JButton>";
+    string Shape5 = "<JButton Shape=\"JButtonShape.BracketFrame\">Settings</JButton>";
+    string Shape6 = "<JButton Shape=\"JButtonShape.Hexagonal\">ON</JButton>";
+    string Shape7 = "<JButton Shape=\"JButtonShape.IconSquare\" Icon=\"⚙\" />";
+    string Shape8 = "<JButton Shape=\"JButtonShape.ScanFull\" Variant=\"JVariant.Scan\">Identify</JButton>";
+}

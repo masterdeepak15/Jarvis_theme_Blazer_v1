@@ -1,0 +1,144 @@
+@* ================================================================
+   JSlider — JARVIS UI Range Slider
+   Angular skewed track with filled accent and glowing diamond thumb.
+
+   USAGE:
+   <JSlider @bind-Value="volume" Label="Volume" Min="0" Max="100" />
+   <JSlider @bind-Value="temp"   Label="Thermostat" Min="0" Max="40"
+            Color="JColor.Amber" ShowValue="true" />
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div style="width:100%;">
+
+    @* Label row *@
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:9px;color:@_accentDim;letter-spacing:0.12em;text-transform:uppercase;">
+                @Label
+            </span>
+            @if (ShowValue)
+            {
+                <span style="font-size:9px;color:@_accentHex;letter-spacing:0.08em;font-weight:600;">
+                    @Value@Unit
+                </span>
+            }
+        </div>
+    }
+
+    @* Tick marks above track *@
+    @if (ShowTicks)
+    {
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px;padding:0 2px;">
+            @for (int i = 0; i <= TickCount; i++)
+            {
+                double pct = (double)i / TickCount;
+                bool   lit = pct <= _fillPct;
+                <div style="width:2px;height:5px;
+                            background:@(lit ? _accentHex : "#1e3a4a");
+                            clip-path:polygon(0 15%,100% 0,100% 100%,0 85%);"></div>
+            }
+        </div>
+    }
+
+    @* Track + input *@
+    <div style="position:relative;height:20px;display:flex;align-items:center;">
+
+        @* Background track *@
+        <div style="position:absolute;left:0;right:0;height:4px;
+                    background:#0f2333;
+                    clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);"></div>
+
+        @* Fill track *@
+        <div style="position:absolute;left:0;height:4px;
+                    width:@(_fillPct * 100)%;
+                    background:linear-gradient(90deg,@_accentDeep,@_accentHex);
+                    box-shadow:0 0 6px @_accentGlow;
+                    clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);
+                    transition:width 0.05s;"></div>
+
+        @* Range input (invisible, on top) *@
+        <input type="range"
+               min="@Min" max="@Max" step="@Step"
+               value="@Value"
+               disabled="@Disabled"
+               @oninput="OnInput"
+               style="position:absolute;left:0;right:0;width:100%;
+                      opacity:0;cursor:@(Disabled ? "not-allowed" : "pointer");
+                      height:20px;margin:0;z-index:2;" />
+
+        @* Custom thumb — diamond *@
+        <div style="position:absolute;
+                    left:calc(@(_fillPct * 100)% - 8px);
+                    width:16px;height:16px;
+                    background:@_accentHex;
+                    clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+                    box-shadow:0 0 10px @_accentHex,0 0 20px @_accentGlow;
+                    pointer-events:none;transition:left 0.05s;
+                    animation:j-pulse 2s ease-in-out infinite;">
+        </div>
+
+    </div>
+
+    @* Min/Max labels *@
+    @if (ShowMinMax)
+    {
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span style="font-size:8px;color:#334155;letter-spacing:0.08em;">@Min</span>
+            <span style="font-size:8px;color:#334155;letter-spacing:0.08em;">@Max</span>
+        </div>
+    }
+
+</div>
+
+@code {
+    [Parameter] public double   Value        { get; set; } = 0;
+    [Parameter] public EventCallback<double> ValueChanged { get; set; }
+    [Parameter] public double   Min          { get; set; } = 0;
+    [Parameter] public double   Max          { get; set; } = 100;
+    [Parameter] public double   Step         { get; set; } = 1;
+    [Parameter] public string?  Label        { get; set; }
+    [Parameter] public string   Unit         { get; set; } = "";
+    [Parameter] public JColor   Color        { get; set; } = JColor.Cyan;
+    [Parameter] public bool     ShowValue    { get; set; } = true;
+    [Parameter] public bool     ShowTicks    { get; set; } = false;
+    [Parameter] public bool     ShowMinMax   { get; set; } = false;
+    [Parameter] public int      TickCount    { get; set; } = 10;
+    [Parameter] public bool     Disabled     { get; set; } = false;
+
+    private double _fillPct => Math.Clamp((Value - Min) / (Max - Min), 0, 1);
+
+    private async Task OnInput(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), out var v))
+        {
+            Value = v;
+            await ValueChanged.InvokeAsync(v);
+        }
+    }
+
+    private string _accentHex => Color switch
+    {
+        JColor.Amber => "#f97316",
+        JColor.Red   => "#ef4444",
+        JColor.Green => "#22c55e",
+        _            => "#00e5ff",
+    };
+    private string _accentDeep => Color switch
+    {
+        JColor.Amber => "#c2410c",
+        JColor.Red   => "#b91c1c",
+        JColor.Green => "#15803d",
+        _            => "#0891b2",
+    };
+    private string _accentDim  => $"{_accentHex}66";
+    private string _accentGlow => Color switch
+    {
+        JColor.Amber => "rgba(249,115,22,0.40)",
+        JColor.Red   => "rgba(239,68,68,0.40)",
+        _            => "rgba(0,229,255,0.35)",
+    };
+}

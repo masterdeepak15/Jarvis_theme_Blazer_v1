@@ -1,0 +1,106 @@
+@* Individual toast item — rendered by JToastProvider *@
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div style="@_style;pointer-events:all;" @onclick="() => OnDismiss.InvokeAsync()">
+
+    @* Left accent rail *@
+    <div style="position:absolute;top:0;bottom:0;left:0;width:2px;
+                background:@_accentHex;
+                box-shadow:0 0 8px @_accentHex;
+                @_railAnim"></div>
+
+    @* Scan line *@
+    <div style="position:absolute;left:0;right:0;height:1px;top:-1px;
+                background:linear-gradient(90deg,transparent,@_accentHex,transparent);
+                animation:j-scan-v 2.5s ease-in-out infinite;
+                pointer-events:none;"></div>
+
+    @* Corner accent *@
+    <div style="position:absolute;top:0;right:0;width:0;height:0;
+                border:8px solid transparent;
+                border-top-color:@_accentHex;border-right-color:@_accentHex;
+                opacity:0.5;"></div>
+
+    <div style="display:flex;align-items:flex-start;gap:8px;padding:10px 14px 10px 16px;">
+        <span style="font-style:normal;font-size:13px;color:@_accentHex;flex-shrink:0;
+                     filter:drop-shadow(0 0 4px @_accentHex);">@_icon</span>
+        <div style="flex:1;min-width:0;">
+            @if (!string.IsNullOrWhiteSpace(Model.Title))
+            {
+                <div style="font-size:9px;color:@_accentHex;letter-spacing:0.12em;
+                            text-transform:uppercase;margin-bottom:2px;font-weight:600;">
+                    @Model.Title
+                </div>
+            }
+            <div style="font-size:11px;color:#94a3b8;letter-spacing:0.04em;line-height:1.4;">
+                @Model.Message
+            </div>
+        </div>
+    </div>
+
+    @* Auto-dismiss progress bar *@
+    @if (Model.Duration > 0)
+    {
+        <div style="height:2px;background:rgba(0,229,255,0.1);position:relative;overflow:hidden;">
+            <div style="@_progressStyle"></div>
+        </div>
+    }
+
+</div>
+
+@using System.Timers
+@implements IDisposable
+@code {
+    [Parameter] public JToastModel   Model     { get; set; } = default!;
+    [Parameter] public EventCallback OnDismiss { get; set; }
+
+    private Timer? _timer;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender || Model.Duration <= 0) return;
+        _timer = new Timer(Model.Duration);
+        _timer.Elapsed += async (_, _) => await OnDismiss.InvokeAsync();
+        _timer.AutoReset = false;
+        _timer.Start();
+    }
+
+    public void Dispose() => _timer?.Dispose();
+
+    private string _accentHex => Model.State switch
+    {
+        JState.Warning => "#f97316",
+        JState.Error   => "#ef4444",
+        JState.Success => "#22c55e",
+        _              => "#00e5ff",
+    };
+
+    private string _icon => Model.State switch
+    {
+        JState.Warning => "⚠",
+        JState.Error   => "✕",
+        JState.Success => "✓",
+        _              => "ℹ",
+    };
+
+    private string _railAnim => Model.State switch
+    {
+        JState.Error   => "animation:j-pulse 0.7s ease-in-out infinite;",
+        JState.Warning => "animation:j-pulse 1.3s ease-in-out infinite;",
+        _              => "",
+    };
+
+    private string _style =>
+        "position:relative;overflow:hidden;cursor:pointer;" +
+        $"background:#030f1e;border:1px solid {_accentHex}25;" +
+        $"clip-path:polygon(8px 0%,100% 0%,100% calc(100% - 8px),calc(100% - 8px) 100%,0% 100%,0% 8px);" +
+        $"box-shadow:0 0 16px {_accentHex}18;" +
+        "font-family:'Courier New',monospace;" +
+        "animation:j-slide-in 0.3s ease-out both;";
+
+    private string _progressStyle =>
+        $"position:absolute;top:0;left:0;height:100%;" +
+        $"background:linear-gradient(90deg,{_accentHex}88,{_accentHex});" +
+        $"animation:j-bar-grow {Model.Duration}ms linear forwards;--j-w:100%;";
+}

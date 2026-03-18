@@ -1,0 +1,117 @@
+@* ================================================================
+   JArcMeter — JARVIS UI Arc Level Meter
+   6 segmented arcs that illuminate based on input level.
+   Exactly matches the LINKS Mark II mic level indicator.
+   Used for microphone input, audio level, signal strength.
+
+   USAGE:
+   <JArcMeter Level="@micLevel" />           0–6 
+   <JArcMeter Level="4" ShowLabel="true" Label="MIC" />
+   <JArcMeter Level="@signalBars" Orientation="JArcOrientation.Vertical" />
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div style="@_wrapStyle">
+
+    @* Label *@
+    @if (ShowLabel)
+    {
+        <div style="font-size:8px;color:@_accentDim;letter-spacing:0.12em;
+                    text-transform:uppercase;margin-bottom:4px;text-align:center;">
+            @Label
+        </div>
+    }
+
+    @* Arc segments *@
+    <div style="@_arcRowStyle">
+        @for (int i = 0; i < TotalArcs; i++)
+        {
+            bool active = i < Level;
+            bool peak   = i == Level - 1 && Level > 0;
+            int  idx    = i;
+            <div style="@_arcStyle(active, peak, idx)"></div>
+        }
+    </div>
+
+    @* Numeric readout *@
+    @if (ShowValue)
+    {
+        <div style="font-size:9px;color:@(Level > 0 ? _accentHex : "#334155");
+                    letter-spacing:0.10em;margin-top:4px;text-align:center;
+                    transition:color 0.2s;">
+            @Level / @TotalArcs
+        </div>
+    }
+
+</div>
+
+@code {
+    public enum JArcOrientation { Horizontal, Vertical }
+
+    [Parameter] public int             Level       { get; set; } = 0;  // 0–TotalArcs
+    [Parameter] public int             TotalArcs   { get; set; } = 6;
+    [Parameter] public JColor          Color       { get; set; } = JColor.Cyan;
+    [Parameter] public JArcOrientation Orientation { get; set; } = JArcOrientation.Horizontal;
+    [Parameter] public bool            ShowLabel   { get; set; } = false;
+    [Parameter] public string          Label       { get; set; } = "LEVEL";
+    [Parameter] public bool            ShowValue   { get; set; } = false;
+    [Parameter] public string          ArcWidth    { get; set; } = "8px";
+    [Parameter] public string          ArcGap      { get; set; } = "3px";
+
+    private string _accentHex => Color switch
+    {
+        JColor.Amber => "#f97316",
+        JColor.Red   => "#ef4444",
+        JColor.Green => "#22c55e",
+        _            => "#00e5ff",
+    };
+    private string _accentDim  => $"{_accentHex}55";
+    private string _accentGlow => Color switch
+    {
+        JColor.Amber => "rgba(249,115,22,0.50)",
+        JColor.Red   => "rgba(239,68,68,0.50)",
+        _            => "rgba(0,229,255,0.50)",
+    };
+
+    private string _wrapStyle =>
+        "display:inline-flex;flex-direction:column;align-items:center;";
+
+    private string _arcRowStyle =>
+        Orientation == JArcOrientation.Horizontal
+            ? $"display:flex;align-items:flex-end;gap:{ArcGap};"
+            : $"display:flex;flex-direction:column-reverse;align-items:center;gap:{ArcGap};";
+
+    private string _arcStyle(bool active, bool peak, int idx)
+    {
+        // Heights vary to create the arc shape — taller in middle
+        int[] heights = { 6, 10, 14, 14, 10, 6, 8, 12, 16, 16, 12, 8 };
+        int h = Orientation == JArcOrientation.Horizontal
+            ? heights[idx % heights.Length]
+            : 4;
+
+        string w = Orientation == JArcOrientation.Horizontal
+            ? ArcWidth
+            : $"{heights[idx % heights.Length]}px";
+
+        string bg = active
+            ? (peak ? $"linear-gradient(0deg,{_accentDim},{_accentHex})" : _accentHex)
+            : "#0e2030";
+
+        string shadow = active
+            ? (peak ? $"0 0 10px {_accentHex},0 0 20px {_accentGlow}" : $"0 0 5px {_accentGlow}")
+            : "none";
+
+        string anim = active && peak
+            ? "animation:j-pulse 0.6s ease-in-out infinite;"
+            : "";
+
+        return $"width:{w};height:{h}px;" +
+               $"background:{bg};" +
+               $"clip-path:polygon(1px 15%,100% 0,100% 100%,1px 85%);" +
+               $"box-shadow:{shadow};" +
+               $"transition:background 0.1s,box-shadow 0.1s;" +
+               anim;
+    }
+}

@@ -1,0 +1,137 @@
+@* ================================================================
+   JHudBar — JARVIS UI HUD Top/Bottom Bar
+   Marching dot sequences, corner brackets, waveform, status labels.
+
+   USAGE:
+   <JHudBar Position="JHudBarPosition.Top"
+            SystemLabel="JARVIS · SYS"
+            ShowDots="true"
+            ShowLive="true" />
+
+   <JHudBar Position="JHudBarPosition.Bottom"
+            ShowWaveform="true"
+            ShowTicks="true" />
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div class="@_barClass @_colorClass @_animClass">
+
+    @* ── System label ── *@
+    @if (!string.IsNullOrWhiteSpace(SystemLabel))
+    {
+        <span class="j-text-xs" style="white-space:nowrap;">@SystemLabel</span>
+    }
+
+    @* ── Marching dot sequence ── *@
+    @if (ShowDots)
+    {
+        <div class="j-dot-seq">
+            @foreach (var (type, delay) in _dots)
+            {
+                <div class="j-d @type" style="animation-delay:@delay;"></div>
+            }
+        </div>
+    }
+
+    @* ── Expanding line ── *@
+    <div style="flex:1;height:1px;background:linear-gradient(90deg,var(--j-accent,var(--j-cyan)),transparent);opacity:0.3;"></div>
+
+    @* ── Tick bars (bottom bar typical) ── *@
+    @if (ShowTicks)
+    {
+        <div class="j-tick-row">
+            @for (int i = 0; i < TickCount; i++)
+            {
+                bool active = i < TickActive;
+                <div class="j-tk @(active ? "" : "off")" style="height:@(_tickHeights[i % _tickHeights.Length])px;"></div>
+            }
+        </div>
+        <div style="width:5px;height:5px;border-radius:50%;background:var(--j-accent,var(--j-cyan));box-shadow:0 0 8px var(--j-accent,var(--j-cyan));animation:j-pulse 1s ease-in-out infinite;flex-shrink:0;"></div>
+    }
+
+    @* ── Waveform ── *@
+    @if (ShowWaveform)
+    {
+        <div class="j-waveform" style="flex:@WaveformFlex;max-width:@WaveformMaxWidth;">
+            @for (int i = 0; i < _waveHeights.Length; i++)
+            {
+                var h = _waveHeights[i];
+                var dur = _waveDurs[i % _waveDurs.Length];
+                var dly = $"{i * 0.04:F2}s";
+                <div class="j-wv" style="height:@(h)px;--j-wv-dur:@dur;--j-wv-dly:@dly;"></div>
+            }
+        </div>
+        <div style="width:5px;height:5px;border-radius:50%;background:var(--j-accent,var(--j-cyan));box-shadow:0 0 8px var(--j-accent,var(--j-cyan));animation:j-pulse 1.2s ease-in-out infinite 0.3s;flex-shrink:0;"></div>
+    }
+
+    @* ── Child content slot ── *@
+    @if (ChildContent != null)
+    {
+        @ChildContent
+    }
+
+    @* ── LIVE / REC blink label ── *@
+    @if (ShowLive)
+    {
+        <span class="j-text-xs j-blink" style="white-space:nowrap;">● LIVE</span>
+    }
+    @if (ShowRec)
+    {
+        <span class="j-text-xs j-blink" style="color:var(--j-red);white-space:nowrap;">● REC</span>
+    }
+
+</div>
+
+@code {
+    public enum JHudBarPosition { Top, Bottom }
+
+    // ── Parameters ────────────────────────────────────────────────
+    [Parameter] public JHudBarPosition Position      { get; set; } = JHudBarPosition.Top;
+    [Parameter] public JColor          Color         { get; set; } = JColor.Cyan;
+    [Parameter] public JAnimSpeed      AnimSpeed     { get; set; } = JAnimSpeed.Normal;
+    [Parameter] public string?         SystemLabel   { get; set; }
+    [Parameter] public bool            ShowDots      { get; set; } = true;
+    [Parameter] public bool            ShowWaveform  { get; set; } = false;
+    [Parameter] public bool            ShowTicks     { get; set; } = false;
+    [Parameter] public bool            ShowLive      { get; set; } = false;
+    [Parameter] public bool            ShowRec       { get; set; } = false;
+    [Parameter] public int             TickCount     { get; set; } = 16;
+    [Parameter] public int             TickActive    { get; set; } = 12;
+    [Parameter] public string          WaveformFlex  { get; set; } = "1";
+    [Parameter] public string          WaveformMaxWidth { get; set; } = "260px";
+    [Parameter] public RenderFragment? ChildContent  { get; set; }
+
+    // ── Computed classes ──────────────────────────────────────────
+    private string _barClass    => Position == JHudBarPosition.Top ? "j-hud-bar-top" : "j-hud-bar-bot";
+    private string _colorClass  => JarvisClasses.Color(Color);
+    private string _animClass   => JarvisClasses.AnimSpeed(AnimSpeed);
+
+    // ── Marching dots definition ──────────────────────────────────
+    // (type: "", "sq", "tall")  (delay)
+    private static readonly (string, string)[] _dots = new[]
+    {
+        ("",   "0.00s"), ("",    "0.08s"), ("",    "0.16s"),
+        ("sq", "0.24s"), ("tall","0.32s"), ("",    "0.40s"),
+        ("",   "0.48s"), ("tall","0.56s"), ("sq",  "0.64s"),
+        ("",   "0.72s"), ("",   "0.80s"),  ("sq",  "0.88s"),
+        ("",   "0.96s"), ("tall","1.04s"), ("",    "1.12s"),
+        ("",   "1.20s"), ("sq", "1.28s"),  ("",    "1.36s"),
+    };
+
+    // ── Tick heights ──────────────────────────────────────────────
+    private static readonly int[] _tickHeights = { 12, 8, 14, 10, 6, 14, 16, 10, 12, 8, 16, 10 };
+
+    // ── Waveform heights + durations ──────────────────────────────
+    private static readonly int[] _waveHeights =
+    {
+        6, 14, 22, 18, 28, 20, 30, 24, 28, 22,
+        16, 20, 26, 18, 12, 22, 28, 18, 10, 14
+    };
+    private static readonly string[] _waveDurs =
+    {
+        ".4s", ".5s", ".6s", ".4s", ".7s",
+        ".5s", ".6s", ".4s", ".8s", ".5s"
+    };
+}

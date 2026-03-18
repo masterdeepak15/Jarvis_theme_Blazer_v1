@@ -1,0 +1,109 @@
+@* ================================================================
+   JNavItem — JARVIS UI Navigation Item
+   Angular nav item with left rail accent, hover glow, active state.
+
+   USAGE:
+   <JNavItem Href="/dashboard" Icon="⊞" Label="Dashboard" Active="true" />
+   <JNavItem Href="/skills"    Icon="⚡" Label="Skills"    Badge="12" />
+   <JNavItem OnClick="HandleClick" Icon="⚙" Label="Settings" />
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+@if (!string.IsNullOrWhiteSpace(Href))
+{
+    <a href="@Href" class="@_class" style="@_style">
+        @_inner
+    </a>
+}
+else
+{
+    <button @onclick="OnClick" class="@_class" style="@_btnStyle">
+        @_inner
+    </button>
+}
+
+@code {
+    [Parameter] public string?       Href      { get; set; }
+    [Parameter] public string?       Icon      { get; set; }
+    [Parameter] public string        Label     { get; set; } = "";
+    [Parameter] public string?       Badge     { get; set; }
+    [Parameter] public bool          Active    { get; set; } = false;
+    [Parameter] public JColor        Color     { get; set; } = JColor.Cyan;
+    [Parameter] public JState        State     { get; set; } = JState.Active;
+    [Parameter] public EventCallback OnClick   { get; set; }
+
+    private string _accentHex => Color switch
+    {
+        JColor.Amber => "#f97316",
+        JColor.Red   => "#ef4444",
+        JColor.Green => "#22c55e",
+        _            => "#00e5ff",
+    };
+
+    private string _class => Active ? "j-nav-item j-nav-item--active" : "j-nav-item";
+
+    private string _btnStyle => _style + "border:none;width:100%;text-align:left;cursor:pointer;";
+
+    private string _style =>
+        "position:relative;display:flex;align-items:center;gap:10px;" +
+        $"padding:10px 14px 10px {(Active ? "16px" : "14px")};" +
+        $"background:{(Active ? $"rgba(0,229,255,0.07)" : "transparent")};" +
+        $"color:{(Active ? _accentHex : "#475569")};" +
+        "font-family:'Courier New',monospace;font-size:11px;" +
+        "letter-spacing:0.10em;text-transform:uppercase;" +
+        "text-decoration:none;" +
+        "transition:all 0.15s ease;" +
+        $"border-left:2px solid {(Active ? _accentHex : "transparent")};" +
+        $"clip-path:polygon(0 0,100% 0,calc(100% - 6px) 100%,0 100%);" +
+        (Active ? $"box-shadow:-2px 0 12px {_accentHex}22;" : "");
+
+    private RenderFragment _inner => builder =>
+    {
+        int seq = 0;
+
+        // Active left rail glow dot
+        if (Active)
+        {
+            builder.OpenElement(seq++, "div");
+            builder.AddAttribute(seq++, "style",
+                $"position:absolute;left:0;top:50%;transform:translateY(-50%);" +
+                $"width:2px;height:60%;background:{_accentHex};" +
+                $"box-shadow:0 0 8px {_accentHex};");
+            builder.CloseElement();
+        }
+
+        // Icon
+        if (!string.IsNullOrWhiteSpace(Icon))
+        {
+            builder.OpenElement(seq++, "span");
+            builder.AddAttribute(seq++, "style",
+                $"font-style:normal;font-size:14px;flex-shrink:0;" +
+                $"color:{(Active ? _accentHex : "#334155")};" +
+                (Active ? $"filter:drop-shadow(0 0 4px {_accentHex});" : ""));
+            builder.AddContent(seq++, Icon);
+            builder.CloseElement();
+        }
+
+        // Label
+        builder.OpenElement(seq++, "span");
+        builder.AddAttribute(seq++, "style", "flex:1;");
+        builder.AddContent(seq++, Label);
+        builder.CloseElement();
+
+        // Badge
+        if (!string.IsNullOrWhiteSpace(Badge))
+        {
+            builder.OpenElement(seq++, "span");
+            builder.AddAttribute(seq++, "style",
+                $"font-size:9px;color:{_accentHex};" +
+                $"background:{_accentHex}18;" +
+                $"border:1px solid {_accentHex}33;" +
+                "padding:1px 6px;" +
+                "clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);");
+            builder.AddContent(seq++, Badge);
+            builder.CloseElement();
+        }
+    };
+}

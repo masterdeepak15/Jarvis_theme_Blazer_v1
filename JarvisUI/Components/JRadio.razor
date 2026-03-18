@@ -1,0 +1,118 @@
+@* ================================================================
+   JRadio — JARVIS UI Radio Button Group
+   Angular radio options with diamond indicator.
+
+   USAGE:
+   <JRadio @bind-Value="selectedModel" Label="Select Model"
+           Options="@radioOptions" />
+
+   var radioOptions = new List<JRadioOption> {
+       new("llama3:8b",  "LLaMA 3 8B",  "Fastest"),
+       new("phi3:mini",  "Phi-3 Mini",  "Lightweight"),
+       new("mistral:7b", "Mistral 7B",  "Balanced"),
+   };
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div style="width:100%;">
+
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <div style="font-size:9px;color:@_accentDim;letter-spacing:0.12em;
+                    text-transform:uppercase;margin-bottom:8px;">
+            @Label
+        </div>
+    }
+
+    <div style="display:flex;flex-direction:@(Horizontal ? "row" : "column");
+                gap:@(Horizontal ? "16px" : "6px");flex-wrap:wrap;">
+        @foreach (var opt in Options)
+        {
+            bool selected = opt.Value == Value;
+            <label style="display:inline-flex;align-items:center;gap:8px;
+                          cursor:@(Disabled ? "not-allowed" : "pointer");
+                          opacity:@(Disabled ? "0.45" : "1");">
+
+                <input type="radio" name="@_groupName" value="@opt.Value"
+                       checked="@selected" disabled="@Disabled"
+                       @onchange="() => Select(opt.Value)"
+                       style="position:absolute;opacity:0;width:0;height:0;" />
+
+                @* Custom radio indicator *@
+                <div style="@_indicatorStyle(selected)">
+                    @if (selected)
+                    {
+                        <div style="width:7px;height:7px;
+                                    background:@_accentHex;
+                                    clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+                                    box-shadow:0 0 8px @_accentHex;
+                                    animation:j-pulse 2s ease-in-out infinite;">
+                        </div>
+                    }
+                </div>
+
+                <div>
+                    <div style="font-size:11px;color:@(selected ? "#e0f7ff" : "#475569");
+                                letter-spacing:0.06em;transition:color 0.2s;
+                                font-family:'Courier New',monospace;">
+                        @opt.Label
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(opt.Description))
+                    {
+                        <div style="font-size:9px;color:#334155;letter-spacing:0.04em;margin-top:1px;">
+                            @opt.Description
+                        </div>
+                    }
+                </div>
+
+            </label>
+        }
+    </div>
+
+</div>
+
+@code {
+    public record JRadioOption(string Value, string Label, string? Description = null);
+
+    [Parameter] public string?                Value        { get; set; }
+    [Parameter] public EventCallback<string>  ValueChanged { get; set; }
+    [Parameter] public List<JRadioOption>     Options      { get; set; } = new();
+    [Parameter] public string?                Label        { get; set; }
+    [Parameter] public JColor                 Color        { get; set; } = JColor.Cyan;
+    [Parameter] public bool                   Horizontal   { get; set; } = false;
+    [Parameter] public bool                   Disabled     { get; set; } = false;
+
+    private string _groupName = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _groupName = Guid.NewGuid().ToString("N")[..8];
+    }
+
+    private async Task Select(string val)
+    {
+        if (Disabled) return;
+        Value = val;
+        await ValueChanged.InvokeAsync(val);
+    }
+
+    private string _accentHex => Color switch
+    {
+        JColor.Amber => "#f97316",
+        JColor.Green => "#22c55e",
+        JColor.Red   => "#ef4444",
+        _            => "#00e5ff",
+    };
+    private string _accentDim => $"{_accentHex}66";
+
+    private string _indicatorStyle(bool selected) =>
+        $"position:relative;width:18px;height:18px;flex-shrink:0;" +
+        $"background:{(selected ? $"{_accentHex}14" : "#030f1e")};" +
+        $"border:1px solid {(selected ? _accentHex : "#1e3a4a")};" +
+        $"clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);" +
+        $"display:flex;align-items:center;justify-content:center;" +
+        $"box-shadow:{(selected ? $"0 0 8px {_accentHex}44" : "none")};" +
+        "transition:all 0.2s;";
+}

@@ -1,0 +1,27 @@
+@* Individual radial item — registers with parent JRadialMenu *@
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+@* No visual output — registers the item definition with parent *@
+
+@code {
+    [Parameter] public string        Icon    { get; set; } = "⊞";
+    [Parameter] public string        Label   { get; set; } = "";
+    [Parameter] public double        Angle   { get; set; } = 0;
+    [Parameter] public JState        State   { get; set; } = JState.Active;
+    [Parameter] public EventCallback OnClick { get; set; }
+
+    [CascadingParameter] private JRadialMenu? _parent { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _parent?.RegisterItem(new JRadialMenu.JRadialItemDef(
+            Key:     $"{Label}-{Angle}",
+            Icon:    Icon,
+            Label:   Label,
+            Angle:   Angle,
+            State:   State,
+            OnClick: OnClick
+        ));
+    }
+}

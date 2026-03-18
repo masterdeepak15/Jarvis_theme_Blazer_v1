@@ -1,0 +1,76 @@
+@* ================================================================
+   JBadge — JARVIS UI Badge / Tag Component
+   Angular shapes: parallelogram cut, hexagonal, diamond pill.
+
+   USAGE:
+   <JBadge Color="JColor.Cyan">Active</JBadge>
+   <JBadge Color="JColor.Red" Blink="true">Error</JBadge>
+   <JBadge Color="JColor.Amber" Shape="JBadgeShape.Hex">WRN</JBadge>
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<span class="@_class" style="@_style">
+    @if (ShowDot)
+    {
+        <span class="j-status-dot" style="@_dotStyle margin-right:5px;display:inline-block;"></span>
+    }
+    @ChildContent
+</span>
+
+@code {
+    public enum JBadgeShape { Angular, Hex, Diamond, Pill }
+
+    [Parameter] public JColor       Color    { get; set; } = JColor.Cyan;
+    [Parameter] public JSize        Size     { get; set; } = JSize.Sm;
+    [Parameter] public JBadgeShape  Shape    { get; set; } = JBadgeShape.Angular;
+    [Parameter] public JState       State    { get; set; } = JState.Active;
+    [Parameter] public bool         Blink    { get; set; } = false;
+    [Parameter] public bool         ShowDot  { get; set; } = false;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string _class => JarvisClasses.Combine(
+        "j-badge",
+        $"j-badge-{Shape.ToString().ToLower()}",
+        JarvisClasses.Color(Color),
+        JarvisClasses.Size(Size),
+        Blink ? "j-blink" : null
+    );
+
+    private string _style => Color switch
+    {
+        JColor.Cyan  => "background:rgba(0,229,255,0.10);color:var(--j-cyan);border:1px solid rgba(0,229,255,0.35);",
+        JColor.Amber => "background:rgba(249,115,22,0.10);color:var(--j-amber);border:1px solid rgba(249,115,22,0.35);",
+        JColor.Red   => "background:rgba(239,68,68,0.10);color:var(--j-red);border:1px solid rgba(239,68,68,0.35);",
+        JColor.Green => "background:rgba(34,197,94,0.10);color:var(--j-green);border:1px solid rgba(34,197,94,0.35);",
+        JColor.Ghost => "background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.15);",
+        _            => "background:rgba(0,229,255,0.10);color:var(--j-cyan);border:1px solid rgba(0,229,255,0.35);",
+    } + _sizeStyle + _shapeStyle;
+
+    private string _sizeStyle => Size switch
+    {
+        JSize.Xs => "font-size:8px;padding:2px 7px;letter-spacing:0.10em;",
+        JSize.Sm => "font-size:9px;padding:3px 9px;letter-spacing:0.10em;",
+        JSize.Md => "font-size:10px;padding:4px 12px;letter-spacing:0.10em;",
+        JSize.Lg => "font-size:11px;padding:5px 14px;letter-spacing:0.10em;",
+        _        => "font-size:9px;padding:3px 9px;letter-spacing:0.10em;",
+    };
+
+    private string _shapeStyle => Shape switch
+    {
+        JBadgeShape.Angular => "clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);border-radius:0;",
+        JBadgeShape.Hex     => "clip-path:polygon(12% 0%,88% 0%,100% 50%,88% 100%,12% 100%,0% 50%);padding-left:14px;padding-right:14px;border-radius:0;",
+        JBadgeShape.Diamond => "clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:0;",
+        JBadgeShape.Pill    => "border-radius:999px;",
+        _                   => "",
+    };
+
+    private string _dotStyle => Color switch
+    {
+        JColor.Amber => "background:var(--j-amber);",
+        JColor.Red   => "background:var(--j-red);",
+        JColor.Green => "background:var(--j-green);",
+        _            => "",
+    };
+}

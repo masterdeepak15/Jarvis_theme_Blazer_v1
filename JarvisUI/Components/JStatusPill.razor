@@ -1,0 +1,65 @@
+@* ================================================================
+   JStatusPill — JARVIS UI Status Indicator
+   Angular parallelogram pill with diamond dot + pulse animation.
+
+   USAGE:
+   <JStatusPill State="JState.Active">System Online</JStatusPill>
+   <JStatusPill State="JState.Warning">High Memory Usage</JStatusPill>
+   <JStatusPill State="JState.Error" Blink="true">Breach Detected</JStatusPill>
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div class="@_class" style="@_style">
+    <div class="j-status-dot" style="@_dotStyle flex-shrink:0;"></div>
+    <span style="@_textStyle">@ChildContent@Text</span>
+</div>
+
+@code {
+    [Parameter] public JState          State       { get; set; } = JState.Active;
+    [Parameter] public bool            Blink       { get; set; } = false;
+    [Parameter] public string?         Text        { get; set; }
+    [Parameter] public RenderFragment? ChildContent{ get; set; }
+
+    private string _class => JarvisClasses.Combine(
+        "j-flex",
+        Blink ? "j-blink-slow" : null
+    );
+
+    private string _style
+    {
+        get
+        {
+            var (bg, border, clr) = State switch
+            {
+                JState.Warning => ("rgba(249,115,22,0.08)", "#f97316", "#f97316"),
+                JState.Error   => ("rgba(239,68,68,0.08)",  "#ef4444", "#ef4444"),
+                JState.Success => ("rgba(34,197,94,0.08)",  "#22c55e", "#22c55e"),
+                JState.Idle    => ("rgba(0,229,255,0.03)",  "rgba(0,229,255,0.2)", "rgba(0,229,255,0.4)"),
+                _              => ("rgba(0,229,255,0.08)",  "#00e5ff", "#00e5ff"),
+            };
+            return $"display:flex;align-items:center;gap:8px;padding:7px 16px 7px 12px;" +
+                   $"background:{bg};border-left:2px solid {clr};" +
+                   $"clip-path:polygon(0 0,100% 0,calc(100% - 8px) 100%,0 100%);";
+        }
+    }
+
+    private string _dotStyle => State switch
+    {
+        JState.Warning => "background:var(--j-amber);animation-duration:1.8s;",
+        JState.Error   => "background:var(--j-red);animation-duration:0.7s;",
+        JState.Success => "background:var(--j-green);animation-duration:2.5s;",
+        JState.Idle    => "background:rgba(0,229,255,0.3);animation:none;",
+        _              => "",
+    };
+
+    private string _textStyle => State switch
+    {
+        JState.Warning => "font-size:11px;color:var(--j-amber);letter-spacing:0.08em;",
+        JState.Error   => "font-size:11px;color:var(--j-red);letter-spacing:0.08em;",
+        JState.Success => "font-size:11px;color:var(--j-green);letter-spacing:0.08em;",
+        JState.Idle    => "font-size:11px;color:rgba(0,229,255,0.4);letter-spacing:0.08em;",
+        _              => "font-size:11px;color:var(--j-cyan);letter-spacing:0.08em;",
+    };
+}

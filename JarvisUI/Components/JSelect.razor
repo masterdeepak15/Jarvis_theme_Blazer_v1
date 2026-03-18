@@ -1,0 +1,96 @@
+@* ================================================================
+   JSelect — JARVIS UI Select Dropdown
+   Angular clip-path select with corner brackets + HUD styling.
+
+   USAGE:
+   <JSelect @bind-Value="selectedModel" Label="Model" Options="@models" />
+
+   var models = new List<JSelectOption> {
+       new("llama3:8b",  "LLaMA 3 8B"),
+       new("phi3:mini",  "Phi-3 Mini"),
+       new("mistral:7b", "Mistral 7B"),
+   };
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div style="position:relative;width:100%;">
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <label style="display:block;font-size:9px;color:#22d3ee88;
+                      letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px;">
+            @Label
+        </label>
+    }
+
+    <div style="position:relative;">
+        @* Corner brackets *@
+        <div style="position:absolute;top:0;left:0;width:8px;height:8px;
+                    border-top:1.5px solid @_accentHex;border-left:1.5px solid @_accentHex;
+                    z-index:1;pointer-events:none;filter:drop-shadow(0 0 3px @_accentHex);"></div>
+        <div style="position:absolute;bottom:0;right:0;width:8px;height:8px;
+                    border-bottom:1.5px solid @_accentHex;border-right:1.5px solid @_accentHex;
+                    z-index:1;pointer-events:none;filter:drop-shadow(0 0 3px @_accentHex);"></div>
+
+        <select value="@Value"
+                @onchange="OnChange"
+                disabled="@Disabled"
+                style="@_selectStyle">
+            @if (!string.IsNullOrWhiteSpace(Placeholder))
+            {
+                <option value="" disabled selected>@Placeholder</option>
+            }
+            @foreach (var opt in Options)
+            {
+                <option value="@opt.Value" selected="@(opt.Value == Value)">
+                    @opt.Label
+                </option>
+            }
+        </select>
+
+        @* Custom arrow *@
+        <div style="position:absolute;right:12px;top:50%;transform:translateY(-50%);
+                    color:@_accentHex;font-size:10px;pointer-events:none;
+                    filter:drop-shadow(0 0 4px @_accentHex);">▼</div>
+    </div>
+</div>
+
+@code {
+    public record JSelectOption(string Value, string Label);
+
+    [Parameter] public string?                Value        { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public List<JSelectOption>    Options      { get; set; } = new();
+    [Parameter] public string?                Label        { get; set; }
+    [Parameter] public string?                Placeholder  { get; set; }
+    [Parameter] public JColor                 Color        { get; set; } = JColor.Cyan;
+    [Parameter] public bool                   Disabled     { get; set; } = false;
+
+    private string _accentHex => Color switch
+    {
+        JColor.Amber => "#f97316",
+        JColor.Red   => "#ef4444",
+        JColor.Green => "#22c55e",
+        _            => "#00e5ff",
+    };
+
+    private async Task OnChange(ChangeEventArgs e)
+    {
+        Value = e.Value?.ToString();
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+    private string _selectStyle =>
+        "width:100%;padding:9px 32px 9px 12px;" +
+        "background:#030f1e;" +
+        $"border:1px solid {_accentHex}33;" +
+        "border-radius:0;" +
+        "color:#e0f7ff;" +
+        "font-size:12px;font-family:'Courier New',monospace;" +
+        "letter-spacing:0.06em;outline:none;" +
+        "appearance:none;-webkit-appearance:none;" +
+        "clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);" +
+        "cursor:pointer;" +
+        (Disabled ? "opacity:0.4;cursor:not-allowed;" : "");
+}

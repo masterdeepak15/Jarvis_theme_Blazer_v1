@@ -1,0 +1,115 @@
+@* ================================================================
+   JSpinner — JARVIS UI Orb Spinner
+   Concentric rotating rings + diamond center. Used for loading,
+   processing, or as the main JARVIS orb identity element.
+
+   USAGE:
+   <JSpinner />
+   <JSpinner Size="80px" Label="JARVIS" State="JState.Active" />
+   <JSpinner Size="40px" ShowLabel="false" Color="JColor.Amber" />
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div style="position:relative;width:@Size;height:@Size;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+
+    @* ── Outer dashed orbit ring ── *@
+    <div style="position:absolute;inset:0;border-radius:50%;
+                border:1px dashed @_accentDim;
+                animation:j-spin @_r1Dur linear infinite;"></div>
+
+    @* ── Mid solid ring (main spinner) ── *@
+    <div style="position:absolute;inset:@_ring2Inset;border-radius:50%;
+                border:1.5px solid transparent;
+                border-top-color:@_accentHex;
+                border-bottom-color:@_accentDim;
+                animation:j-spin @_r2Dur linear infinite;
+                box-shadow:0 0 8px @_accentGlow;"></div>
+
+    @* ── Inner counter-rotating ring ── *@
+    <div style="position:absolute;inset:@_ring3Inset;border-radius:50%;
+                border:1px solid transparent;
+                border-left-color:@_accentMid;
+                animation:j-spin-rev @_r3Dur linear infinite;"></div>
+
+    @* ── Diamond / dot center ── *@
+    <div style="position:relative;z-index:2;
+                width:@_centerSize;height:@_centerSize;
+                background:@_accentHex;
+                clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+                animation:j-pulse var(--j-dur-pulse) ease-in-out infinite;
+                box-shadow:0 0 10px @_accentHex;">
+    </div>
+
+    @* ── Label inside ── *@
+    @if (ShowLabel && !string.IsNullOrWhiteSpace(Label))
+    {
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+            <span style="font-size:@_labelSize;color:@_accentHex;
+                         letter-spacing:0.12em;text-transform:uppercase;
+                         font-family:'Courier New',monospace;font-weight:600;">
+                @Label
+            </span>
+        </div>
+    }
+
+</div>
+
+@code {
+    [Parameter] public string  Size      { get; set; } = "64px";
+    [Parameter] public JColor  Color     { get; set; } = JColor.Cyan;
+    [Parameter] public JState  State     { get; set; } = JState.Active;
+    [Parameter] public string? Label     { get; set; }
+    [Parameter] public bool    ShowLabel { get; set; } = true;
+
+    // ── Color tokens ──────────────────────────────────────────────
+    private string _accentHex => Color switch
+    {
+        JColor.Cyan  => "#00e5ff",
+        JColor.Blue  => "#0891b2",
+        JColor.Amber => "#f97316",
+        JColor.Red   => "#ef4444",
+        JColor.Green => "#22c55e",
+        _            => "#00e5ff",
+    };
+    private string _accentMid  => Color switch
+    {
+        JColor.Cyan  => "#0891b2",
+        JColor.Amber => "#c2410c",
+        JColor.Red   => "#b91c1c",
+        JColor.Green => "#15803d",
+        _            => "#0891b2",
+    };
+    private string _accentDim  => Color switch
+    {
+        JColor.Cyan  => "rgba(0,229,255,0.25)",
+        JColor.Amber => "rgba(249,115,22,0.25)",
+        JColor.Red   => "rgba(239,68,68,0.25)",
+        JColor.Green => "rgba(34,197,94,0.25)",
+        _            => "rgba(0,229,255,0.25)",
+    };
+    private string _accentGlow => Color switch
+    {
+        JColor.Cyan  => "rgba(0,229,255,0.35)",
+        JColor.Amber => "rgba(249,115,22,0.35)",
+        JColor.Red   => "rgba(239,68,68,0.35)",
+        JColor.Green => "rgba(34,197,94,0.30)",
+        _            => "rgba(0,229,255,0.35)",
+    };
+
+    // ── Speed driven by State ─────────────────────────────────────
+    private string _r1Dur => State switch { JState.Processing => "5s",  JState.Idle => "14s", _ => "8s" };
+    private string _r2Dur => State switch { JState.Processing => "1.5s",JState.Idle => "5s",  _ => "3s" };
+    private string _r3Dur => State switch { JState.Processing => "2.5s",JState.Idle => "8s",  _ => "5s" };
+
+    // ── Ring insets scale with size string (approx) ───────────────
+    private string _ring2Inset => "6px";
+    private string _ring3Inset => "14px";
+
+    // ── Center diamond size ───────────────────────────────────────
+    private string _centerSize => "10px";
+
+    // ── Label font size ───────────────────────────────────────────
+    private string _labelSize => "9px";
+}

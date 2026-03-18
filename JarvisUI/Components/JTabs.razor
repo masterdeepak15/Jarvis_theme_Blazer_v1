@@ -1,0 +1,109 @@
+@* ================================================================
+   JTabs — JARVIS UI Tab Strip
+   Angular parallelogram tabs with active scan underline.
+
+   USAGE:
+   <JTabs @bind-ActiveTab="activeTab">
+       <JTab Key="system"  Label="System"  Icon="⊞" />
+       <JTab Key="skills"  Label="Skills"  Icon="⚡" Badge="12" />
+       <JTab Key="logs"    Label="Logs"    Icon="≡" />
+   </JTabs>
+
+   @if (activeTab == "system") { ... }
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div>
+    @* ── Tab strip ── *@
+    <div style="display:flex;border-bottom:1px solid rgba(0,229,255,0.15);
+                overflow-x:auto;gap:0;">
+        @foreach (var tab in _tabs)
+        {
+            bool active = tab.Key == ActiveTab;
+            <button @onclick="() => SelectTab(tab.Key)"
+                    style="@_tabStyle(active, tab)"
+                    type="button">
+
+                @if (!string.IsNullOrWhiteSpace(tab.Icon))
+                {
+                    <span style="font-style:normal;font-size:13px;@(active ? "filter:drop-shadow(0 0 4px #00e5ff);" : "")">
+                        @tab.Icon
+                    </span>
+                }
+
+                <span>@tab.Label</span>
+
+                @if (!string.IsNullOrWhiteSpace(tab.Badge))
+                {
+                    <span style="font-size:8px;padding:1px 5px;
+                                 background:rgba(0,229,255,0.15);
+                                 color:#22d3ee;
+                                 clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);">
+                        @tab.Badge
+                    </span>
+                }
+
+                @* Active underline bar *@
+                @if (active)
+                {
+                    <div style="position:absolute;bottom:-1px;left:0;right:0;height:2px;
+                                background:#00e5ff;
+                                box-shadow:0 0 8px #00e5ff;
+                                overflow:hidden;">
+                        <div style="position:absolute;inset:0;width:30px;
+                                    background:linear-gradient(90deg,transparent,#fff,transparent);
+                                    animation:j-scan-h 2s ease-in-out infinite;"></div>
+                    </div>
+                }
+
+            </button>
+        }
+    </div>
+
+    @* ── Tab content ── *@
+    <div style="padding-top:4px;">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    public record JTabDefinition(string Key, string Label, string? Icon = null, string? Badge = null);
+
+    [Parameter] public string?            ActiveTab       { get; set; }
+    [Parameter] public EventCallback<string> ActiveTabChanged { get; set; }
+    [Parameter] public JColor             Color           { get; set; } = JColor.Cyan;
+    [Parameter] public RenderFragment?    ChildContent    { get; set; }
+
+    private List<JTabDefinition> _tabs = new();
+
+    // Called by child JTab components to register themselves
+    internal void RegisterTab(JTabDefinition tab)
+    {
+        if (!_tabs.Any(t => t.Key == tab.Key))
+        {
+            _tabs.Add(tab);
+            if (ActiveTab == null && _tabs.Count == 1)
+                ActiveTab = tab.Key;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SelectTab(string key)
+    {
+        ActiveTab = key;
+        await ActiveTabChanged.InvokeAsync(key);
+    }
+
+    private string _tabStyle(bool active, JTabDefinition tab) =>
+        "position:relative;display:flex;align-items:center;gap:6px;" +
+        "padding:10px 18px;" +
+        "background:transparent;border:none;cursor:pointer;" +
+        "font-family:'Courier New',monospace;font-size:10px;font-weight:600;" +
+        "letter-spacing:0.12em;text-transform:uppercase;" +
+        $"color:{(active ? "#00e5ff" : "#475569")};" +
+        "transition:color 0.15s;" +
+        "white-space:nowrap;" +
+        (active ? "text-shadow:0 0 8px rgba(0,229,255,0.5);" : "");
+}
