@@ -7,6 +7,19 @@ JarvisUI.sln              ← Open this in Visual Studio or Rider
 JarvisUI/                 ← The RCL component library (reference this in your app)
 JarvisUI.Docs/            ← Live docs playground (run this to explore all components)
 ```
+---
+## Screenshots
+
+<p align="center">
+  <img src="assets/screen1.png" width="45%" />
+  <img src="assets/screen2.png" width="45%" />
+</p>
+
+<p align="center">
+  <img src="assets/screen3.png" width="45%" />
+  <img src="assets/screen4.png" width="45%" />
+</p>
+
 
 ---
 
