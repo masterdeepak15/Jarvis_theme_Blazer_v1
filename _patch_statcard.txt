@@ -1,0 +1,20 @@
+        @* ── Top HUD Stats Row ─────────────────────────────────────── *@
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+            <JStatCard Title="TOTAL CAMERAS"
+                       Value="@_nh90Cameras.Count.ToString()"
+                       Sub="NH-90 Corridor"
+                       Color="JColor.Cyan" />
+            <JStatCard Title="ONLINE"
+                       Value="@_nh90Online.ToString()"
+                       Sub="Operational"
+                       Color="JColor.Green"
+                       BarValue="@((int)((double)_nh90Online / _nh90Cameras.Count * 100))" />
+            <JStatCard Title="WARNING"
+                       Value="@_nh90Warning.ToString()"
+                       Sub="Needs Attention"
+                       Color="JColor.Amber" />
+            <JStatCard Title="OFFLINE"
+                       Value="@_nh90Offline.ToString()"
+                       Sub="Critical"
+                       Color="JColor.Red" />
+        </div>
