@@ -1,97 +1,102 @@
 @inherits LayoutComponentBase
 @using JarvisUI.Components
 @using JarvisUI.Tokens
+@using JarvisUI.Docs
+@inject ThemeState ThemeState
+@implements IDisposable
 
-<JPageLayout SystemName="JARVIS UI"
-             Version="v1.0.0"
-             State="JState.Active"
-             ShowSidebar="true"
-             ShowTicks="true"
-             ShowWaveform="false"
-             ContentPadding="0">
+<JThemeProvider @ref="_tp" Preset="@_localPreset">
+<JPageLayout SystemName="JARVIS UI" Version="v1.0" State="JState.Active"
+             ShowSidebar="@_sidebarOpen" ShowTicks="true" ShowWaveform="true"
+             ContentPadding="0" SidebarWidth="220px">
+
+    <TopBarContent>
+        <button @onclick="ToggleSidebar"
+                title="@(_sidebarOpen ? "Collapse sidebar" : "Expand sidebar")"
+                style="background:none;border:1px solid var(--j-accent-25);color:var(--j-accent);
+                       font-size:13px;width:26px;height:26px;cursor:pointer;
+                       display:flex;align-items:center;justify-content:center;
+                       clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);
+                       transition:all .15s;flex-shrink:0;">
+            @(_sidebarOpen ? "◁" : "▷")
+        </button>
+    </TopBarContent>
 
     <SidebarNav>
-        <div style="padding:0 0 8px;">
-            <JDivider Label="Foundation" />
-        </div>
-        <JNavItem Href="/"            Icon="⊞" Label="Overview"     Active="@_isHome" />
-        <JNavItem Href="/tokens"      Icon="◈" Label="Tokens" />
-
-        <div style="padding:8px 0;">
-            <JDivider Label="Identity" />
-        </div>
-        <JNavItem Href="/orb"         Icon="◎" Label="Orb" />
-        <JNavItem Href="/arcmeter"    Icon="▶" Label="Arc Meter" />
-        <JNavItem Href="/spinner"     Icon="↻" Label="Spinner" />
-        <JNavItem Href="/waveform"    Icon="∿" Label="Waveform" />
-        <JNavItem Href="/bootscreen"  Icon="⏻" Label="Boot Screen" />
-        <JNavItem Href="/radialmenu"  Icon="✦" Label="Radial Menu" />
-
-        <div style="padding:8px 0;">
-            <JDivider Label="Cards" />
-        </div>
-        <JNavItem Href="/cards"       Icon="▣" Label="JCard"       Badge="9" />
-        <JNavItem Href="/statcard"    Icon="▤" Label="Stat Card" />
-
-        <div style="padding:8px 0;">
-            <JDivider Label="Actions" />
-        </div>
-        <JNavItem Href="/buttons"     Icon="▷" Label="JButton"     Badge="9" />
-        <JNavItem Href="/badge"       Icon="◆" Label="Badge" />
-        <JNavItem Href="/statuspill"  Icon="◈" Label="Status Pill" />
-
-        <div style="padding:8px 0;">
-            <JDivider Label="Forms" />
-        </div>
-        <JNavItem Href="/input"       Icon="⌨" Label="Input" />
-        <JNavItem Href="/select"      Icon="▾" Label="Select" />
-        <JNavItem Href="/toggle"      Icon="⏻" Label="Toggle" />
-        <JNavItem Href="/slider"      Icon="⊟" Label="Slider" />
-        <JNavItem Href="/checkbox"    Icon="✓" Label="Checkbox" />
-        <JNavItem Href="/radio"       Icon="◉" Label="Radio" />
-        <JNavItem Href="/textarea"    Icon="≡" Label="Text Area" />
-        <JNavItem Href="/formfield"   Icon="⊡" Label="Form Field" />
-
-        <div style="padding:8px 0;">
-            <JDivider Label="Feedback" />
-        </div>
-        <JNavItem Href="/alerts"      Icon="⚠" Label="Alert" />
-        <JNavItem Href="/toasts"      Icon="◱" Label="Toast" />
-        <JNavItem Href="/progress"    Icon="▬" Label="Progress" />
-        <JNavItem Href="/modal"       Icon="▫" Label="Modal" />
-
-        <div style="padding:8px 0;">
-            <JDivider Label="Navigation" />
-        </div>
-        <JNavItem Href="/tabs"        Icon="⊞" Label="Tabs" />
-        <JNavItem Href="/accordion"   Icon="⊟" Label="Accordion" />
-        <JNavItem Href="/cmdpalette"  Icon="⌕" Label="Command Palette" />
-
-        <div style="padding:8px 0;">
-            <JDivider Label="Data" />
-        </div>
-        <JNavItem Href="/table"       Icon="⊟" Label="Table" />
-        <JNavItem Href="/datarow"     Icon="―" Label="Data Row" />
-        <JNavItem Href="/pagination"  Icon="›" Label="Pagination" />
-        <JNavItem Href="/divider"     Icon="—" Label="Divider" />
+        <JNavItem Href="/"           Icon="⊞" Label="Overview"           Active="@IsHome" />
+        <JDivider Label="Visual" />
+        <JNavItem Href="/theme"        Icon="◉" Label="Theme"               Badge="6" />
+        <JNavItem Href="/identity"     Icon="◎" Label="Identity / HUD"      Badge="9" />
+        <JNavItem Href="/cards"        Icon="▣" Label="Cards"               Badge="9" />
+        <JNavItem Href="/hud-elements" Icon="⬡" Label="HUD Frames + Labels" Badge="NEW" />
+        <JDivider Label="Interaction" />
+        <JNavItem Href="/buttons"    Icon="▷" Label="Buttons"            Badge="9" />
+        <JNavItem Href="/actions"    Icon="◆" Label="Badge · Pill · Data" />
+        <JNavItem Href="/forms"      Icon="⌨" Label="Forms"              Badge="8" />
+        <JNavItem Href="/datetime"   Icon="📅" Label="Date + Time"        Badge="NEW" />
+        <JDivider Label="Feedback + Nav" />
+        <JNavItem Href="/feedback"   Icon="◱" Label="Feedback"           Badge="4" />
+        <JNavItem Href="/navigation" Icon="⊟" Label="Navigation"         Badge="6" />
+        <JNavItem Href="/datatable"  Icon="▤" Label="Table + Pagination" Badge="NEW" />
+        <JNavItem Href="/nodegraph"  Icon="⬡" Label="Node Graph"         Badge="NEW" />
+        <JDivider Label="Pages" />
+        <JNavItem Href="/login"      Icon="◈" Label="Login"              Badge="NEW" />
+        <JDivider Label="Maps" />
+        <JNavItem Href="/map"        Icon="◎" Label="NH-90 ITS + Toll"   Badge="LIVE" />
+        <JNavItem Href="/leaflet"    Icon="◈" Label="Leaflet + India"     Badge="LIVE" />
+        <JDivider Label="Reference" />
+        <JNavItem Href="/tokens"     Icon="◆" Label="Design Tokens" />
     </SidebarNav>
 
+    <SidebarFooter>
+        <JDivider Label="Theme" Margin="4px 0 6px" />
+        <JThemePicker @bind-Preset="_localPreset" Provider="_tp" ShowCustom="false" Compact="true" />
+    </SidebarFooter>
+
     <MainContent>
-        <div style="padding:20px 24px;min-height:100%;">
-            @Body
-        </div>
+        <div style="padding:20px 24px;">@Body</div>
     </MainContent>
 
 </JPageLayout>
+</JThemeProvider>
 
 @code {
-    private bool IsActive(string href) =>
-        NavigationManager.Uri.EndsWith(href, StringComparison.OrdinalIgnoreCase);
+    JThemePreset    _localPreset = JThemePreset.Cyan;
+    JThemeProvider? _tp;
+    bool            _sidebarOpen = true;
+    JThemePreset    _appliedPreset = JThemePreset.Cyan;
 
-    private bool _isHome =>
-        NavigationManager.Uri.TrimEnd('/').Equals(
-            NavigationManager.BaseUri.TrimEnd('/'),
-            StringComparison.OrdinalIgnoreCase);
+    [Inject] NavigationManager Nav { get; set; } = default!;
+    bool IsHome => Nav.Uri.TrimEnd('/').Equals(Nav.BaseUri.TrimEnd('/'), StringComparison.OrdinalIgnoreCase);
 
-    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+    protected override void OnInitialized()
+    {
+        _localPreset  = ThemeState.Preset;
+        _appliedPreset = ThemeState.Preset;
+        ThemeState.OnChange += HandleThemeStateChange;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Apply to provider whenever _localPreset drifts (picker or external change)
+        if (_localPreset == _appliedPreset || _tp == null) return;
+        _appliedPreset = _localPreset;
+        ThemeState.SetPreset(_localPreset);
+        await _tp.SetPresetAsync(_localPreset);
+    }
+
+    private void HandleThemeStateChange()
+    {
+        if (_localPreset == ThemeState.Preset) return;
+        _localPreset   = ThemeState.Preset;
+        _appliedPreset = ThemeState.Preset;
+        _ = InvokeAsync(async () => {
+            if (_tp != null) await _tp.SetPresetAsync(_localPreset);
+            StateHasChanged();
+        });
+    }
+
+    void ToggleSidebar() => _sidebarOpen = !_sidebarOpen;
+
+    public void Dispose() => ThemeState.OnChange -= HandleThemeStateChange;
 }

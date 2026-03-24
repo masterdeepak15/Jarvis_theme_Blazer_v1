@@ -1,19 +1,35 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JarvisUI — Component Docs</title>
 
-    <!-- JarvisUI base styles from RCL -->
+    <!-- Leaflet CSS (for JLeafletMap) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- JarvisUI styles -->
+    <link rel="stylesheet" href="_content/JarvisUI/css/jarvis-theme.css" />
     <link rel="stylesheet" href="_content/JarvisUI/css/jarvis-ui.css" />
-    <!-- Docs app extra styles -->
+    <link rel="stylesheet" href="_content/JarvisUI/css/jarvis-maps.css" />
+
+    <!-- Docs app styles -->
     <link rel="stylesheet" href="css/docs.css" />
 
     <base href="/" />
 </head>
 <body>
     <Routes @rendermode="@InteractiveServer" />
+    <!-- Leaflet JS (for JLeafletMap) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- GoogleMap JS (Optional) -->
+    <script src="https://maps.googleapis.com/maps/api/js?key="GmapKey"></script>
+
+    <!-- JarvisUI Maps interop -->
+    <script src="_content/JarvisUI/js/jarvis-gmap.js"></script>
+    <script src="_content/JarvisUI/js/jarvis-maps.js"></script>
+    <script src="_content/JarvisUI/js/jarvis-leaflet.js"></script>
+
     <script src="_framework/blazor.web.js"></script>
 </body>
 </html>
