@@ -26,6 +26,10 @@ public static class JarvisUIServiceExtensions
         // Toast notification service — scoped per user session
         services.AddScoped<JarvisUI.Components.JToastService>();
 
+        // HttpClient for JLeafletMap GeoJSON loading
+        // Base address is configured at runtime from the request context
+        services.AddHttpClient("JarvisUI");
+
         return services;
     }
 }
