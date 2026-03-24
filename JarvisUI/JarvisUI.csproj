@@ -12,21 +12,36 @@
     <Version>1.0.0</Version>
     <Authors>Your Name</Authors>
     <Description>
-      A cinematic JARVIS / HUD-style Blazor Server component library.
-      9 card frame styles, 8 button shapes, full animation vocabulary.
-      Pure CSS animations — zero JavaScript.
+      Cinematic JARVIS / HUD-style Blazor Server component library.
+      38 components. Full theme system with CSS variables.
+      Google Maps + Leaflet maps. India GeoJSON drill-down.
+      Zero hardcoded colors — fully customizable.
     </Description>
-    <PackageTags>blazor;hud;jarvis;sci-fi;ui;components;tailwind</PackageTags>
+    <PackageTags>blazor;hud;jarvis;sci-fi;ui;components;maps;leaflet;google-maps</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.0" />
+    <Compile Remove="wwwroot\geojson\**" />
+    <Content Remove="wwwroot\geojson\**" />
+    <EmbeddedResource Remove="wwwroot\geojson\**" />
+    <None Remove="wwwroot\geojson\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="wwwroot\css\jarvis-ui.css">
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.24" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <!-- Google Maps interop — optional, only needed if using JGoogleMap -->
+    <PackageReference Include="BlazorGoogleMaps" Version="4.15.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="wwwroot\js\jarvis-gmap.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="wwwroot\js\jarvis-leaflet.js">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
