@@ -33,11 +33,11 @@
                 <polygon class="j-btn-border" points="@_fillPts" style="@_borderStyle" />
                 @if (Shape == JButtonShape.LeftNotch || Shape == JButtonShape.BothNotch)
                 {
-                    <polygon points="0,0 10,0 0,10" style="fill:@_accentHex;" />
+                    <polygon points="0,0 10,0 0,10" style="fill:var(--j-accent);" />
                 }
                 @if (Shape == JButtonShape.RightNotch || Shape == JButtonShape.BothNotch)
                 {
-                    <polygon points="@(_svgW),0 @(_svgW - 10),0 @(_svgW),10" style="fill:@_accentHex;opacity:0.5;" />
+                    <polygon points="@(_svgW),0 @(_svgW - 10),0 @(_svgW),10" style="fill:var(--j-accent);opacity:0.5;" />
                 }
             </svg>
             if (ShowShine) { <div class="j-btn-shine"></div> }
@@ -57,7 +57,7 @@
             break;
 
         case JButtonShape.GhostSkew:
-            <div class="j-btn-bg-fill" style="position:absolute;inset:0;background:transparent;border:1px dashed @_accentHex;opacity:0.4;"></div>
+            <div class="j-btn-bg-fill" style="position:absolute;inset:0;background:transparent;border:1px dashed var(--j-accent);opacity:0.4;"></div>
             break;
 
         case JButtonShape.Hexagonal:
@@ -69,8 +69,8 @@
             break;
 
         case JButtonShape.ScanFull:
-            <div class="j-btn-bg-fill" style="position:absolute;inset:0;background:@_accentHex;"></div>
-            <div class="j-btn-shine" style="background:linear-gradient(90deg,transparent,rgba(255,255,255,0.30),transparent);"></div>
+            <div class="j-btn-bg-fill" style="position:absolute;inset:0;background:var(--j-accent);"></div>
+            <div class="j-btn-shine" style="background:linear-gradient(90deg,transparent,var(--j-accent-25),transparent);"></div>
             break;
     }
 
@@ -117,35 +117,11 @@
     [Parameter] public RenderFragment? ChildContent    { get; set; }
 
     // ── Color lookup ──────────────────────────────────────────────
-    private string _accentHex => Color switch
-    {
-        JColor.Cyan  => "#00e5ff",
-        JColor.Blue  => "#0891b2",
-        JColor.Amber => "#f97316",
-        JColor.Red   => "#ef4444",
-        JColor.Green => "#22c55e",
-        JColor.Ghost => "rgba(255,255,255,0.3)",
-        JColor.White => "#ffffff",
-        _            => "#00e5ff",
-    };
+    private string _accentHex => "var(--j-accent)";
 
-    private string _accentDim => Color switch
-    {
-        JColor.Cyan  => "rgba(0,229,255,0.12)",
-        JColor.Amber => "rgba(249,115,22,0.12)",
-        JColor.Red   => "rgba(239,68,68,0.12)",
-        JColor.Green => "rgba(34,197,94,0.12)",
-        _            => "rgba(0,229,255,0.12)",
-    };
+    private string _accentDim => "var(--j-accent-12)";
 
-    private string _accentGlow => Color switch
-    {
-        JColor.Cyan  => "rgba(0,229,255,0.35)",
-        JColor.Amber => "rgba(249,115,22,0.35)",
-        JColor.Red   => "rgba(239,68,68,0.35)",
-        JColor.Green => "rgba(34,197,94,0.30)",
-        _            => "rgba(0,229,255,0.35)",
-    };
+    private string _accentGlow => "var(--j-accent-25)";
 
     // ── SVG polygon points ────────────────────────────────────────
     private int _svgW => Size switch
@@ -168,16 +144,16 @@
 
     private string _fillStyle => Variant switch
     {
-        JVariant.Solid  => $"fill:{_accentHex};",
-        JVariant.Danger => $"fill:{_accentDim};",
-        _               => $"fill:{_accentDim};",
+        JVariant.Solid  => $"fill:var(--j-accent);",
+        JVariant.Danger => $"fill:var(--j-accent-12);",
+        _               => $"fill:var(--j-accent-12);",
     };
 
     private string _borderStyle => Variant switch
     {
-        JVariant.Solid  => $"fill:none;stroke:{_accentHex};stroke-width:0;",
-        JVariant.Danger => $"fill:none;stroke:{_accentHex};stroke-width:1;",
-        _               => $"fill:none;stroke:{_accentHex};stroke-width:1;",
+        JVariant.Solid  => $"fill:none;stroke:var(--j-accent);stroke-width:0;",
+        JVariant.Danger => $"fill:none;stroke:var(--j-accent);stroke-width:1;",
+        _               => $"fill:none;stroke:var(--j-accent);stroke-width:1;",
     };
 
     // ── Root class ────────────────────────────────────────────────
@@ -216,16 +192,16 @@
         {
             string color = Variant switch
             {
-                JVariant.Solid   => "color:#020d18;",
-                JVariant.Danger  => $"color:{_accentHex};",
-                JVariant.Ghost   => $"color:{_accentHex};opacity:0.55;",
-                JVariant.Scan    => "color:#020d18;",
-                _                => $"color:{_accentHex};",
+                JVariant.Solid   => "color:var(--j-bg);",
+                JVariant.Danger  => $"color:var(--j-accent);",
+                JVariant.Ghost   => $"color:var(--j-accent);opacity:0.55;",
+                JVariant.Scan    => "color:var(--j-bg);",
+                _                => $"color:var(--j-accent);",
             };
 
             string glow = Variant == JVariant.Solid || Variant == JVariant.Scan
                 ? ""
-                : $"text-shadow:0 0 8px {_accentGlow};";
+                : $"text-shadow:0 0 8px var(--j-accent-25);";
 
             return color + glow;
         }
@@ -233,20 +209,20 @@
 
     // ── Shape-specific styles ─────────────────────────────────────
     private string _paraFillStyle =>
-        $"position:absolute;inset:0;background:{_accentDim};border:1px solid {_accentHex};opacity:0.7;";
+        $"position:absolute;inset:0;background:var(--j-accent-12);border:1px solid var(--j-accent);opacity:0.7;";
 
     private string _paraRailStyle =>
-        $"position:absolute;top:0;bottom:0;left:0;width:3px;background:{_accentHex};box-shadow:0 0 8px {_accentHex};";
+        $"position:absolute;top:0;bottom:0;left:0;width:3px;background:var(--j-accent);box-shadow:0 0 8px var(--j-accent);";
 
     private string _hexFillStyle =>
-        $"position:absolute;inset:0;background:{_accentDim};" +
+        $"position:absolute;inset:0;background:var(--j-accent-12);" +
         $"clip-path:polygon(12% 0%,88% 0%,100% 50%,88% 100%,12% 100%,0% 50%);" +
-        $"border:1px solid {_accentHex};animation:j-pulse var(--j-dur-pulse) ease-in-out infinite;";
+        $"border:1px solid var(--j-accent);animation:j-pulse var(--j-dur-pulse) ease-in-out infinite;";
 
     private string _iconSqFillStyle =>
-        $"position:absolute;inset:0;background:{_accentDim};" +
-        $"border:1px solid {_accentHex};opacity:0.8;";
+        $"position:absolute;inset:0;background:var(--j-accent-12);" +
+        $"border:1px solid var(--j-accent);opacity:0.8;";
 
     private string _bracketBgStyle =>
-        $"--j-accent:{_accentHex};";
+        $"--j-accent:var(--j-accent);";
 }

@@ -16,37 +16,37 @@
 
     @* ── Outer dashed orbit ring ── *@
     <div style="position:absolute;inset:0;border-radius:50%;
-                border:1px dashed @_accentDim;
+                border:1px dashed var(--j-accent-12);
                 animation:j-spin @_r1Dur linear infinite;"></div>
 
     @* ── Mid solid ring (main spinner) ── *@
     <div style="position:absolute;inset:@_ring2Inset;border-radius:50%;
                 border:1.5px solid transparent;
-                border-top-color:@_accentHex;
-                border-bottom-color:@_accentDim;
+                border-top-color:var(--j-accent);
+                border-bottom-color:var(--j-accent-12);
                 animation:j-spin @_r2Dur linear infinite;
-                box-shadow:0 0 8px @_accentGlow;"></div>
+                box-shadow:0 0 8px var(--j-accent-25);"></div>
 
     @* ── Inner counter-rotating ring ── *@
     <div style="position:absolute;inset:@_ring3Inset;border-radius:50%;
                 border:1px solid transparent;
-                border-left-color:@_accentMid;
+                border-left-color:var(--j-accent-mid);
                 animation:j-spin-rev @_r3Dur linear infinite;"></div>
 
     @* ── Diamond / dot center ── *@
     <div style="position:relative;z-index:2;
                 width:@_centerSize;height:@_centerSize;
-                background:@_accentHex;
+                background:var(--j-accent);
                 clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
                 animation:j-pulse var(--j-dur-pulse) ease-in-out infinite;
-                box-shadow:0 0 10px @_accentHex;">
+                box-shadow:0 0 10px var(--j-accent);">
     </div>
 
     @* ── Label inside ── *@
     @if (ShowLabel && !string.IsNullOrWhiteSpace(Label))
     {
         <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
-            <span style="font-size:@_labelSize;color:@_accentHex;
+            <span style="font-size:@_labelSize;color:var(--j-accent);
                          letter-spacing:0.12em;text-transform:uppercase;
                          font-family:'Courier New',monospace;font-weight:600;">
                 @Label
@@ -64,39 +64,24 @@
     [Parameter] public bool    ShowLabel { get; set; } = true;
 
     // ── Color tokens ──────────────────────────────────────────────
-    private string _accentHex => Color switch
-    {
-        JColor.Cyan  => "#00e5ff",
-        JColor.Blue  => "#0891b2",
-        JColor.Amber => "#f97316",
-        JColor.Red   => "#ef4444",
-        JColor.Green => "#22c55e",
-        _            => "#00e5ff",
-    };
+    private string _accentHex => "var(--j-accent)";
     private string _accentMid  => Color switch
     {
-        JColor.Cyan  => "#0891b2",
-        JColor.Amber => "#c2410c",
-        JColor.Red   => "#b91c1c",
-        JColor.Green => "#15803d",
-        _            => "#0891b2",
+        JColor.Cyan  => "var(--j-accent-deep)",
+        JColor.Amber => "var(--j-accent-deep)",
+        JColor.Red   => "var(--j-accent-deep)",
+        JColor.Green => "var(--j-accent-deep)",
+        _            => "var(--j-accent-deep)",
     };
     private string _accentDim  => Color switch
     {
-        JColor.Cyan  => "rgba(0,229,255,0.25)",
-        JColor.Amber => "rgba(249,115,22,0.25)",
-        JColor.Red   => "rgba(239,68,68,0.25)",
-        JColor.Green => "rgba(34,197,94,0.25)",
-        _            => "rgba(0,229,255,0.25)",
+        JColor.Cyan  => "var(--j-accent-25)",
+        JColor.Amber => "var(--j-warn-25)",
+        JColor.Red   => "var(--j-err-25)",
+        JColor.Green => "var(--j-ok-25)",
+        _            => "var(--j-accent-25)",
     };
-    private string _accentGlow => Color switch
-    {
-        JColor.Cyan  => "rgba(0,229,255,0.35)",
-        JColor.Amber => "rgba(249,115,22,0.35)",
-        JColor.Red   => "rgba(239,68,68,0.35)",
-        JColor.Green => "rgba(34,197,94,0.30)",
-        _            => "rgba(0,229,255,0.35)",
-    };
+    private string _accentGlow => "var(--j-accent-25)";
 
     // ── Speed driven by State ─────────────────────────────────────
     private string _r1Dur => State switch { JState.Processing => "5s",  JState.Idle => "14s", _ => "8s" };

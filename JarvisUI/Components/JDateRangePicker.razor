@@ -1,0 +1,221 @@
+@* ================================================================
+   JDateRangePicker — JARVIS UI Date Range Selector
+   Two-month calendar side-by-side with range highlight.
+
+   USAGE:
+   <JDateRangePicker @bind-Start="_start" @bind-End="_end" />
+   <JDateRangePicker @bind-Start="_start" @bind-End="_end" ShowInput="true" Label="MISSION WINDOW" />
+================================================================ *@
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div style="font-family:'Courier New',monospace;position:relative;@(ShowInput?"":"width:fit-content;")"
+     @onfocusout="OnFocusOut" tabindex="-1">
+
+    @* ── Input trigger ── *@
+    @if (ShowInput)
+    {
+        @if (!string.IsNullOrWhiteSpace(Label))
+        {
+            <div style="font-size:9px;color:var(--j-accent-70);letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px;">@Label</div>
+        }
+        <div @onclick="()=>_open=!_open" @onclick:stopPropagation="true"
+             style="display:flex;align-items:center;gap:8px;padding:9px 14px;
+                    background:var(--j-bg-card);border:1px solid @(_open?"var(--j-accent)":"var(--j-accent-25)");cursor:pointer;
+                    clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);
+                    position:relative;overflow:hidden;width:100%;box-sizing:border-box;">
+            <div style="position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--j-accent);"></div>
+            <span style="font-size:10px;color:@(Start.HasValue?"var(--j-text-primary)":"var(--j-text-dim)");letter-spacing:.06em;">
+                @(Start.HasValue ? Start.Value.ToString("dd MMM yyyy") : "START DATE")
+            </span>
+            <span style="color:var(--j-accent-35);">→</span>
+            <span style="font-size:10px;color:@(End.HasValue?"var(--j-text-primary)":"var(--j-text-dim)");letter-spacing:.06em;">
+                @(End.HasValue ? End.Value.ToString("dd MMM yyyy") : "END DATE")
+            </span>
+            @if (Start.HasValue && End.HasValue)
+            {
+                <span style="margin-left:auto;font-size:8px;color:var(--j-accent-50);letter-spacing:.10em;">
+                    @((End.Value - Start.Value).Days + 1) DAYS
+                </span>
+            }
+            else
+            {
+                <span style="margin-left:auto;font-size:12px;color:var(--j-accent);">@(_open ? "✕" : "📅")</span>
+            }
+        </div>
+    }
+
+    @* ── Dual calendar panel ── *@
+    @if (_open || !ShowInput)
+    {
+        <div @onclick:stopPropagation="true" style="@_panelStyle">
+            <div style="position:absolute;left:0;right:0;height:1px;top:-1px;
+                        background:linear-gradient(90deg,transparent,var(--j-accent-70),transparent);
+                        animation:j-scan-v 3s ease-in-out infinite;pointer-events:none;"></div>
+
+            @* Selection state banner *@
+            <div style="padding:6px 14px;border-bottom:1px solid var(--j-accent-12);
+                        font-size:8px;color:var(--j-accent-50);letter-spacing:.12em;
+                        display:flex;gap:16px;">
+                <span style="color:@(Start.HasValue?"var(--j-accent)":"var(--j-text-dim)")">
+                    START: @(Start.HasValue ? Start.Value.ToString("dd MMM yyyy") : "—")
+                </span>
+                <span style="color:var(--j-accent-35);">→</span>
+                <span style="color:@(End.HasValue?"var(--j-ok)":"var(--j-text-dim)")">
+                    END: @(End.HasValue ? End.Value.ToString("dd MMM yyyy") : "—")
+                </span>
+                @if (Start.HasValue && End.HasValue)
+                {
+                    <span style="margin-left:auto;color:var(--j-accent);font-weight:700;">
+                        @((End.Value - Start.Value).Days + 1) DAYS
+                    </span>
+                }
+            </div>
+
+            @* Two-month grid *@
+            <div style="display:flex;gap:0;">
+                @for (int col = 0; col < 2; col++)
+                {
+                    var mv = col == 0 ? _leftView : NextMonth(_leftView);
+                    <div style="flex:1;padding:8px;@(col==1?"border-left:1px solid var(--j-accent-12);":"")">
+                        @* Month header *@
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                            @if (col == 0) { <button @onclick="GoToPrevMonth" style="@_navBtn">‹</button> }
+                            else { <div style="width:28px;"></div> }
+                            <span style="font-size:10px;font-weight:700;color:var(--j-accent);letter-spacing:.08em;">
+                                @mv.ToString("MMM yyyy").ToUpper()
+                            </span>
+                            @if (col == 1) { <button @onclick="GoToNextMonth" style="@_navBtn">›</button> }
+                            else { <div style="width:28px;"></div> }
+                        </div>
+                        @* Day headers *@
+                        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:2px;">
+                            @foreach (var dh in new[]{"M","T","W","T","F","S","S"})
+                            {
+                                <div style="text-align:center;font-size:7px;color:var(--j-accent-35);padding:2px 0;">@dh</div>
+                            }
+                        </div>
+                        @* Days *@
+                        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;">
+                            @for (int b = 0; b < ((int)mv.DayOfWeek+6)%7; b++) { <div></div> }
+                            @for (int day = 1; day <= DateTime.DaysInMonth(mv.Year, mv.Month); day++)
+                            {
+                                var d    = new DateTime(mv.Year, mv.Month, day);
+                                bool sel = (Start.HasValue && d == Start.Value.Date) || (End.HasValue && d == End.Value.Date);
+                                bool inR = Start.HasValue && End.HasValue && d > Start.Value.Date && d < End.Value.Date;
+                                bool tod = d == DateTime.Today;
+                                bool isS = Start.HasValue && d == Start.Value.Date;
+                                bool isE = End.HasValue && d == End.Value.Date;
+                                int  dd  = day;
+                                <button @onclick="() => PickDay(d)"
+                                        @onmouseover="() => _hover = d"
+                                        style="@RangeDayStyle(sel,inR,tod,isS,isE,d)">@day</button>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @* Quick ranges *@
+            <div style="display:flex;gap:4px;padding:4px 8px 8px;border-top:1px solid var(--j-accent-12);flex-wrap:wrap;">
+                <button @onclick="()=>SetQuick(0,6)"    style="@_quickBtn">WEEK</button>
+                <button @onclick="()=>SetQuick(0,29)"   style="@_quickBtn">30 DAYS</button>
+                <button @onclick="()=>SetQuick(0,89)"   style="@_quickBtn">90 DAYS</button>
+                <button @onclick="SetThisMonth"          style="@_quickBtn">THIS MONTH</button>
+                <button @onclick="ClearRange"            style="@_quickBtn">CLEAR</button>
+                @if (ShowInput) { <button @onclick="()=>_open=false" style="@_quickBtn">DONE</button> }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public DateTime?       Start        { get; set; }
+    [Parameter] public EventCallback<DateTime?> StartChanged { get; set; }
+    [Parameter] public DateTime?       End          { get; set; }
+    [Parameter] public EventCallback<DateTime?> EndChanged   { get; set; }
+    [Parameter] public JColor          Color        { get; set; } = JColor.Cyan;
+    [Parameter] public string?         Label        { get; set; }
+    [Parameter] public bool            ShowInput    { get; set; } = false;
+
+    private bool     _open     = false;
+    private bool     _pickEnd  = false;   // false = picking start, true = picking end
+    private DateTime _leftView = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private DateTime _hover;
+
+    private static DateTime NextMonth(DateTime d)
+        => d.Month == 12 ? new(d.Year+1,1,1) : new(d.Year,d.Month+1,1);
+
+    private void GoToPrevMonth()
+        => _leftView = _leftView.Month==1 ? new(_leftView.Year-1,12,1) : new(_leftView.Year,_leftView.Month-1,1);
+    private void GoToNextMonth()
+        => _leftView = _leftView.Month==12 ? new(_leftView.Year+1,1,1) : new(_leftView.Year,_leftView.Month+1,1);
+
+    private async Task PickDay(DateTime d)
+    {
+        if (!_pickEnd || (Start.HasValue && d < Start.Value))
+        {
+            // Start over
+            Start = d; End = null; _pickEnd = true;
+            await StartChanged.InvokeAsync(Start);
+            await EndChanged.InvokeAsync(null);
+        }
+        else
+        {
+            End = d; _pickEnd = false;
+            await EndChanged.InvokeAsync(End);
+            if (ShowInput) _open = false;
+        }
+    }
+
+    private async Task SetQuick(int daysFromToday, int rangeDays)
+    {
+        Start = DateTime.Today.AddDays(daysFromToday); End = DateTime.Today.AddDays(rangeDays);
+        _pickEnd = false; _leftView = new(Start.Value.Year, Start.Value.Month, 1);
+        await StartChanged.InvokeAsync(Start); await EndChanged.InvokeAsync(End);
+    }
+    private async Task SetThisMonth()
+    {
+        var t = DateTime.Today;
+        Start = new(t.Year,t.Month,1); End = new(t.Year,t.Month,DateTime.DaysInMonth(t.Year,t.Month));
+        _leftView = new(t.Year,t.Month,1); _pickEnd = false;
+        await StartChanged.InvokeAsync(Start); await EndChanged.InvokeAsync(End);
+    }
+    private async Task ClearRange()
+    {
+        Start=null; End=null; _pickEnd=false;
+        await StartChanged.InvokeAsync(null); await EndChanged.InvokeAsync(null);
+    }
+
+    private string RangeDayStyle(bool sel, bool inR, bool tod, bool isS, bool isE, DateTime d)
+    {
+        // Preview range on hover
+        bool prevR = _pickEnd && Start.HasValue && d > Start.Value.Date && d <= _hover.Date && !End.HasValue;
+        bool bg_inR = inR || prevR;
+        var bg    = isS||isE ? "var(--j-accent)" : bg_inR ? "var(--j-accent-12)" : "transparent";
+        var color = isS||isE ? "var(--j-bg)"     : bg_inR ? "var(--j-accent)"    :
+                    tod      ? "var(--j-accent)"  : "var(--j-text-secondary)";
+        var border = isS||isE ? "1px solid var(--j-accent)" :
+                     tod      ? "1px solid var(--j-accent-25)" : "1px solid transparent";
+        return $"width:100%;aspect-ratio:1;background:{bg};border:{border};color:{color};" +
+               $"font-size:9px;cursor:pointer;font-family:'Courier New',monospace;" +
+               $"clip-path:polygon(2px 0,100% 0,calc(100% - 2px) 100%,0 100%);transition:all .1s;";
+    }
+
+    private async Task OnFocusOut(FocusEventArgs e) { await Task.Delay(150); _open = false; }
+
+    private string _panelStyle =>
+        (ShowInput ? "position:absolute;top:calc(100% + 4px);left:0;" : "position:relative;") +
+        "z-index:9999;background:var(--j-bg-card);border:1px solid var(--j-accent-35);min-width:500px;" +
+        "overflow:visible;box-shadow:0 8px 32px rgba(0,0,0,.5),0 0 0 1px var(--j-accent-12);";
+
+    private string _navBtn =>
+        "width:28px;height:28px;background:var(--j-accent-08);border:1px solid var(--j-accent-25);" +
+        "color:var(--j-accent);font-size:14px;cursor:pointer;font-family:'Courier New',monospace;" +
+        "clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);";
+
+    private string _quickBtn =>
+        "padding:3px 10px;background:var(--j-accent-08);border:1px solid var(--j-accent-18);" +
+        "color:var(--j-accent-70);font-size:8px;letter-spacing:.12em;cursor:pointer;font-family:'Courier New',monospace;" +
+        "clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);";
+}

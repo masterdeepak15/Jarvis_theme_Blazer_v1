@@ -34,7 +34,7 @@
             @if (!string.IsNullOrWhiteSpace(Tag))
             {
                 <span style="font-size:8px;padding:1px 6px;
-                             background:rgba(0,229,255,0.10);color:#22d3ee;
+                             background:var(--j-accent-12);color:var(--j-accent-mid);
                              clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);
                              letter-spacing:0.08em;">
                     @Tag
@@ -57,7 +57,7 @@
     @* Helper text *@
     else if (!string.IsNullOrWhiteSpace(Helper))
     {
-        <div style="margin-top:4px;font-size:9px;color:#334155;letter-spacing:0.06em;">
+        <div style="margin-top:4px;font-size:9px;color:var(--j-text-dim);letter-spacing:0.06em;">
             @Helper
         </div>
     }
@@ -74,7 +74,7 @@
 
     private bool _hasError => !string.IsNullOrWhiteSpace(Error);
 
-    private string _labelColor => _hasError ? "var(--j-red)" : "rgba(0,229,255,0.6)";
+    private string _labelColor => _hasError ? "var(--j-red)" : "var(--j-accent-50)";
 
     private string _wrapStyle =>
         "display:flex;flex-direction:column;width:100%;" +

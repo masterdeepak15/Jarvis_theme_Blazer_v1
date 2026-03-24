@@ -17,7 +17,7 @@
         @* Thumb — diamond shape *@
         <div style="@_thumbStyle"></div>
         @* Active fill *@
-        @if (Value == true)
+        @if (Value)
         {
             <div style="@_fillStyle"></div>
         }
@@ -26,7 +26,7 @@
     @* Label *@
     @if (!string.IsNullOrWhiteSpace(Label))
     {
-        <span style="font-size:10px;color:@(Value == true ? _accentHex : "#475569");
+        <span style="font-size:10px;color:@(Value ? _accentHex : "var(--j-text-muted)");
                      letter-spacing:0.10em;text-transform:uppercase;
                      transition:color 0.2s;user-select:none;">
             @Label
@@ -36,7 +36,7 @@
 </div>
 
 @code {
-    [Parameter] public bool?          Value       { get; set; } = false;
+    [Parameter] public bool          Value       { get; set; } = false;
     [Parameter] public EventCallback<bool> ValueChanged { get; set; }
     [Parameter] public string?        Label       { get; set; }
     [Parameter] public JColor         Color       { get; set; } = JColor.Cyan;
@@ -45,38 +45,32 @@
     private async Task Toggle()
     {
         if (Disabled) return;
-        Value = !(Value ?? false);
-        await ValueChanged.InvokeAsync(Value ?? false);
+        Value = !Value;
+        await ValueChanged.InvokeAsync(Value);
     }
 
-    private string _accentHex => Color switch
-    {
-        JColor.Amber => "#f97316",
-        JColor.Red   => "#ef4444",
-        JColor.Green => "#22c55e",
-        _            => "#00e5ff",
-    };
+    private string _accentHex => "var(--j-accent)";
 
     private string _trackStyle =>
         $"position:relative;width:40px;height:22px;" +
-        $"background:{(Value == true ? _accentHex + "18" : "#0f2333")};" +
-        $"border:1px solid {(Value == true ? _accentHex : "#1e3a4a")};" +
+        $"background:{(Value == true ? _accentHex + "18" : "var(--j-accent-08)")};" +
+        $"border:1px solid {(Value == true ? _accentHex : "var(--j-accent-18)")};" +
         $"clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);" +
         $"transition:background 0.2s,border-color 0.2s;" +
         $"cursor:{(Disabled ? "not-allowed" : "pointer")};" +
-        (Value == true ? $"box-shadow:0 0 8px {_accentHex}44;" : "");
+        (Value == true ? $"box-shadow:0 0 8px var(--j-accent)44;" : "");
 
     private string _thumbStyle =>
         $"position:absolute;top:50%;width:10px;height:10px;" +
-        $"background:{(Value == true ? _accentHex : "#334155")};" +
+        $"background:{(Value == true ? _accentHex : "var(--j-text-dim)")};" +
         $"clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);" +
         $"transition:left 0.2s,background 0.2s;" +
         $"left:{(Value == true ? "24px" : "5px")};" +
         $"transform:translateY(-50%);" +
-        (Value == true ? $"box-shadow:0 0 8px {_accentHex};" : "");
+        (Value == true ? $"box-shadow:0 0 8px var(--j-accent);" : "");
 
     private string _fillStyle =>
         $"position:absolute;inset:0;" +
-        $"background:linear-gradient(90deg,{_accentHex}08,{_accentHex}22);" +
+        $"background:linear-gradient(90deg,var(--j-accent)08,var(--j-accent)22);" +
         "pointer-events:none;";
 }

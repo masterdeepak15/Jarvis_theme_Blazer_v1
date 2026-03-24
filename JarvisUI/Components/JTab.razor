@@ -2,7 +2,7 @@
 @using JarvisUI.Tokens
 @namespace JarvisUI.Components
 
-@* No visible output — registers definition and renders content when active *@
+@* No visible markup — registers with parent JTabs and renders content when active *@
 @if (_parent?.ActiveTab == Key)
 {
     @ChildContent
@@ -17,8 +17,25 @@
 
     [CascadingParameter] private JTabs? _parent { get; set; }
 
+    // Track previous values to detect real changes and avoid re-render loops
+    private string  _prevKey   = "";
+    private string  _prevLabel = "";
+    private string? _prevIcon;
+    private string? _prevBadge;
+
     protected override void OnInitialized()
     {
+        _prevKey = Key; _prevLabel = Label; _prevIcon = Icon; _prevBadge = Badge;
         _parent?.RegisterTab(new JTabs.JTabDefinition(Key, Label, Icon, Badge));
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Only notify parent if something actually changed — prevents infinite render loop
+        if (Key   == _prevKey   && Label == _prevLabel &&
+            Icon  == _prevIcon  && Badge == _prevBadge) return;
+
+        _prevKey = Key; _prevLabel = Label; _prevIcon = Icon; _prevBadge = Badge;
+        _parent?.UpdateTab(new JTabs.JTabDefinition(Key, Label, Icon, Badge));
     }
 }

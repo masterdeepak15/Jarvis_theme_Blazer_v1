@@ -1,0 +1,170 @@
+@* ================================================================
+   JDatePicker — JARVIS UI HUD Date Picker
+   Angular calendar grid with month/year navigation.
+   Pure Blazor — no JS, no external lib.
+================================================================ *@
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+@* Outer wrapper — NO clip-path here so absolute dropdown is not clipped *@
+<div style="font-family:'Courier New',monospace;position:relative;@_wrapW"
+     @onfocusout="OnFocusOut" tabindex="-1">
+
+    @* ── Input trigger (when ShowInput=true) ── *@
+    @if (ShowInput)
+    {
+        @if (!string.IsNullOrWhiteSpace(Label))
+        {
+            <div style="font-size:9px;color:var(--j-accent-70);letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px;">@Label</div>
+        }
+        @* Input trigger — clip-path ONLY on this div, not the parent *@
+        <div @onclick="TogglePicker" @onclick:stopPropagation="true"
+             style="display:flex;align-items:center;gap:8px;padding:9px 14px;
+                    background:var(--j-bg-card);border:1px solid @(_open?"var(--j-accent)":"var(--j-accent-25)");
+                    cursor:pointer;user-select:none;
+                    clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);
+                    transition:border-color .15s;position:relative;overflow:hidden;">
+            <div style="position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--j-accent);"></div>
+            <span style="font-size:11px;color:@(Value.HasValue?"var(--j-text-primary)":"var(--j-text-dim)");letter-spacing:.06em;">
+                @(Value.HasValue ? Value.Value.ToString("dd MMM yyyy") : Placeholder)
+            </span>
+            <span style="margin-left:auto;font-size:12px;color:var(--j-accent);">@(_open ? "✕" : "📅")</span>
+        </div>
+    }
+
+    @* ── Calendar panel ── *@
+    @if (_open || !ShowInput)
+    {
+        <div @onclick:stopPropagation="true" style="@_panelStyle">
+            <div style="position:absolute;left:0;right:0;height:1px;top:0;
+                        background:linear-gradient(90deg,transparent,var(--j-accent-70),transparent);
+                        animation:j-scan-v 3s ease-in-out infinite;pointer-events:none;"></div>
+
+            @* ── Header ── *@
+            <div style="display:flex;align-items:center;justify-content:space-between;
+                        padding:10px 14px;border-bottom:1px solid var(--j-accent-18);">
+                <button @onclick="PrevMonth" style="@_navBtn">‹</button>
+                <div style="display:flex;gap:6px;align-items:center;">
+                    <span style="font-size:11px;font-weight:700;color:var(--j-accent);letter-spacing:.10em;">
+                        @_view.ToString("MMMM").ToUpper()
+                    </span>
+                    <span style="font-size:11px;color:var(--j-text-muted);letter-spacing:.06em;">@_view.Year</span>
+                </div>
+                <button @onclick="NextMonth" style="@_navBtn">›</button>
+            </div>
+
+            @* ── Day-of-week header ── *@
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:6px 8px 2px;">
+                @foreach (var d in _dayHeaders)
+                {
+                    <div style="text-align:center;font-size:8px;color:var(--j-accent-50);letter-spacing:.10em;padding:3px 0;">@d</div>
+                }
+            </div>
+
+            @* ── Day grid ── *@
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:2px 8px 8px;">
+                @for (int b = 0; b < _startDow; b++) { <div></div> }
+                @for (int day = 1; day <= _daysInMonth; day++)
+                {
+                    var d    = new DateTime(_view.Year, _view.Month, day);
+                    bool sel = Value.HasValue && Value.Value.Date == d;
+                    bool tod = d == DateTime.Today;
+                    bool dis = (MinDate.HasValue && d < MinDate.Value.Date) ||
+                               (MaxDate.HasValue && d > MaxDate.Value.Date);
+                    var dd   = day;
+                    <button @onclick="() => SelectDay(dd)" disabled="@dis" style="@DayStyle(sel, tod, dis)">@day</button>
+                }
+            </div>
+
+            @* ── Quick selectors ── *@
+            @if (ShowQuick)
+            {
+                <div style="display:flex;gap:4px;padding:0 8px 8px;flex-wrap:wrap;border-top:1px solid var(--j-accent-08);">
+                    <button @onclick="() => SelectDay(DateTime.Today)" style="@_quickBtn">TODAY</button>
+                    <button @onclick="ClearDate"                        style="@_quickBtn">CLEAR</button>
+                    @if (ShowInput) { <button @onclick="Close" style="@_quickBtn">CLOSE ✕</button> }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public DateTime?       Value        { get; set; }
+    [Parameter] public EventCallback<DateTime?> ValueChanged { get; set; }
+    [Parameter] public DateTime?       MinDate      { get; set; }
+    [Parameter] public DateTime?       MaxDate      { get; set; }
+    [Parameter] public JColor          Color        { get; set; } = JColor.Cyan;
+    [Parameter] public string?         Label        { get; set; }
+    [Parameter] public string          Placeholder  { get; set; } = "SELECT DATE";
+    [Parameter] public bool            ShowInput    { get; set; } = false;
+    [Parameter] public bool            ShowQuick    { get; set; } = true;
+    [Parameter] public string          Width        { get; set; } = "280px";
+
+    private bool     _open = false;
+    private DateTime _view = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+
+    private static readonly string[] _dayHeaders = { "MO","TU","WE","TH","FR","SA","SU" };
+    private int _startDow    => ((int)_view.DayOfWeek + 6) % 7;
+    private int _daysInMonth => DateTime.DaysInMonth(_view.Year, _view.Month);
+    private string _wrapW    => ShowInput ? $"width:{Width};" : "width:fit-content;";
+
+    // Panel — position:absolute with high z-index, NO clip-path so it renders outside parent bounds
+    private string _panelStyle =>
+        (ShowInput ? "position:absolute;top:calc(100% + 4px);left:0;" : "position:relative;") +
+        "z-index:9999;background:var(--j-bg-card);border:1px solid var(--j-accent-35);" +
+        "min-width:280px;overflow:visible;" +
+        "box-shadow:0 8px 32px rgba(0,0,0,.5),0 0 0 1px var(--j-accent-12);";
+
+    private string _navBtn =>
+        "width:28px;height:28px;background:var(--j-accent-08);border:1px solid var(--j-accent-25);" +
+        "color:var(--j-accent);font-size:14px;cursor:pointer;font-family:'Courier New',monospace;" +
+        "clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);";
+
+    private string _quickBtn =>
+        "padding:3px 10px;background:var(--j-accent-08);border:1px solid var(--j-accent-18);" +
+        "color:var(--j-accent-70);font-size:8px;letter-spacing:.12em;cursor:pointer;" +
+        "font-family:'Courier New',monospace;margin-top:4px;" +
+        "clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);";
+
+    private string DayStyle(bool sel, bool tod, bool dis) =>
+        $"width:100%;aspect-ratio:1;" +
+        $"background:{(sel?"var(--j-accent)":tod?"var(--j-accent-12)":"transparent")};" +
+        $"border:{(sel?"1px solid var(--j-accent)":tod?"1px solid var(--j-accent-35)":"1px solid transparent")};" +
+        $"color:{(sel?"var(--j-bg)":tod?"var(--j-accent)":dis?"var(--j-text-dim)":"var(--j-text-secondary)")};" +
+        $"font-size:10px;cursor:{(dis?"not-allowed":"pointer")};font-family:'Courier New',monospace;" +
+        $"clip-path:polygon(3px 0,100% 0,calc(100% - 3px) 100%,0 100%);transition:all .12s;";
+
+    private void TogglePicker() => _open = !_open;
+    private void Close()        => _open = false;
+
+    // Close when focus leaves the entire component (click outside)
+    private async Task OnFocusOut(FocusEventArgs e)
+    {
+        await Task.Delay(150); // Let click events fire first
+        _open = false;
+    }
+
+    private void PrevMonth() =>
+        _view = _view.Month == 1 ? new(_view.Year-1,12,1) : new(_view.Year,_view.Month-1,1);
+    private void NextMonth() =>
+        _view = _view.Month == 12 ? new(_view.Year+1,1,1) : new(_view.Year,_view.Month+1,1);
+
+    private async Task SelectDay(int day)
+    {
+        var d = new DateTime(_view.Year, _view.Month, day);
+        if (MinDate.HasValue && d < MinDate.Value.Date) return;
+        if (MaxDate.HasValue && d > MaxDate.Value.Date) return;
+        Value = d; await ValueChanged.InvokeAsync(Value);
+        if (ShowInput) _open = false;
+    }
+
+    private async Task SelectDay(DateTime d)
+    {
+        _view = new(d.Year, d.Month, 1);
+        Value = d.Date; await ValueChanged.InvokeAsync(Value);
+        if (ShowInput) _open = false;
+    }
+
+    private async Task ClearDate() { Value = null; await ValueChanged.InvokeAsync(null); }
+}

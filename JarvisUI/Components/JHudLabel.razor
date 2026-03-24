@@ -1,0 +1,114 @@
+@* ================================================================
+   JHudLabel — JARVIS UI HUD Display Label (Image-2 style)
+   Sci-fi callout labels: parallelogram chips, circuit lines,
+   connector dots, animated lower-thirds.
+
+   USAGE:
+   <JHudLabel Text="UPLOAD" LabelStyle="JHudLabel.LabelType.Chip" />
+   <JHudLabel Text="NH-90 ITS" SubText="HARIDWAR" LabelStyle="JHudLabel.LabelType.Callout" />
+   <JHudLabel Text="SENSOR-04" LabelStyle="JHudLabel.LabelType.Circuit" Value="99.8%" />
+================================================================ *@
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div class="j-hl j-hl-@_styleClass @_colorClass" style="@_inlineStyle">
+
+    @* CHIP — simple parallelogram tag (top-row of image 2) *@
+    @if (LabelStyle == LabelType.Chip)
+    {
+        <div class="j-hl-chip">
+            @if (ShowDot) { <span class="j-hl-pip"></span> }
+            <span class="j-hl-text">@Text</span>
+            @if (!string.IsNullOrWhiteSpace(Value)) { <span class="j-hl-val">@Value</span> }
+        </div>
+        @if (ShowLine) { <div class="j-hl-line-h"></div> }
+    }
+
+    @* CALLOUT — two-line lower-third with connecting line + dot *@
+    @if (LabelStyle == LabelType.Callout)
+    {
+        <div class="j-hl-callout">
+            <div class="j-hl-callout-inner">
+                @if (!string.IsNullOrWhiteSpace(SubText))
+                {
+                    <div class="j-hl-sub">@SubText</div>
+                }
+                <div class="j-hl-main">@Text</div>
+            </div>
+            @if (ShowLine)
+            {
+                <div class="j-hl-callout-line">
+                    <div class="j-hl-line-seg"></div>
+                    <div class="j-hl-line-dot"></div>
+                </div>
+            }
+        </div>
+    }
+
+    @* CIRCUIT — bracket label with circuit-board arm *@
+    @if (LabelStyle == LabelType.Circuit)
+    {
+        <div class="j-hl-circuit">
+            <div class="j-hl-cir-bracket">
+                <div class="j-hl-cir-label">@Text</div>
+                @if (!string.IsNullOrWhiteSpace(Value))
+                {
+                    <div class="j-hl-cir-val">@Value</div>
+                }
+            </div>
+            @if (ShowLine)
+            {
+                <div class="j-hl-cir-arm">
+                    <div class="j-hl-cir-node"></div>
+                    <div class="j-hl-cir-track"></div>
+                    <div class="j-hl-cir-node j-hl-cir-node-end"></div>
+                </div>
+            }
+        </div>
+    }
+
+    @* BADGE — circle + text (image 2: "90 CONNECT" radial) *@
+    @if (LabelStyle == LabelType.Badge)
+    {
+        <div class="j-hl-badge">
+            <div class="j-hl-badge-ring">
+                <span class="j-hl-badge-val">@(Value ?? Text)</span>
+            </div>
+            <div class="j-hl-badge-label">@Text</div>
+        </div>
+    }
+
+    @* PANEL — bordered info panel (image 2: DATA ANALYSIS) *@
+    @if (LabelStyle == LabelType.Panel)
+    {
+        <div class="j-hl-panel">
+            <div class="j-hl-panel-top">
+                @if (!string.IsNullOrWhiteSpace(SubText)) { <span class="j-hl-panel-sub">@SubText</span> }
+            </div>
+            <div class="j-hl-panel-body">
+                <span class="j-hl-panel-main">@Text</span>
+                @if (!string.IsNullOrWhiteSpace(Value)) { <span class="j-hl-panel-val">@Value</span> }
+            </div>
+            <div class="j-hl-panel-scan"></div>
+        </div>
+    }
+
+</div>
+
+@code {
+    public enum LabelType { Chip, Callout, Circuit, Badge, Panel }
+
+    [Parameter] public LabelType LabelStyle  { get; set; } = LabelType.Chip;
+    [Parameter] public JColor    Color       { get; set; } = JColor.Cyan;
+    [Parameter] public string    Text        { get; set; } = "";
+    [Parameter] public string?   SubText     { get; set; }
+    [Parameter] public string?   Value       { get; set; }
+    [Parameter] public bool      ShowDot     { get; set; } = true;
+    [Parameter] public bool      ShowLine    { get; set; } = true;
+    [Parameter] public bool      Animate     { get; set; } = true;
+    [Parameter] public string?   CustomStyle { get; set; }
+
+    private string _styleClass  => LabelStyle.ToString().ToLowerInvariant();
+    private string _colorClass  => JarvisClasses.Color(Color);
+    private string _inlineStyle => CustomStyle ?? "";
+}

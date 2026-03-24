@@ -40,12 +40,12 @@
 
     private string _style => Color switch
     {
-        JColor.Cyan  => "background:rgba(0,229,255,0.10);color:var(--j-cyan);border:1px solid rgba(0,229,255,0.35);",
-        JColor.Amber => "background:rgba(249,115,22,0.10);color:var(--j-amber);border:1px solid rgba(249,115,22,0.35);",
-        JColor.Red   => "background:rgba(239,68,68,0.10);color:var(--j-red);border:1px solid rgba(239,68,68,0.35);",
-        JColor.Green => "background:rgba(34,197,94,0.10);color:var(--j-green);border:1px solid rgba(34,197,94,0.35);",
-        JColor.Ghost => "background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.15);",
-        _            => "background:rgba(0,229,255,0.10);color:var(--j-cyan);border:1px solid rgba(0,229,255,0.35);",
+        JColor.Cyan  => "background:var(--j-accent-12);color:var(--j-cyan);border:1px solid var(--j-accent-35);",
+        JColor.Amber => "background:var(--j-warn-12);color:var(--j-amber);border:1px solid var(--j-warn-25);",
+        JColor.Red   => "background:var(--j-err-12);color:var(--j-red);border:1px solid var(--j-err-25);",
+        JColor.Green => "background:var(--j-ok-12);color:var(--j-green);border:1px solid var(--j-ok-25);",
+        JColor.Ghost => "background:var(--j-accent-05);color:var(--j-text-muted);border:1px solid var(--j-border-dim);",
+        _            => "background:var(--j-accent-12);color:var(--j-cyan);border:1px solid var(--j-accent-35);",
     } + _sizeStyle + _shapeStyle;
 
     private string _sizeStyle => Size switch

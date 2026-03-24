@@ -38,18 +38,18 @@
 
         @* Inner radial glow *@
         <div style="position:absolute;inset:0;border-radius:50%;
-                    background:radial-gradient(circle at 40% 35%, @_accentGlow 0%, transparent 65%);
+                    background:radial-gradient(circle at 40% 35%, var(--j-accent-25) 0%, transparent 65%);
                     pointer-events:none;"></div>
 
         @* System name *@
         <div style="position:relative;z-index:1;text-align:center;">
             <div style="font-size:@_nameFontSize;font-weight:600;
-                        color:#e0f7ff;letter-spacing:0.16em;text-transform:uppercase;
-                        text-shadow:0 0 16px @_accentHex;
+                        color:var(--j-text-primary);letter-spacing:0.16em;text-transform:uppercase;
+                        text-shadow:0 0 16px var(--j-accent);
                         animation:j-glitch 8s ease-in-out infinite;">
                 @SystemName
             </div>
-            <div style="font-size:@_stateFontSize;color:@_accentHex;
+            <div style="font-size:@_stateFontSize;color:var(--j-accent);
                         letter-spacing:0.14em;text-transform:uppercase;
                         margin-top:2px;
                         animation:j-pulse var(--j-dur-pulse) ease-in-out infinite;">
@@ -62,8 +62,8 @@
     @* ── Orange / active indicator button ── *@
     <div style="@_indicatorStyle" @onclick:stopPropagation="true" @onclick="OnClick">
         <div style="width:10px;height:10px;border-radius:50%;
-                    background:@(Listening ? _accentHex : "#334155");
-                    box-shadow:@(Listening ? $"0 0 12px {_accentHex},0 0 24px {_accentGlow}" : "none");
+                    background:@(Listening ? _accentHex : "var(--j-text-dim)");
+                    box-shadow:@(Listening ? $"0 0 12px var(--j-accent),0 0 24px var(--j-accent-25)" : "none");
                     transition:all 0.3s;
                     animation:@(Listening ? "j-pulse 1.2s ease-in-out infinite" : "none");">
         </div>
@@ -80,26 +80,9 @@
     [Parameter] public EventCallback OnClick    { get; set; }
 
     // ── Color tokens ──────────────────────────────────────────────
-    private string _accentHex => Color switch
-    {
-        JColor.Amber => "#f97316",
-        JColor.Red   => "#ef4444",
-        JColor.Green => "#22c55e",
-        _            => "#00e5ff",
-    };
-    private string _accentGlow => Color switch
-    {
-        JColor.Amber => "rgba(249,115,22,0.30)",
-        JColor.Red   => "rgba(239,68,68,0.30)",
-        JColor.Green => "rgba(34,197,94,0.25)",
-        _            => "rgba(0,229,255,0.25)",
-    };
-    private string _accentDim => Color switch
-    {
-        JColor.Amber => "rgba(249,115,22,0.12)",
-        JColor.Red   => "rgba(239,68,68,0.12)",
-        _            => "rgba(0,229,255,0.10)",
-    };
+    private string _accentHex => "var(--j-accent)";
+    private string _accentGlow => "var(--j-accent-25)";
+    private string _accentDim => "var(--j-accent-12)";
 
     // ── Ring speeds driven by state ───────────────────────────────
     private string _r1Speed => State switch
@@ -144,7 +127,7 @@
     private string _ringStyle(int insetPx, string style, string opacity, string speed, bool reverse) =>
         $"position:absolute;border-radius:50%;" +
         $"inset:{insetPx}px;" +
-        $"border:1px {style} {_accentHex};" +
+        $"border:1px {style} var(--j-accent);" +
         $"opacity:{opacity};" +
         $"animation:j-spin{(reverse ? "-rev" : "")} {speed} linear infinite;";
 
@@ -152,17 +135,17 @@
         $"position:absolute;border-radius:50%;" +
         $"inset:{insetPx}px;" +
         $"border:1.5px solid transparent;" +
-        $"border-top-color:{_accentHex};" +
-        $"border-bottom-color:{_accentHex}66;" +
-        $"box-shadow:0 0 6px {_accentGlow};" +
+        $"border-top-color:var(--j-accent);" +
+        $"border-bottom-color:var(--j-accent)66;" +
+        $"box-shadow:0 0 6px var(--j-accent-25);" +
         $"animation:j-spin{(reverse ? "-rev" : "")} {speed} linear infinite;";
 
     private string _innerStyle =>
         "position:absolute;inset:32px;border-radius:50%;" +
-        $"background:radial-gradient(circle at 38% 36%, {_accentDim}, #020d18 70%);" +
-        $"border:1px solid {_accentHex}44;" +
+        $"background:radial-gradient(circle at 38% 36%, var(--j-accent-12), var(--j-bg) 70%);" +
+        $"border:1px solid var(--j-accent)44;" +
         "display:flex;align-items:center;justify-content:center;" +
-        $"box-shadow:inset 0 0 20px {_accentGlow},0 0 16px {_accentGlow};" +
+        $"box-shadow:inset 0 0 20px var(--j-accent-25),0 0 16px var(--j-accent-25);" +
         "overflow:hidden;";
 
     private string _tickStyle(double angle)
@@ -172,7 +155,7 @@
         double x = 50 + r * Math.Sin(rad);
         double y = 50 - r * Math.Cos(rad);
         return $"position:absolute;width:2px;height:4px;" +
-               $"background:{_accentHex};opacity:0.35;" +
+               $"background:var(--j-accent);opacity:0.35;" +
                $"left:{x:F1}%;top:{y:F1}%;" +
                $"transform:translate(-50%,-50%) rotate({angle}deg);";
     }
@@ -180,8 +163,8 @@
     private string _indicatorStyle =>
         "position:absolute;bottom:18%;left:50%;transform:translateX(-50%);" +
         "width:24px;height:24px;border-radius:50%;" +
-        "background:#020d18;" +
-        $"border:1px solid {_accentHex}44;" +
+        "background:var(--j-bg);" +
+        $"border:1px solid var(--j-accent)44;" +
         "display:flex;align-items:center;justify-content:center;" +
         "cursor:pointer;z-index:2;";
 }

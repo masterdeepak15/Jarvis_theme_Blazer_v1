@@ -22,7 +22,7 @@
         @* Center dot or label *@
         @if (!string.IsNullOrWhiteSpace(Label))
         {
-            <span style="font-size:8px;color:@_accentHex;letter-spacing:0.14em;
+            <span style="font-size:8px;color:var(--j-accent);letter-spacing:0.14em;
                          text-transform:uppercase;padding:0 10px;opacity:0.7;
                          white-space:nowrap;">
                 @Label
@@ -31,9 +31,9 @@
         else if (ShowDot)
         {
             <div style="width:5px;height:5px;flex-shrink:0;
-                        background:@_accentHex;
+                        background:var(--j-accent);
                         clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
-                        box-shadow:0 0 6px @_accentHex;
+                        box-shadow:0 0 6px var(--j-accent);
                         animation:j-pulse 2.5s ease-in-out infinite;
                         margin:0 8px;">
             </div>
@@ -54,9 +54,9 @@ else
         @if (ShowDot)
         {
             <div style="width:5px;height:5px;flex-shrink:0;
-                        background:@_accentHex;
+                        background:var(--j-accent);
                         clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
-                        box-shadow:0 0 6px @_accentHex;
+                        box-shadow:0 0 6px var(--j-accent);
                         animation:j-pulse 2.5s ease-in-out infinite;
                         margin:6px 0;">
             </div>
@@ -80,13 +80,7 @@ else
 
     private string _opacity => Opacity;
 
-    private string _accentHex => Color switch
-    {
-        JColor.Amber => "#f97316",
-        JColor.Red   => "#ef4444",
-        JColor.Green => "#22c55e",
-        _            => "#00e5ff",
-    };
+    private string _accentHex => "var(--j-accent)";
 
     private string _hStyle =>
         $"display:flex;align-items:center;margin:{Margin};width:100%;";

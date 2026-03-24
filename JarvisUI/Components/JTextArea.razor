@@ -15,13 +15,13 @@
     @if (!string.IsNullOrWhiteSpace(Label))
     {
         <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-            <label style="font-size:9px;color:@_accentDim;
+            <label style="font-size:9px;color:var(--j-accent-12);
                           letter-spacing:0.12em;text-transform:uppercase;">
                 @Label
             </label>
             @if (ShowLineCount && !string.IsNullOrWhiteSpace(Value))
             {
-                <span style="font-size:9px;color:#334155;letter-spacing:0.08em;">
+                <span style="font-size:9px;color:var(--j-text-dim);letter-spacing:0.08em;">
                     @_lineCount LN
                 </span>
             }
@@ -31,16 +31,16 @@
     <div style="position:relative;">
         @* Corner brackets *@
         <div style="position:absolute;top:0;left:0;width:8px;height:8px;
-                    border-top:1.5px solid @_accentHex;border-left:1.5px solid @_accentHex;
+                    border-top:1.5px solid var(--j-accent);border-left:1.5px solid var(--j-accent);
                     z-index:1;pointer-events:none;filter:drop-shadow(0 0 3px @_accentHex);"></div>
         <div style="position:absolute;bottom:0;right:0;width:8px;height:8px;
-                    border-bottom:1.5px solid @_accentHex;border-right:1.5px solid @_accentHex;
+                    border-bottom:1.5px solid var(--j-accent);border-right:1.5px solid var(--j-accent);
                     z-index:1;pointer-events:none;filter:drop-shadow(0 0 3px @_accentHex);"></div>
         <div style="position:absolute;top:0;right:0;width:8px;height:8px;
-                    border-top:1.5px solid @_accentHex;border-right:1.5px solid @_accentHex;
+                    border-top:1.5px solid var(--j-accent);border-right:1.5px solid var(--j-accent);
                     z-index:1;pointer-events:none;opacity:0.4;"></div>
         <div style="position:absolute;bottom:0;left:0;width:8px;height:8px;
-                    border-bottom:1.5px solid @_accentHex;border-left:1.5px solid @_accentHex;
+                    border-bottom:1.5px solid var(--j-accent);border-left:1.5px solid var(--j-accent);
                     z-index:1;pointer-events:none;opacity:0.4;"></div>
 
         <textarea rows="@Rows"
@@ -55,7 +55,7 @@
 
     @if (MaxLength < int.MaxValue)
     {
-        <div style="text-align:right;font-size:8px;color:#334155;
+        <div style="text-align:right;font-size:8px;color:var(--j-text-dim);
                     letter-spacing:0.08em;margin-top:3px;">
             @(Value?.Length ?? 0) / @MaxLength
         </div>
@@ -82,20 +82,14 @@
         await ValueChanged.InvokeAsync(Value);
     }
 
-    private string _accentHex => Color switch
-    {
-        JColor.Amber => "#f97316",
-        JColor.Red   => "#ef4444",
-        JColor.Green => "#22c55e",
-        _            => "#00e5ff",
-    };
-    private string _accentDim => $"{_accentHex}66";
+    private string _accentHex => "var(--j-accent)";
+    private string _accentDim => $"var(--j-accent)66";
 
     private string _style =>
         "width:100%;padding:10px 12px;" +
-        "background:#030f1e;" +
-        $"border:1px solid {_accentHex}33;" +
-        "border-radius:0;color:#e0f7ff;" +
+        "background:var(--j-bg-card);" +
+        $"border:1px solid var(--j-accent)33;" +
+        "border-radius:0;color:var(--j-text-primary);" +
         "font-size:12px;font-family:'Courier New',monospace;" +
         "letter-spacing:0.04em;outline:none;resize:vertical;" +
         "box-sizing:border-box;line-height:1.6;" +

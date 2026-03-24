@@ -1,14 +1,14 @@
 using JarvisUI.Tokens;
+using Microsoft.AspNetCore.Components;
 
 namespace JarvisUI.Components;
 
 // ================================================================
-//  JToastService — injectable toast trigger
-//  Registered as Scoped by AddJarvisUI()
+//  JToastService — injectable toast trigger (Scoped)
 //
 //  USAGE:
 //  @inject JToastService Toast
-//  Toast.Show("Skill loaded",  JState.Success);
+//  Toast.Show("Saved",         JState.Success);
 //  Toast.Show("Memory high",   JState.Warning, duration: 6000);
 //  Toast.Show("Engine error",  JState.Error,   title: "CRITICAL");
 // ================================================================
@@ -19,6 +19,7 @@ public class JToastService
 
     public IReadOnlyList<JToastModel> Toasts => _toasts.AsReadOnly();
 
+    // Raised on the calling thread — subscribers must marshal to UI thread themselves
     public event Action? OnChange;
 
     public void Show(
@@ -36,27 +37,31 @@ public class JToastService
         );
 
         _toasts.Add(toast);
-        OnChange?.Invoke();
+        NotifyChange();
 
         if (duration <= 0) return;
 
-        // Auto-remove after duration + animation buffer
-        _ = Task.Delay(duration + 500).ContinueWith(_ =>
-        {
-            Remove(toast.Id);
-        });
+        // Auto-remove after duration + slide-out buffer
+        var id = toast.Id;
+        _ = Task.Delay(duration + 600).ContinueWith(_ => Remove(id));
     }
 
     public void Remove(Guid id)
     {
         _toasts.RemoveAll(t => t.Id == id);
-        OnChange?.Invoke();
+        NotifyChange();
     }
 
     public void Clear()
     {
         _toasts.Clear();
-        OnChange?.Invoke();
+        NotifyChange();
+    }
+
+    private void NotifyChange()
+    {
+        try { OnChange?.Invoke(); }
+        catch { /* subscriber may have been disposed */ }
     }
 }
 

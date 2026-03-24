@@ -1,0 +1,164 @@
+@* ================================================================
+   JThemePicker — Visual Theme Switcher
+   Drop this anywhere in your UI to let users switch themes live.
+   Works with JThemeProvider via cascading parameter or direct ref.
+
+   USAGE — simple preset picker:
+   <JThemePicker @bind-Preset="currentPreset" />
+
+   USAGE — with provider ref for live switching:
+   <JThemePicker Provider="@themeProvider" />
+
+   USAGE — compact icon-only mode:
+   <JThemePicker Compact="true" @bind-Preset="preset" />
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div style="@_wrapStyle">
+
+    @if (!Compact)
+    {
+        <div style="font-size:9px;color:var(--j-accent-70);letter-spacing:.14em;
+                    text-transform:uppercase;margin-bottom:8px;">
+            Theme
+        </div>
+    }
+
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        @foreach (var (preset, color, label) in _presets)
+        {
+            bool active = Preset == preset;
+            <button @onclick="() => SelectPreset(preset)"
+                    title="@label"
+                    style="@SwatchStyle(color, active)">
+                @if (!Compact)
+                {
+                    <span style="font-size:9px;font-family:'Courier New',monospace;
+                                 letter-spacing:.08em;text-transform:uppercase;
+                                 color:@(active ? "var(--j-bg)" : color);margin-top:2px;">
+                        @label
+                    </span>
+                }
+            </button>
+        }
+    </div>
+
+    @if (ShowCustom && !Compact)
+    {
+        <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+            <div style="font-size:9px;color:var(--j-accent-70);letter-spacing:.14em;
+                        text-transform:uppercase;margin-bottom:2px;">
+                Custom accent
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <input type="color"
+                       value="@_customAccent"
+                       @onchange="OnCustomAccentChange"
+                       style="width:36px;height:28px;background:transparent;
+                              border:1px solid var(--j-border);cursor:pointer;
+                              clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);" />
+                <span style="font-size:10px;color:var(--j-text-muted);font-family:'Courier New',monospace;">
+                    @_customAccent
+                </span>
+            </div>
+            <div style="display:flex;gap:6px;">
+                <div style="flex:1;">
+                    <div style="font-size:8px;color:var(--j-text-dim);margin-bottom:3px;">Background</div>
+                    <input type="color" value="@_customBg" @onchange="OnCustomBgChange"
+                           style="width:100%;height:24px;background:transparent;border:1px solid var(--j-border);cursor:pointer;" />
+                </div>
+                <div style="flex:1;">
+                    <div style="font-size:8px;color:var(--j-text-dim);margin-bottom:3px;">Card</div>
+                    <input type="color" value="@_customCard" @onchange="OnCustomCardChange"
+                           style="width:100%;height:24px;background:transparent;border:1px solid var(--j-border);cursor:pointer;" />
+                </div>
+            </div>
+            <button @onclick="ApplyCustom"
+                    style="@_applyBtnStyle">
+                Apply Custom
+            </button>
+        </div>
+    }
+
+</div>
+
+@code {
+    [Parameter] public JThemePreset    Preset        { get; set; } = JThemePreset.Cyan;
+    [Parameter] public EventCallback<JThemePreset> PresetChanged { get; set; }
+    [Parameter] public JThemeProvider? Provider      { get; set; }
+    [Parameter] public bool            Compact       { get; set; } = false;
+    [Parameter] public bool            ShowCustom    { get; set; } = true;
+
+    private string _customAccent = "var(--j-accent)";
+    private string _customBg     = "var(--j-bg)";
+    private string _customCard   = "var(--j-bg-card)";
+
+    private static readonly (JThemePreset, string, string)[] _presets = new[]
+    {
+        (JThemePreset.Cyan,   "var(--j-accent)", "Cyan"),
+        (JThemePreset.Amber,  "var(--j-warn)", "Amber"),
+        (JThemePreset.Green,  "var(--j-ok)", "Green"),
+        (JThemePreset.Red,    "var(--j-err)", "Red"),
+        (JThemePreset.Purple, "#a855f7", "Purple"),
+        (JThemePreset.White,  "var(--j-accent-deep)", "White"),
+    };
+
+    private async Task SelectPreset(JThemePreset preset)
+    {
+        Preset = preset;
+        await PresetChanged.InvokeAsync(preset);
+        if (Provider != null)
+            await Provider.SetPresetAsync(preset);
+    }
+
+    private async Task ApplyCustom()
+    {
+        var theme = new JarvisTheme
+        {
+            Name        = "Custom",
+            Preset      = JThemePreset.Custom,
+            Accent      = _customAccent,
+            AccentMid   = _customAccent,
+            AccentDim   = _customAccent,
+            Bg          = _customBg,
+            BgCard      = _customCard,
+            BgCardAlt   = _customCard,
+            TextPrimary = "var(--j-text-primary)",
+        };
+        Preset = JThemePreset.Custom;
+        await PresetChanged.InvokeAsync(JThemePreset.Custom);
+        if (Provider != null)
+            await Provider.SetThemeAsync(theme);
+    }
+
+    private void OnCustomAccentChange(ChangeEventArgs e) =>
+        _customAccent = e.Value?.ToString() ?? _customAccent;
+
+    private void OnCustomBgChange(ChangeEventArgs e) =>
+        _customBg = e.Value?.ToString() ?? _customBg;
+
+    private void OnCustomCardChange(ChangeEventArgs e) =>
+        _customCard = e.Value?.ToString() ?? _customCard;
+
+    private string SwatchStyle(string color, bool active) =>
+        $"width:{(Compact ? "20px" : "48px")};height:{(Compact ? "20px" : "32px")};" +
+        $"background:{color};" +
+        $"border:2px solid {(active ? "var(--j-text-primary)" : "transparent")};" +
+        $"box-shadow:{(active ? $"0 0 12px {color}" : "none")};" +
+        "display:flex;flex-direction:column;align-items:center;justify-content:center;" +
+        "cursor:pointer;" +
+        $"clip-path:polygon({(Compact ? "4px" : "6px")} 0,100% 0,calc(100% - {(Compact ? "4px" : "6px")}) 100%,0 100%);" +
+        "transition:all .15s;";
+
+    private string _wrapStyle =>
+        "font-family:'Courier New',monospace;" +
+        "padding:" + (Compact ? "0" : "12px 14px") + ";";
+
+    private string _applyBtnStyle =>
+        "padding:7px 14px;background:var(--j-accent-12);border:1px solid var(--j-border);" +
+        "color:var(--j-accent);font-family:'Courier New',monospace;font-size:10px;" +
+        "letter-spacing:.10em;text-transform:uppercase;cursor:pointer;" +
+        "clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);";
+}

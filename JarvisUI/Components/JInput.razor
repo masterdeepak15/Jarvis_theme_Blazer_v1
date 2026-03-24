@@ -17,7 +17,7 @@
     @* Label *@
     @if (!string.IsNullOrWhiteSpace(Label))
     {
-        <label style="display:block;font-size:9px;color:@_accentDim;
+        <label style="display:block;font-size:9px;color:var(--j-accent-12);
                       letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px;">
             @Label
         </label>
@@ -26,10 +26,10 @@
     @* Corner brackets *@
     <div style="position:relative;">
         <div style="position:absolute;top:0;left:0;width:8px;height:8px;
-                    border-top:1.5px solid @_accentHex;border-left:1.5px solid @_accentHex;
+                    border-top:1.5px solid var(--j-accent);border-left:1.5px solid var(--j-accent);
                     filter:drop-shadow(0 0 3px @_accentHex);z-index:1;pointer-events:none;"></div>
         <div style="position:absolute;bottom:0;right:0;width:8px;height:8px;
-                    border-bottom:1.5px solid @_accentHex;border-right:1.5px solid @_accentHex;
+                    border-bottom:1.5px solid var(--j-accent);border-right:1.5px solid var(--j-accent);
                     filter:drop-shadow(0 0 3px @_accentHex);z-index:1;pointer-events:none;"></div>
 
         <input type="@Type"
@@ -45,7 +45,7 @@
     @* Helper text *@
     @if (!string.IsNullOrWhiteSpace(HelperText))
     {
-        <div style="font-size:9px;color:#3a5568;margin-top:3px;letter-spacing:0.06em;">@HelperText</div>
+        <div style="font-size:9px;color:var(--j-text-muted);margin-top:3px;letter-spacing:0.06em;">@HelperText</div>
     }
 
 </div>
@@ -76,28 +76,28 @@
 
     private string _accentHex => State switch
     {
-        JState.Warning => "#f97316",
-        JState.Error   => "#ef4444",
-        JState.Success => "#22c55e",
+        JState.Warning => "var(--j-warn)",
+        JState.Error   => "var(--j-err)",
+        JState.Success => "var(--j-ok)",
         _              => Color switch
         {
-            JColor.Amber => "#f97316",
-            JColor.Red   => "#ef4444",
-            JColor.Green => "#22c55e",
-            _            => "#00e5ff",
+            JColor.Amber => "var(--j-warn)",
+            JColor.Red   => "var(--j-err)",
+            JColor.Green => "var(--j-ok)",
+            _            => "var(--j-accent)",
         },
     };
 
-    private string _accentDim => $"{_accentHex}88";
+    private string _accentDim => $"var(--j-accent)88";
 
     private string _wrapStyle => "position:relative;width:100%;";
 
     private string _inputStyle =>
         $"width:100%;padding:10px 14px;" +
-        $"background:#030f1e;" +
-        $"border:1px solid {_accentHex}33;" +
+        $"background:var(--j-bg-card);" +
+        $"border:1px solid var(--j-accent)33;" +
         $"border-radius:0;" +
-        $"color:#e0f7ff;" +
+        $"color:var(--j-text-primary);" +
         $"font-size:12px;" +
         $"font-family:'Courier New',monospace;" +
         $"letter-spacing:0.06em;" +

@@ -34,13 +34,7 @@ else
     [Parameter] public JState        State     { get; set; } = JState.Active;
     [Parameter] public EventCallback OnClick   { get; set; }
 
-    private string _accentHex => Color switch
-    {
-        JColor.Amber => "#f97316",
-        JColor.Red   => "#ef4444",
-        JColor.Green => "#22c55e",
-        _            => "#00e5ff",
-    };
+    private string _accentHex => "var(--j-accent)";
 
     private string _class => Active ? "j-nav-item j-nav-item--active" : "j-nav-item";
 
@@ -49,15 +43,15 @@ else
     private string _style =>
         "position:relative;display:flex;align-items:center;gap:10px;" +
         $"padding:10px 14px 10px {(Active ? "16px" : "14px")};" +
-        $"background:{(Active ? $"rgba(0,229,255,0.07)" : "transparent")};" +
-        $"color:{(Active ? _accentHex : "#475569")};" +
+        $"background:{(Active ? $"var(--j-accent-08)" : "transparent")};" +
+        $"color:{(Active ? _accentHex : "var(--j-text-muted)")};" +
         "font-family:'Courier New',monospace;font-size:11px;" +
         "letter-spacing:0.10em;text-transform:uppercase;" +
         "text-decoration:none;" +
         "transition:all 0.15s ease;" +
         $"border-left:2px solid {(Active ? _accentHex : "transparent")};" +
         $"clip-path:polygon(0 0,100% 0,calc(100% - 6px) 100%,0 100%);" +
-        (Active ? $"box-shadow:-2px 0 12px {_accentHex}22;" : "");
+        (Active ? $"box-shadow:-2px 0 12px var(--j-accent)22;" : "");
 
     private RenderFragment _inner => builder =>
     {
@@ -69,8 +63,8 @@ else
             builder.OpenElement(seq++, "div");
             builder.AddAttribute(seq++, "style",
                 $"position:absolute;left:0;top:50%;transform:translateY(-50%);" +
-                $"width:2px;height:60%;background:{_accentHex};" +
-                $"box-shadow:0 0 8px {_accentHex};");
+                $"width:2px;height:60%;background:var(--j-accent);" +
+                $"box-shadow:0 0 8px var(--j-accent);");
             builder.CloseElement();
         }
 
@@ -80,8 +74,8 @@ else
             builder.OpenElement(seq++, "span");
             builder.AddAttribute(seq++, "style",
                 $"font-style:normal;font-size:14px;flex-shrink:0;" +
-                $"color:{(Active ? _accentHex : "#334155")};" +
-                (Active ? $"filter:drop-shadow(0 0 4px {_accentHex});" : ""));
+                $"color:{(Active ? _accentHex : "var(--j-text-dim)")};" +
+                (Active ? $"filter:drop-shadow(0 0 4px var(--j-accent));" : ""));
             builder.AddContent(seq++, Icon);
             builder.CloseElement();
         }
@@ -97,9 +91,9 @@ else
         {
             builder.OpenElement(seq++, "span");
             builder.AddAttribute(seq++, "style",
-                $"font-size:9px;color:{_accentHex};" +
-                $"background:{_accentHex}18;" +
-                $"border:1px solid {_accentHex}33;" +
+                $"font-size:9px;color:var(--j-accent);" +
+                $"background:var(--j-accent)18;" +
+                $"border:1px solid var(--j-accent)33;" +
                 "padding:1px 6px;" +
                 "clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);");
             builder.AddContent(seq++, Badge);

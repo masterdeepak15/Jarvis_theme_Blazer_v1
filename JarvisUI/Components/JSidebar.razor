@@ -23,7 +23,7 @@
 
     @* Right-edge notch border *@
     <div style="position:absolute;top:0;bottom:0;right:0;width:1px;
-                background:linear-gradient(180deg,var(--j-cyan),rgba(0,229,255,0.1) 60%,transparent);
+                background:linear-gradient(180deg,var(--j-cyan),var(--j-accent-08) 60%,transparent);
                 opacity:0.4;pointer-events:none;"></div>
 
     @* Scan line sweeping top→bottom *@
@@ -34,17 +34,17 @@
                 pointer-events:none;"></div>
 
     @* ── Brand header ── *@
-    <div style="padding:16px 14px 12px;border-bottom:1px solid rgba(0,229,255,0.10);
+    <div style="padding:16px 14px 12px;border-bottom:1px solid var(--j-accent-12);
                 display:flex;align-items:center;gap:10px;">
         <JSpinner Size="32px" Color="@Color" State="@State" ShowLabel="false" />
         <div>
-            <div style="font-size:13px;font-weight:600;color:#e0f7ff;
+            <div style="font-size:13px;font-weight:600;color:var(--j-text-primary);
                         letter-spacing:0.14em;text-transform:uppercase;
-                        text-shadow:0 0 12px @_accentHex;
+                        text-shadow:0 0 12px var(--j-accent);
                         animation:j-glitch 8s ease-in-out infinite;">
                 @SystemName
             </div>
-            <div style="font-size:9px;color:@_accentHex;letter-spacing:0.12em;opacity:0.7;">
+            <div style="font-size:9px;color:var(--j-accent);letter-spacing:0.12em;opacity:0.7;">
                 @Version
             </div>
         </div>
@@ -57,7 +57,7 @@
     @* ── Section label ── *@
     @if (!string.IsNullOrWhiteSpace(NavLabel))
     {
-        <div style="padding:10px 14px 4px;font-size:8px;color:#334155;
+        <div style="padding:10px 14px 4px;font-size:8px;color:var(--j-text-dim);
                     letter-spacing:0.16em;text-transform:uppercase;">
             @NavLabel
         </div>
@@ -69,7 +69,7 @@
     </nav>
 
     @* ── Divider ── *@
-    <div style="height:1px;background:linear-gradient(90deg,rgba(0,229,255,0.2),transparent);
+    <div style="height:1px;background:linear-gradient(90deg,var(--j-accent-18),transparent);
                 margin:0 14px;"></div>
 
     @* ── Footer slot ── *@
@@ -81,12 +81,12 @@
     }
 
     @* ── Footer system label ── *@
-    <div style="padding:8px 14px;border-top:1px solid rgba(0,229,255,0.08);
+    <div style="padding:8px 14px;border-top:1px solid var(--j-accent-08);
                 display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-size:8px;color:#334155;letter-spacing:0.12em;text-transform:uppercase;">
+        <span style="font-size:8px;color:var(--j-text-dim);letter-spacing:0.12em;text-transform:uppercase;">
             SYS · @_timeLabel
         </span>
-        <span style="font-size:8px;color:@_accentHex;animation:j-blink 2s step-end infinite;">
+        <span style="font-size:8px;color:var(--j-accent);animation:j-blink 2s step-end infinite;">
             ● LIVE
         </span>
     </div>
@@ -103,13 +103,7 @@
     [Parameter] public RenderFragment? NavContent  { get; set; }
     [Parameter] public RenderFragment? FooterContent { get; set; }
 
-    private string _accentHex => Color switch
-    {
-        JColor.Amber => "#f97316",
-        JColor.Red   => "#ef4444",
-        JColor.Green => "#22c55e",
-        _            => "#00e5ff",
-    };
+    private string _accentHex => "var(--j-accent)";
 
     private string _timeLabel => DateTime.Now.ToString("HH:mm");
 
@@ -118,13 +112,13 @@
         JState.Processing => "background:var(--j-cyan);animation-duration:0.8s;",
         JState.Warning    => "background:var(--j-amber);",
         JState.Error      => "background:var(--j-red);animation-duration:0.5s;",
-        JState.Idle       => "background:#334155;animation:none;",
+        JState.Idle       => "background:var(--j-text-dim);animation:none;",
         _                 => "",
     };
 
     private string _sidebarStyle =>
         $"position:relative;width:{Width};min-height:100vh;" +
-        "background:#020d18;display:flex;flex-direction:column;" +
+        "background:var(--j-bg);display:flex;flex-direction:column;" +
         "font-family:'Courier New',monospace;overflow:hidden;" +
         "flex-shrink:0;";
 }

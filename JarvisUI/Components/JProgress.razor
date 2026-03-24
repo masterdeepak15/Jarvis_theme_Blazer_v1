@@ -13,11 +13,11 @@
 
 @if (!string.IsNullOrWhiteSpace(Label))
 {
-    <div style="font-size:9px;color:rgba(0,229,255,0.6);letter-spacing:0.10em;text-transform:uppercase;margin-bottom:4px;display:flex;justify-content:space-between;">
+    <div style="font-size:9px;color:var(--j-accent-50);letter-spacing:0.10em;text-transform:uppercase;margin-bottom:4px;display:flex;justify-content:space-between;">
         <span>@Label</span>
         @if (ShowPercent && !Indeterminate)
         {
-            <span style="color:#e0f7ff;">@Value%</span>
+            <span style="color:var(--j-text-primary);">@Value%</span>
         }
     </div>
 }
@@ -69,24 +69,12 @@ else
     private int _activeTicks => (int)Math.Round(Value / 100.0 * Total);
 
     // ── Colors ────────────────────────────────────────────────────
-    private string _accentA => State switch
-    {
-        JState.Warning => "#92400e",
-        JState.Error   => "#7f1d1d",
-        JState.Success => "#14532d",
-        _              => "#0891b2",
-    };
-    private string _accentB => State switch
-    {
-        JState.Warning => "var(--j-amber)",
-        JState.Error   => "var(--j-red)",
-        JState.Success => "var(--j-green)",
-        _              => "var(--j-cyan)",
-    };
+    private string _accentA => "var(--j-accent-deep)";
+    private string _accentB => "var(--j-accent)";
 
     // ── Bar styles ────────────────────────────────────────────────
     private string _trackStyle =>
-        "height:5px;background:#0f2333;" +
+        "height:5px;background:var(--j-accent-08);" +
         "clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);";
 
     private string _fillStyle =>

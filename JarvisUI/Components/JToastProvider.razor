@@ -1,22 +1,11 @@
 @* ================================================================
-   JToast + JToastProvider — JARVIS UI Toast Notifications
-   Corner-stacked HUD notifications with auto-dismiss.
+   JToastProvider — Container for JToast notifications.
+   Place ONCE in App.razor or MainLayout (already inside JPageLayout).
 
-   SETUP (Program.cs):
-   builder.Services.AddJarvisUI();
-   // JToastService is registered by AddJarvisUI()
-
-   SETUP (App.razor or MainLayout.razor):
-   <JToastProvider />
-
-   USAGE (inject in any page/component):
-   @inject JToastService Toast
-   Toast.Show("Skill loaded", JState.Success);
-   Toast.Show("Memory high", JState.Warning, duration: 6000);
-   Toast.Show("Engine error", JState.Error, title: "CRITICAL");
+   SETUP: <JToastProvider />
+   USAGE: @inject JToastService Toast  →  Toast.Show("msg")
 ================================================================ *@
 
-@* ── JToastProvider ─────────────────────────────────────────── *@
 @using JarvisUI.Tokens
 @namespace JarvisUI.Components
 @implements IDisposable
@@ -33,13 +22,23 @@
 @code {
     [Inject] private JToastService _service { get; set; } = default!;
 
+    private bool _disposed = false;
+
     protected override void OnInitialized()
     {
-        _service.OnChange += StateHasChanged;
+        _service.OnChange += HandleChange;
+    }
+
+    // OnChange fires from background Task.Delay threads — must use InvokeAsync
+    private void HandleChange()
+    {
+        if (_disposed) return;
+        _ = InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()
     {
-        _service.OnChange -= StateHasChanged;
+        _disposed = true;
+        _service.OnChange -= HandleChange;
     }
 }

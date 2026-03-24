@@ -24,10 +24,10 @@
 
     @* Top accent bar + scan *@
     <div style="position:relative;height:2px;
-                background:linear-gradient(90deg,var(--j-cyan),rgba(0,229,255,0.1));
+                background:linear-gradient(90deg,var(--j-cyan),var(--j-accent-08));
                 overflow:hidden;">
         <div style="position:absolute;inset:0;width:60px;
-                    background:linear-gradient(90deg,transparent,#fff,transparent);
+                    background:linear-gradient(90deg,transparent,var(--j-text-primary),transparent);
                     animation:j-scan-h 2.5s ease-in-out infinite;"></div>
     </div>
 
@@ -53,7 +53,7 @@
                     <tr>
                         <td colspan="@Columns.Count" style="@_emptyStyle">
                             <JSpinner Size="24px" ShowLabel="false" />
-                            <span style="margin-left:10px;font-size:10px;color:#334155;letter-spacing:0.10em;">
+                            <span style="margin-left:10px;font-size:10px;color:var(--j-text-dim);letter-spacing:0.10em;">
                                 NO DATA
                             </span>
                         </td>
@@ -98,12 +98,12 @@
     </div>
 
     @* Bottom accent line *@
-    <div style="height:1px;background:linear-gradient(90deg,rgba(0,229,255,0.3),transparent);"></div>
+    <div style="height:1px;background:linear-gradient(90deg,var(--j-accent-25),transparent);"></div>
 
     @* Row count *@
     @if (ShowFooter && Rows != null)
     {
-        <div style="padding:6px 14px;font-size:8px;color:#334155;
+        <div style="padding:6px 14px;font-size:8px;color:var(--j-text-dim);
                     letter-spacing:0.10em;text-transform:uppercase;
                     display:flex;justify-content:space-between;">
             <span>@Rows.Count RECORDS</span>
@@ -147,11 +147,11 @@
         };
     }
 
-    private string _accentHex => "#00e5ff";
+    private string _accentHex => "var(--j-accent)";
 
     private string _wrapStyle =>
-        "position:relative;background:#030f1e;overflow:hidden;" +
-        "border:1px solid rgba(0,229,255,0.12);";
+        "position:relative;background:var(--j-bg-card);overflow:hidden;" +
+        "border:1px solid var(--j-accent-12);";
 
     private string _tableStyle =>
         "width:100%;border-collapse:collapse;" +
@@ -159,27 +159,27 @@
 
     private string _thStyle(JTableColumn col) =>
         $"padding:8px 14px;text-align:{col.Align};" +
-        "color:#22d3ee;font-size:9px;font-weight:600;" +
+        "color:var(--j-accent-mid);font-size:9px;font-weight:600;" +
         "letter-spacing:0.14em;text-transform:uppercase;" +
-        "background:rgba(0,229,255,0.06);" +
-        "border-bottom:1px solid rgba(0,229,255,0.20);" +
+        "background:var(--j-accent-05);" +
+        "border-bottom:1px solid var(--j-accent-18);" +
         (col.Width != null ? $"width:{col.Width};" : "");
 
     private string _trStyle(int idx, JState state)
     {
         bool hovered = idx == _hoveredRow;
         string bg = hovered
-            ? "rgba(0,229,255,0.06)"
+            ? "var(--j-accent-05)"
             : idx % 2 == 0
                 ? "transparent"
-                : "rgba(0,229,255,0.02)";
+                : "var(--j-accent-05)";
 
         string border = state switch
         {
-            JState.Warning => "border-left:2px solid #f97316;",
-            JState.Error   => "border-left:2px solid #ef4444;",
-            JState.Success => "border-left:2px solid #22c55e;",
-            _              => hovered ? "border-left:2px solid rgba(0,229,255,0.6);" : "border-left:2px solid transparent;",
+            JState.Warning => "border-left:2px solid var(--j-warn);",
+            JState.Error   => "border-left:2px solid var(--j-err);",
+            JState.Success => "border-left:2px solid var(--j-ok);",
+            _              => hovered ? "border-left:2px solid var(--j-accent-50);" : "border-left:2px solid transparent;",
         };
 
         return $"background:{bg};transition:background 0.12s;{border}";
@@ -187,17 +187,17 @@
 
     private string _tdStyle(JTableColumn col, JState state) =>
         $"padding:8px 14px;text-align:{col.Align};" +
-        "border-bottom:1px solid rgba(0,229,255,0.06);" +
+        "border-bottom:1px solid var(--j-accent-05);" +
         (state switch
         {
-            JState.Warning => "color:#fb923c;",
-            JState.Error   => "color:#f87171;",
-            JState.Success => "color:#4ade80;",
-            JState.Idle    => "color:#475569;",
-            _              => "color:#94a3b8;",
+            JState.Warning => "color:var(--j-warn);",
+            JState.Error   => "color:var(--j-err);",
+            JState.Success => "color:var(--j-ok);",
+            JState.Idle    => "color:var(--j-text-muted);",
+            _              => "color:var(--j-text-secondary);",
         });
 
     private string _emptyStyle =>
-        "padding:24px;text-align:center;color:#334155;" +
+        "padding:24px;text-align:center;color:var(--j-text-dim);" +
         "display:flex;align-items:center;justify-content:center;";
 }

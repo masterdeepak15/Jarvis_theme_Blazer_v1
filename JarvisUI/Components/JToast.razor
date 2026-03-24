@@ -1,39 +1,40 @@
 @* Individual toast item — rendered by JToastProvider *@
 @using JarvisUI.Tokens
 @namespace JarvisUI.Components
+@implements IDisposable
 
-<div style="@_style;pointer-events:all;" @onclick="() => OnDismiss.InvokeAsync()">
+<div style="@_style;pointer-events:all;" @onclick="Dismiss">
 
     @* Left accent rail *@
     <div style="position:absolute;top:0;bottom:0;left:0;width:2px;
-                background:@_accentHex;
-                box-shadow:0 0 8px @_accentHex;
+                background:@_stateColor;
+                box-shadow:0 0 8px @_stateColor;
                 @_railAnim"></div>
 
     @* Scan line *@
     <div style="position:absolute;left:0;right:0;height:1px;top:-1px;
-                background:linear-gradient(90deg,transparent,@_accentHex,transparent);
+                background:linear-gradient(90deg,transparent,@_stateColor,transparent);
                 animation:j-scan-v 2.5s ease-in-out infinite;
                 pointer-events:none;"></div>
 
     @* Corner accent *@
     <div style="position:absolute;top:0;right:0;width:0;height:0;
                 border:8px solid transparent;
-                border-top-color:@_accentHex;border-right-color:@_accentHex;
+                border-top-color:@_stateColor;border-right-color:@_stateColor;
                 opacity:0.5;"></div>
 
     <div style="display:flex;align-items:flex-start;gap:8px;padding:10px 14px 10px 16px;">
-        <span style="font-style:normal;font-size:13px;color:@_accentHex;flex-shrink:0;
-                     filter:drop-shadow(0 0 4px @_accentHex);">@_icon</span>
+        <span style="font-style:normal;font-size:13px;color:@_stateColor;flex-shrink:0;
+                     filter:drop-shadow(0 0 4px @_stateColor);">@_icon</span>
         <div style="flex:1;min-width:0;">
             @if (!string.IsNullOrWhiteSpace(Model.Title))
             {
-                <div style="font-size:9px;color:@_accentHex;letter-spacing:0.12em;
+                <div style="font-size:9px;color:@_stateColor;letter-spacing:0.12em;
                             text-transform:uppercase;margin-bottom:2px;font-weight:600;">
                     @Model.Title
                 </div>
             }
-            <div style="font-size:11px;color:#94a3b8;letter-spacing:0.04em;line-height:1.4;">
+            <div style="font-size:11px;color:var(--j-text-secondary);letter-spacing:0.04em;line-height:1.4;">
                 @Model.Message
             </div>
         </div>
@@ -42,7 +43,8 @@
     @* Auto-dismiss progress bar *@
     @if (Model.Duration > 0)
     {
-        <div style="height:2px;background:rgba(0,229,255,0.1);position:relative;overflow:hidden;">
+        @* <div style="height:2px;background:var(--j-accent-08);position:relative;overflow:hidden;"> *@
+        <div style="height:2px;background:color-mix(in srgb,@_stateColor 8%,transparent);position:relative;overflow:hidden;">
             <div style="@_progressStyle"></div>
         </div>
     }
@@ -50,30 +52,49 @@
 </div>
 
 @using System.Timers
-@implements IDisposable
 @code {
     [Parameter] public JToastModel   Model     { get; set; } = default!;
     [Parameter] public EventCallback OnDismiss { get; set; }
 
-    private Timer? _timer;
+    private Timer?  _timer;
+    private bool    _dismissed = false;
 
     protected override void OnAfterRender(bool firstRender)
     {
-        if (!firstRender || Model.Duration <= 0) return;
+        if (!firstRender || Model.Duration <= 0 || _timer != null) return;
+
         _timer = new Timer(Model.Duration);
-        _timer.Elapsed += async (_, _) => await OnDismiss.InvokeAsync();
+        _timer.Elapsed += OnTimerElapsed;
         _timer.AutoReset = false;
         _timer.Start();
     }
 
-    public void Dispose() => _timer?.Dispose();
-
-    private string _accentHex => Model.State switch
+    // Timer fires on thread-pool — use InvokeAsync to marshal to Blazor sync context
+    private void OnTimerElapsed(object? sender, ElapsedEventArgs e)
     {
-        JState.Warning => "#f97316",
-        JState.Error   => "#ef4444",
-        JState.Success => "#22c55e",
-        _              => "#00e5ff",
+        _ = InvokeAsync(Dismiss);
+    }
+
+    private async Task Dismiss()
+    {
+        if (_dismissed) return;
+        _dismissed = true;
+        await OnDismiss.InvokeAsync();
+    }
+
+    public void Dispose()
+    {
+        _timer?.Stop();
+        _timer?.Dispose();
+        _timer = null;
+    }
+
+    private string _stateColor => Model.State switch
+    {
+        JState.Warning => "var(--j-warn)",
+        JState.Error   => "var(--j-err)",
+        JState.Success => "var(--j-ok)",
+        _              => "var(--j-accent)",
     };
 
     private string _icon => Model.State switch
@@ -91,16 +112,29 @@
         _              => "",
     };
 
+    // private string _style =>
+    //     "position:relative;overflow:hidden;cursor:pointer;" +
+    //     "background:var(--j-bg-card);border:1px solid var(--j-accent-25);" +
+    //     "clip-path:polygon(8px 0%,100% 0%,100% calc(100% - 8px),calc(100% - 8px) 100%,0% 100%,0% 8px);" +
+    //     "box-shadow:0 0 16px var(--j-accent-18);" +
+    //     "font-family:'Courier New',monospace;" +
+    //     "animation:j-slide-in 0.3s ease-out both;";
+
     private string _style =>
-        "position:relative;overflow:hidden;cursor:pointer;" +
-        $"background:#030f1e;border:1px solid {_accentHex}25;" +
-        $"clip-path:polygon(8px 0%,100% 0%,100% calc(100% - 8px),calc(100% - 8px) 100%,0% 100%,0% 8px);" +
-        $"box-shadow:0 0 16px {_accentHex}18;" +
-        "font-family:'Courier New',monospace;" +
-        "animation:j-slide-in 0.3s ease-out both;";
+            "position:relative;overflow:hidden;cursor:pointer;" +
+            $"background:var(--j-bg-card);border:1px solid color-mix(in srgb,{_stateColor} 25%,transparent);" +
+            $"clip-path:polygon(8px 0%,100% 0%,100% calc(100% - 8px),calc(100% - 8px) 100%,0% 100%,0% 8px);" +
+            $"box-shadow:0 0 16px color-mix(in srgb,{_stateColor} 18%,transparent);" +
+            "font-family:'Courier New',monospace;" +
+            "animation:j-slide-in 0.3s ease-out both;";
+
+    // private string _progressStyle =>
+    //     "position:absolute;top:0;left:0;height:100%;" +
+    //     "background:linear-gradient(90deg,var(--j-accent-80),var(--j-accent));" +
+    //     $"animation:j-bar-grow {Model.Duration}ms linear forwards;--j-w:100%;";
 
     private string _progressStyle =>
-        $"position:absolute;top:0;left:0;height:100%;" +
-        $"background:linear-gradient(90deg,{_accentHex}88,{_accentHex});" +
+        "position:absolute;top:0;left:0;height:100%;" +
+        $"background:linear-gradient(90deg,color-mix(in srgb,{_stateColor} 80%,transparent),{_stateColor});" +
         $"animation:j-bar-grow {Model.Duration}ms linear forwards;--j-w:100%;";
 }

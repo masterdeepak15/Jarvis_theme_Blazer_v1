@@ -34,9 +34,9 @@
                 int  h   = cur ? 18 : 10;
                 <div @onclick="() => GoTo(p)"
                      style="width:6px;height:@(h)px;cursor:pointer;
-                            background:@(cur ? _accentHex : "#1e3a4a");
+                            background:@(cur ? _accentHex : "var(--j-accent-18)");
                             clip-path:polygon(0 15%,100% 0,100% 100%,0 85%);
-                            box-shadow:@(cur ? $"0 0 8px {_accentHex}" : "none");
+                            box-shadow:@(cur ? $"0 0 8px var(--j-accent)" : "none");
                             transition:all 0.2s;
                             @(cur ? "animation:j-pulse 2s ease-in-out infinite;" : "")">
                 </div>
@@ -50,7 +50,7 @@
         {
             if (p == -1)
             {
-                <span style="color:#334155;font-size:10px;padding:0 4px;">···</span>
+                <span style="color:var(--j-text-dim);font-size:10px;padding:0 4px;">···</span>
             }
             else
             {
@@ -76,7 +76,7 @@
     @* Page info *@
     @if (ShowInfo)
     {
-        <span style="font-size:9px;color:#334155;letter-spacing:0.10em;
+        <span style="font-size:9px;color:var(--j-text-dim);letter-spacing:0.10em;
                      text-transform:uppercase;margin-left:8px;">
             @Page / @TotalPages
         </span>
@@ -101,11 +101,7 @@
         await PageChanged.InvokeAsync(p);
     }
 
-    private string _accentHex => Color switch
-    {
-        JColor.Amber => "#f97316",
-        _            => "#00e5ff",
-    };
+    private string _accentHex => "var(--j-accent)";
 
     private IEnumerable<int> _visiblePages
     {
@@ -125,10 +121,10 @@
     }
 
     private string _btnStyle(bool active, bool disabled) =>
-        $"padding:5px 10px;background:{(active ? $"{_accentHex}18" : "transparent")};" +
-        $"border:1px solid {(active ? _accentHex : (disabled ? "#0f2333" : "#1e3a4a"))};" +
-        $"color:{(active ? _accentHex : (disabled ? "#1e3a4a" : "#475569"))};" +
-        $"box-shadow:{(active ? $"0 0 8px {_accentHex}44" : "none")};" +
+        $"padding:5px 10px;background:{(active ? $"var(--j-accent)18" : "transparent")};" +
+        $"border:1px solid {(active ? _accentHex : (disabled ? "var(--j-accent-08)" : "var(--j-accent-18)"))};" +
+        $"color:{(active ? _accentHex : (disabled ? "var(--j-accent-18)" : "var(--j-text-muted)"))};" +
+        $"box-shadow:{(active ? $"0 0 8px var(--j-accent)44" : "none")};" +
         "font-size:11px;font-family:'Courier New',monospace;letter-spacing:0.08em;" +
         $"clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);" +
         $"cursor:{(disabled ? "not-allowed" : "pointer")};transition:all 0.15s;";

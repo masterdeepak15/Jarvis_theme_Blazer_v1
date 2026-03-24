@@ -33,9 +33,9 @@
 
     private string _barColor => State switch
     {
-        JState.Warning => "background:linear-gradient(90deg,#92400e,var(--j-amber));",
-        JState.Error   => "background:linear-gradient(90deg,#7f1d1d,var(--j-red));",
-        JState.Success => "background:linear-gradient(90deg,#14532d,var(--j-green));",
+        JState.Warning => "background:linear-gradient(90deg,var(--j-warn-12),var(--j-warn));",
+        JState.Error   => "background:linear-gradient(90deg,var(--j-err-12),var(--j-err));",
+        JState.Success => "background:linear-gradient(90deg,var(--j-ok-12),var(--j-ok));",
         _              => "",
     };
 

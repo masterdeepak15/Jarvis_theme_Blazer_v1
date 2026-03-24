@@ -1,0 +1,65 @@
+@* ================================================================
+   JThemeProvider — JARVIS UI Theme Provider
+   Place ONCE at the top of your app (App.razor or MainLayout).
+   Writes CSS custom properties to :root via a <style> tag.
+   No JavaScript required — pure Blazor SSR compatible.
+
+   USAGE — preset:
+   <JThemeProvider Preset="JThemePreset.Amber" />
+
+   USAGE — fully custom:
+   <JThemeProvider Theme="@myTheme" />
+
+   USAGE — bind to change at runtime:
+   <JThemeProvider @bind-Theme="currentTheme" />
+
+   where myTheme = new JarvisTheme {
+       Accent    = "#a855f7",
+       Bg        = "#050010",
+       BgCard    = "#080018",
+       TextPrimary = "#faf5ff",
+   }
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+@* Injects the full CSS variable block into the page head via a style element *@
+<style id="jarvis-theme-vars">
+    @((MarkupString)_css)
+</style>
+
+@ChildContent
+
+@code {
+    [Parameter] public JThemePreset    Preset       { get; set; } = JThemePreset.Cyan;
+    [Parameter] public JarvisTheme?    Theme        { get; set; }
+    [Parameter] public EventCallback<JarvisTheme> ThemeChanged { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string _css = string.Empty;
+    private JarvisTheme _active = new();
+
+    protected override void OnParametersSet()
+    {
+        _active = Theme ?? JarvisTheme.FromPreset(Preset);
+        _css    = _active.ToCss();
+    }
+
+    /// <summary>Switch theme at runtime — call from any component</summary>
+    public async Task SetThemeAsync(JarvisTheme theme)
+    {
+        _active = theme;
+        _css    = theme.ToCss();
+        await ThemeChanged.InvokeAsync(theme);
+        StateHasChanged();
+    }
+
+    public async Task SetPresetAsync(JThemePreset preset)
+    {
+        Preset = preset;
+        await SetThemeAsync(JarvisTheme.FromPreset(preset));
+    }
+
+    public JarvisTheme CurrentTheme => _active;
+}

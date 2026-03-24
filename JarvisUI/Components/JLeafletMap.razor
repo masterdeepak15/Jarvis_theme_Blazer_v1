@@ -1,0 +1,419 @@
+@* ================================================================
+   JLeafletMap — JARVIS UI Leaflet Map Component
+   India GeoJSON drill-down (state → district → taluka → village),
+   HUD dark theme, animated markers, custom controls.
+   No API key needed — uses OpenStreetMap tiles.
+
+   REQUIRES in App.razor <head>:
+   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+   <script src="_content/JarvisUI/js/jarvis-leaflet.js"></script>
+
+   USAGE:
+   <JLeafletMap Height="100%"
+                GeoJsonUrl="/data/india-states.geojson"
+                OnFeatureClick="HandleStateClick"
+                Markers="@markers" />
+================================================================ *@
+
+@using JarvisUI.Tokens
+@using Microsoft.AspNetCore.Http
+@namespace JarvisUI.Components
+@inject IJSRuntime JS
+@inject IHttpClientFactory HttpFactory
+@inject IHttpContextAccessor HttpContextAccessor
+@implements IAsyncDisposable
+
+<div style="@_wrapStyle">
+
+    @* HUD corner brackets *@
+    <div style="position:absolute;top:0;left:0;width:16px;height:16px;
+                border-top:2px solid var(--j-accent);border-left:2px solid var(--j-accent);
+                z-index:1000;pointer-events:none;animation:j-corner-blink 3s ease-in-out infinite;"></div>
+    <div style="position:absolute;top:0;right:0;width:16px;height:16px;
+                border-top:2px solid var(--j-accent);border-right:2px solid var(--j-accent);
+                z-index:1000;pointer-events:none;animation:j-corner-blink 3s ease-in-out infinite .5s;"></div>
+    <div style="position:absolute;bottom:0;left:0;width:16px;height:16px;
+                border-bottom:2px solid var(--j-accent);border-left:2px solid var(--j-accent);
+                z-index:1000;pointer-events:none;animation:j-corner-blink 3s ease-in-out infinite 1s;"></div>
+    <div style="position:absolute;bottom:0;right:0;width:16px;height:16px;
+                border-bottom:2px solid var(--j-accent);border-right:2px solid var(--j-accent);
+                z-index:1000;pointer-events:none;animation:j-corner-blink 3s ease-in-out infinite 1.5s;"></div>
+
+    @* Scan line *@
+    <div style="position:absolute;top:0;left:0;right:0;height:1px;z-index:1000;pointer-events:none;
+                background:linear-gradient(90deg,transparent,var(--j-accent),transparent);
+                box-shadow:0 0 8px var(--j-accent);
+                animation:j-scan-h 4s ease-in-out infinite;"></div>
+
+    @* Map container *@
+    <div id="@_mapId" style="width:100%;height:100%;z-index:1;"></div>
+
+    @* Built-in HUD controls *@
+    @if (ShowBuiltinControls)
+    {
+        <div style="position:absolute;top:12px;right:12px;z-index:1001;display:flex;flex-direction:column;gap:4px;">
+            <button @onclick="ZoomIn"  style="@_ctrlBtnStyle">＋</button>
+            <button @onclick="ZoomOut" style="@_ctrlBtnStyle">－</button>
+        </div>
+        <div style="position:absolute;bottom:12px;right:12px;z-index:1001;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+            <button @onclick="ResetView"     style="@_ctrlBtnSmStyle">⌂ RESET</button>
+            <button @onclick="ZoomToIndia"   style="@_ctrlBtnSmStyle">🇮🇳 INDIA</button>
+            @if (_drillLevel > JIndiaLevel.Country)
+            {
+                <button @onclick="DrillUp" style="@_ctrlBtnSmStyle">← BACK</button>
+            }
+        </div>
+    }
+
+    @* Breadcrumb trail *@
+    @if (_breadcrumb.Count > 0)
+    {
+        <div style="position:absolute;top:12px;left:12px;z-index:1001;
+                    display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+            @foreach (var (crumb, i) in _breadcrumb.Select((c,i) => (c,i)))
+            {
+                @if (i > 0) {
+                    <span style="color:var(--j-accent-35);font-size:10px;"> › </span>
+                }
+                <button @onclick="() => DrillTo(i)"
+                        style="font-size:9px;color:var(--j-accent);background:var(--j-bg-card);
+                               border:1px solid var(--j-accent-35);padding:3px 8px;cursor:pointer;
+                               font-family:'Courier New',monospace;letter-spacing:.08em;text-transform:uppercase;
+                               clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);">
+                    @crumb.Name
+                </button>
+            }
+        </div>
+    }
+
+    @* Selected feature info panel *@
+    @if (_selectedFeature != null && ShowFeatureInfo)
+    {
+        <div style="position:absolute;bottom:48px;left:12px;z-index:1001;
+                    background:var(--j-bg-card);border:1px solid var(--j-accent-35);
+                    clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);
+                    padding:10px 14px;min-width:160px;max-width:240px;">
+            <div style="font-size:8px;color:var(--j-accent-70);letter-spacing:.14em;
+                        text-transform:uppercase;margin-bottom:4px;">@_drillLevel</div>
+            <div style="font-size:14px;font-weight:600;color:var(--j-text-primary);
+                        letter-spacing:.08em;">@_selectedFeature</div>
+            @if (FeatureInfoContent != null) {
+                @FeatureInfoContent(_selectedFeature)
+            }
+        </div>
+    }
+
+    @* Loading *@
+    @if (_loading)
+    {
+        <div style="position:absolute;inset:0;z-index:2000;background:var(--j-bg);
+                    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;">
+            <JSpinner Size="48px" State="JState.Processing" ShowLabel="false" />
+            <span style="font-size:10px;color:var(--j-accent);letter-spacing:.14em;
+                         text-transform:uppercase;animation:j-pulse 1.5s ease-in-out infinite;">
+                @_loadingLabel
+            </span>
+        </div>
+    }
+
+    @ChildContent
+
+</div>
+
+@code {
+    // ── Parameters ────────────────────────────────────────────────
+    [Parameter] public double  Lat                { get; set; } = 20.5937;
+    [Parameter] public double  Lng                { get; set; } = 78.9629;
+    [Parameter] public int     Zoom               { get; set; } = 5;
+    [Parameter] public string  Height             { get; set; } = "100%";
+    [Parameter] public string  Width              { get; set; } = "100%";
+    [Parameter] public string? MinHeight          { get; set; } = "300px";
+    [Parameter] public bool    UseTheme           { get; set; } = true;
+    [Parameter] public bool    ShowBuiltinControls{ get; set; } = true;
+    [Parameter] public bool    ShowFeatureInfo    { get; set; } = true;
+    [Parameter] public string? TileUrl            { get; set; }
+    [Parameter] public JTileProvider TileProvider { get; set; } = JTileProvider.JarvisDark;
+
+    /// <summary>Auto-fit map to GeoJSON extents after initial load</summary>
+    [Parameter] public bool       FitBoundsOnLoad  { get; set; } = false;
+
+    /// <summary>Minimum zoom level — use 4 to lock to India</summary>
+    [Parameter] public int        MinZoom          { get; set; } = 1;
+
+    /// <summary>Restrict panning — use JMapBounds.IndiaMaxBounds to lock to India</summary>
+    [Parameter] public double[][]? MaxBounds       { get; set; }
+
+    /// <summary>Initial GeoJSON URL to load on mount</summary>
+    [Parameter] public string? GeoJsonUrl         { get; set; }
+
+    /// <summary>Initial GeoJSON string (alternative to GeoJsonUrl)</summary>
+    [Parameter] public string? GeoJsonData        { get; set; }
+
+    [Parameter] public JGeoLayerOptions LayerOptions { get; set; } = new();
+    [Parameter] public List<JMapMarker>?  Markers  { get; set; }
+    [Parameter] public List<JMapControl>? Controls { get; set; }
+
+    /// <summary>Render fragment for custom content in the selected-feature panel</summary>
+    [Parameter] public RenderFragment<string>? FeatureInfoContent { get; set; }
+
+    // Events
+    [Parameter] public EventCallback<(string LayerId, string Name, string Code, string PropsJson)> OnFeatureClick  { get; set; }
+    [Parameter] public EventCallback<(string LayerId, string Name, string PropsJson)>              OnFeatureHover  { get; set; }
+    [Parameter] public EventCallback<(string Id, double Lat, double Lng, string Title, string Data)> OnMarkerClick { get; set; }
+    [Parameter] public EventCallback<(double Lat, double Lng)>                                     OnMapClick      { get; set; }
+    [Parameter] public EventCallback<int>                                                           OnZoomChanged   { get; set; }
+    [Parameter] public EventCallback<string>                                                        OnControlClick  { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    // ── State ─────────────────────────────────────────────────────
+    private string   _mapId     = "jlfmap_" + Guid.NewGuid().ToString("N")[..8];
+    private bool     _loading   = true;
+    private string   _loadingLabel = "Initialising Map...";
+    private bool     _initialized  = false;
+    private string?  _selectedFeature;
+    private JIndiaLevel _drillLevel = JIndiaLevel.Country;
+    private DotNetObjectReference<JLeafletMap>? _dotNetRef;
+
+    private record BreadcrumbItem(string Name, string LayerId, JIndiaLevel Level);
+    private List<BreadcrumbItem> _breadcrumb = new();
+
+    // ── Lifecycle ─────────────────────────────────────────────────
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _initialized) return;
+        _initialized = true;
+        _dotNetRef   = DotNetObjectReference.Create(this);
+
+        try
+        {
+            // Resolve tile URL from TileProvider enum if TileUrl not explicitly set
+            var resolvedTileUrl = TileUrl ?? TileProvider switch
+            {
+                JTileProvider.CartoDark     => "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+                JTileProvider.CartoLight    => "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                JTileProvider.OpenStreetMap => "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                _                           => null,  // null = OSM default in JS with dark filter
+            };
+
+            var opts = new {
+                lat          = Lat,       lng      = Lng,
+                zoom         = Zoom,      minZoom  = MinZoom,
+                useTheme     = UseTheme && TileProvider == JTileProvider.JarvisDark,
+                tileUrl      = resolvedTileUrl,
+                maxBounds    = MaxBounds,
+            };
+
+            bool ok = await JS.InvokeAsync<bool>("JarvisLeaflet.init", _mapId, _dotNetRef, opts);
+            if (!ok) { _loading = false; StateHasChanged(); return; }
+
+            // Custom controls
+            if (Controls?.Count > 0)
+            {
+                var json = "[" + string.Join(",", Controls.Select(c => c.ToJson())) + "]";
+                await JS.InvokeVoidAsync("JarvisLeaflet.addCustomControls", _mapId, json);
+            }
+
+            // Initial GeoJSON
+            if (!string.IsNullOrWhiteSpace(GeoJsonUrl))
+            {
+                _loadingLabel = "Loading Map Data...";
+                StateHasChanged();
+                // Build absolute URL — Blazor Server named HttpClient has no base address
+                var http = HttpFactory.CreateClient("JarvisUI");
+                var ctx  = HttpContextAccessor.HttpContext;
+                string absoluteUrl;
+                if (GeoJsonUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    absoluteUrl = GeoJsonUrl;
+                else if (ctx != null)
+                    absoluteUrl = $"{ctx.Request.Scheme}://{ctx.Request.Host}{GeoJsonUrl}";
+                else
+                    absoluteUrl = GeoJsonUrl; // fallback
+                var geoJson = await http.GetStringAsync(absoluteUrl);
+                var layerOpts = LayerOptions with { FitBounds = FitBoundsOnLoad || LayerOptions.FitBounds };
+                await LoadGeoJsonAsync("base", geoJson, layerOpts);
+                _breadcrumb.Add(new("India", "base", JIndiaLevel.Country));
+            }
+            else if (!string.IsNullOrWhiteSpace(GeoJsonData))
+            {
+                var layerOpts = LayerOptions with { FitBounds = FitBoundsOnLoad || LayerOptions.FitBounds };
+                await LoadGeoJsonAsync("base", GeoJsonData, layerOpts);
+                _breadcrumb.Add(new("India", "base", JIndiaLevel.Country));
+            }
+
+            // Markers
+            if (Markers?.Count > 0)
+                foreach (var m in Markers)
+                    await AddMarkerAsync(m);
+
+            _loading = false;
+            StateHasChanged();
+            // Force Leaflet to recalculate container size after Blazor render settles
+            await Task.Delay(150);
+            await JS.InvokeVoidAsync("JarvisLeaflet.invalidateSize", _mapId);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"JLeafletMap init error: {ex.Message}");
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    // ── Public API ────────────────────────────────────────────────
+    public async Task LoadGeoJsonAsync(string layerId, string geoJson, JGeoLayerOptions? opts = null)
+    {
+        opts ??= LayerOptions;
+        await JS.InvokeVoidAsync("JarvisLeaflet.addGeoJsonLayer",
+            _mapId, layerId, geoJson, opts.ToJson());
+    }
+
+    public async Task RemoveLayerAsync(string layerId) =>
+        await JS.InvokeVoidAsync("JarvisLeaflet.removeGeoJsonLayer", _mapId, layerId);
+
+    public async Task ClearLayersAsync() =>
+        await JS.InvokeVoidAsync("JarvisLeaflet.clearGeoJsonLayers", _mapId);
+
+    public async Task<string?> AddMarkerAsync(JMapMarker marker)
+    {
+        try { return await JS.InvokeAsync<string>("JarvisLeaflet.addMarker", _mapId, marker.ToJson()); }
+        catch { return null; }
+    }
+
+    public async Task RemoveMarkerAsync(string id) =>
+        await JS.InvokeVoidAsync("JarvisLeaflet.removeMarker", _mapId, id);
+
+    public async Task ClearMarkersAsync() =>
+        await JS.InvokeVoidAsync("JarvisLeaflet.clearMarkers", _mapId);
+
+    public async Task SetViewAsync(double lat, double lng, int zoom) =>
+        await JS.InvokeVoidAsync("JarvisLeaflet.setView", _mapId, lat, lng, zoom);
+
+    public async Task FitBoundsAsync(JMapBounds bounds) =>
+        await JS.InvokeVoidAsync("JarvisLeaflet.fitBounds", _mapId, bounds.ToJson());
+
+    public async Task OpenPopupAsync(double lat, double lng, string html) =>
+        await JS.InvokeVoidAsync("JarvisLeaflet.openPopup", _mapId, lat, lng, html);
+
+    public async Task HighlightFeatureAsync(string layerId, string name) =>
+        await JS.InvokeVoidAsync("JarvisLeaflet.highlightFeature", _mapId, layerId, name);
+
+    // ── Drill navigation ──────────────────────────────────────────
+    private async Task DrillUp()
+    {
+        if (_breadcrumb.Count <= 1) return;
+        _breadcrumb.RemoveAt(_breadcrumb.Count - 1);
+        var parent = _breadcrumb.Last();
+        _drillLevel      = parent.Level;
+        _selectedFeature = parent.Name == "India" ? null : parent.Name;
+        await JS.InvokeVoidAsync("JarvisLeaflet.clearGeoJsonLayers", _mapId);
+        // Parent layer will need to be re-added by the consuming page via OnFeatureClick
+        StateHasChanged();
+    }
+
+    private async Task DrillTo(int crumbIndex)
+    {
+        if (crumbIndex >= _breadcrumb.Count - 1) return;
+        var target = _breadcrumb[crumbIndex];
+        _breadcrumb = _breadcrumb.Take(crumbIndex + 1).ToList();
+        _drillLevel      = target.Level;
+        _selectedFeature = target.Name == "India" ? null : target.Name;
+        await JS.InvokeVoidAsync("JarvisLeaflet.clearGeoJsonLayers", _mapId);
+        StateHasChanged();
+    }
+
+    private async Task ZoomIn()     => await JS.InvokeVoidAsync("JarvisLeaflet.zoomIn", _mapId);
+    private async Task ZoomOut()    => await JS.InvokeVoidAsync("JarvisLeaflet.zoomOut", _mapId);
+    private async Task ResetView()
+    {
+        await JS.InvokeVoidAsync("JarvisLeaflet.resetZoom", _mapId);
+        await JS.InvokeVoidAsync("JarvisLeaflet.setView", _mapId, Lat, Lng, Zoom);
+        _breadcrumb      = _breadcrumb.Count > 0 ? new() { _breadcrumb[0] } : new();
+        _selectedFeature = null;
+        _drillLevel      = JIndiaLevel.Country;
+        StateHasChanged();
+    }
+
+    private async Task ZoomToIndia() =>
+        await JS.InvokeVoidAsync("JarvisLeaflet.fitBounds", _mapId, JMapBounds.India.ToJson());
+
+    // Add breadcrumb entry (called by consuming pages after loading child layer)
+    public void AddBreadcrumb(string name, string layerId, JIndiaLevel level)
+    {
+        _breadcrumb.Add(new(name, layerId, level));
+        _drillLevel = level;
+        StateHasChanged();
+    }
+
+    /// <summary>Clear all breadcrumb entries and reset drill level to Country</summary>
+    public void ClearBreadcrumbs()
+    {
+        _breadcrumb.Clear();
+        _drillLevel      = JIndiaLevel.Country;
+        _selectedFeature = null;
+        StateHasChanged();
+    }
+
+    // ── JS callbacks ──────────────────────────────────────────────
+    [JSInvokable]
+    public async Task JsFeatureClick(string layerId, string name, string code, string propsJson)
+    {
+        _selectedFeature = name;
+        StateHasChanged();
+        await OnFeatureClick.InvokeAsync((layerId, name, code, propsJson));
+    }
+
+    [JSInvokable]
+    public async Task JsFeatureHover(string layerId, string name, string propsJson) =>
+        await OnFeatureHover.InvokeAsync((layerId, name, propsJson));
+
+    [JSInvokable]
+    public async Task JsMapClick(double lat, double lng) =>
+        await OnMapClick.InvokeAsync((lat, lng));
+
+    [JSInvokable]
+    public async Task JsZoomChanged(int zoom)
+    {
+        Zoom = zoom;
+        await OnZoomChanged.InvokeAsync(zoom);
+    }
+
+    [JSInvokable]
+    public async Task JsMarkerClick(string id, double lat, double lng, string title, string data) =>
+        await OnMarkerClick.InvokeAsync((id, lat, lng, title, data));
+
+    [JSInvokable]
+    public async Task JsControlClick(string controlId) =>
+        await OnControlClick.InvokeAsync(controlId);
+
+    // ── Styles ────────────────────────────────────────────────────
+    private string _wrapStyle =>
+        $"position:relative;width:{Width};height:{Height};min-height:0;" +
+        (MinHeight != null ? $"min-height:{MinHeight};" : "") +
+        // overflow:visible so Leaflet tile pane can render outside during pan
+        // Leaflet's own .leaflet-container handles clipping internally
+        "overflow:hidden;background:var(--j-bg);";
+
+    private string _ctrlBtnStyle =>
+        "background:var(--j-bg-card);color:var(--j-accent);" +
+        "border:1px solid var(--j-accent-35);font-family:'Courier New',monospace;" +
+        "font-size:14px;font-weight:bold;width:32px;height:32px;" +
+        "cursor:pointer;display:flex;align-items:center;justify-content:center;" +
+        "clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);";
+
+    private string _ctrlBtnSmStyle =>
+        "background:var(--j-bg-card);color:var(--j-accent);" +
+        "border:1px solid var(--j-accent-35);font-family:'Courier New',monospace;" +
+        "font-size:9px;font-weight:600;letter-spacing:.10em;" +
+        "padding:4px 8px;cursor:pointer;text-transform:uppercase;" +
+        "clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);";
+
+    // ── Dispose ──────────────────────────────────────────────────
+    public async ValueTask DisposeAsync()
+    {
+        try { if (_initialized) await JS.InvokeVoidAsync("JarvisLeaflet.destroy", _mapId); }
+        catch { /* circuit closed on navigation */ }
+        _dotNetRef?.Dispose();
+    }
+}

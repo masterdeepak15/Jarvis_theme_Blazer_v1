@@ -18,7 +18,7 @@
 <div style="position:relative;width:100%;">
     @if (!string.IsNullOrWhiteSpace(Label))
     {
-        <label style="display:block;font-size:9px;color:#22d3ee88;
+        <label style="display:block;font-size:9px;color:var(--j-accent-mid)88;
                       letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px;">
             @Label
         </label>
@@ -27,10 +27,10 @@
     <div style="position:relative;">
         @* Corner brackets *@
         <div style="position:absolute;top:0;left:0;width:8px;height:8px;
-                    border-top:1.5px solid @_accentHex;border-left:1.5px solid @_accentHex;
+                    border-top:1.5px solid var(--j-accent);border-left:1.5px solid var(--j-accent);
                     z-index:1;pointer-events:none;filter:drop-shadow(0 0 3px @_accentHex);"></div>
         <div style="position:absolute;bottom:0;right:0;width:8px;height:8px;
-                    border-bottom:1.5px solid @_accentHex;border-right:1.5px solid @_accentHex;
+                    border-bottom:1.5px solid var(--j-accent);border-right:1.5px solid var(--j-accent);
                     z-index:1;pointer-events:none;filter:drop-shadow(0 0 3px @_accentHex);"></div>
 
         <select value="@Value"
@@ -51,7 +51,7 @@
 
         @* Custom arrow *@
         <div style="position:absolute;right:12px;top:50%;transform:translateY(-50%);
-                    color:@_accentHex;font-size:10px;pointer-events:none;
+                    color:var(--j-accent);font-size:10px;pointer-events:none;
                     filter:drop-shadow(0 0 4px @_accentHex);">▼</div>
     </div>
 </div>
@@ -67,13 +67,7 @@
     [Parameter] public JColor                 Color        { get; set; } = JColor.Cyan;
     [Parameter] public bool                   Disabled     { get; set; } = false;
 
-    private string _accentHex => Color switch
-    {
-        JColor.Amber => "#f97316",
-        JColor.Red   => "#ef4444",
-        JColor.Green => "#22c55e",
-        _            => "#00e5ff",
-    };
+    private string _accentHex => "var(--j-accent)";
 
     private async Task OnChange(ChangeEventArgs e)
     {
@@ -83,10 +77,10 @@
 
     private string _selectStyle =>
         "width:100%;padding:9px 32px 9px 12px;" +
-        "background:#030f1e;" +
-        $"border:1px solid {_accentHex}33;" +
+        "background:var(--j-bg-card);" +
+        $"border:1px solid var(--j-accent)33;" +
         "border-radius:0;" +
-        "color:#e0f7ff;" +
+        "color:var(--j-text-primary);" +
         "font-size:12px;font-family:'Courier New',monospace;" +
         "letter-spacing:0.06em;outline:none;" +
         "appearance:none;-webkit-appearance:none;" +

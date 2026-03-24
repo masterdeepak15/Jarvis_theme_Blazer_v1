@@ -1,0 +1,150 @@
+@* ================================================================
+   JGoogleMap — JARVIS UI Google Maps Component
+   All Google default controls removed. Full HUD custom controls.
+   Requires Google Maps JS API loaded in App.razor.
+================================================================ *@
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<div style="position:relative;width:100%;height:@Height;overflow:hidden;background:var(--j-bg);">
+    <div id="@_mapId" style="width:100%;height:100%;background:var(--j-bg);"></div>
+
+    <div style="position:absolute;top:0;left:0;width:20px;height:20px;border-top:1px solid var(--j-accent);border-left:1px solid var(--j-accent);pointer-events:none;z-index:10;"></div>
+    <div style="position:absolute;top:0;right:0;width:20px;height:20px;border-top:1px solid var(--j-accent);border-right:1px solid var(--j-accent);pointer-events:none;z-index:10;"></div>
+    <div style="position:absolute;bottom:0;left:0;width:20px;height:20px;border-bottom:1px solid var(--j-accent);border-left:1px solid var(--j-accent);pointer-events:none;z-index:10;"></div>
+    <div style="position:absolute;bottom:0;right:0;width:20px;height:20px;border-bottom:1px solid var(--j-accent);border-right:1px solid var(--j-accent);pointer-events:none;z-index:10;"></div>
+
+    <div style="position:absolute;top:12px;right:12px;z-index:20;display:flex;flex-direction:column;gap:2px;">
+        <button @onclick="ZoomIn"   style="@_ctrlBtn" title="Zoom in">+</button>
+        <button @onclick="ZoomOut"  style="@_ctrlBtn" title="Zoom out">−</button>
+        <div style="height:4px;"></div>
+        <button @onclick="LocateMe" style="@_ctrlBtn" title="My location">◎</button>
+        <button @onclick="FitAll"   style="@_ctrlBtn" title="Fit all">⊠</button>
+    </div>
+
+    <div style="position:absolute;top:12px;left:12px;z-index:20;display:flex;flex-direction:column;gap:2px;">
+        @foreach (var mt in _mapTypes)
+        {
+            bool act = _mapType == mt.Id;
+            <button @onclick="() => SetMapTypeAsync(mt.Id)" style="@MapTypeBtnStyle(act)" title="@mt.Label">@mt.Icon</button>
+        }
+    </div>
+
+    <div style="position:absolute;bottom:0;left:0;right:0;padding:4px 14px;z-index:20;background:linear-gradient(0deg,var(--j-bg) 0%,transparent 100%);display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:9px;color:var(--j-accent-70);letter-spacing:.12em;text-transform:uppercase;font-family:var(--j-font);">@(string.IsNullOrWhiteSpace(Label)?"JARVIS — GEOSPATIAL":Label)</span>
+        @if (_coords != null) { <span style="font-size:9px;color:var(--j-text-dim);font-family:var(--j-font);">@_coords</span> }
+    </div>
+
+    @if (_loading) {
+        <div style="position:absolute;inset:0;background:var(--j-bg);display:flex;align-items:center;justify-content:center;z-index:30;">
+            <JSpinner Size="48px" State="JState.Active" Label="MAP" />
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string           ApiKey         { get; set; } = "";
+    [Parameter] public double           Lat            { get; set; } = 20.5937;
+    [Parameter] public double           Lng            { get; set; } = 78.9629;
+    [Parameter] public int              Zoom           { get; set; } = 5;
+    [Parameter] public string           Height         { get; set; } = "400px";
+    [Parameter] public string?          Label          { get; set; }
+    [Parameter] public string           MapType        { get; set; } = "roadmap";
+    [Parameter] public List<JMapMarker> Markers        { get; set; } = new();
+    [Parameter] public bool             UseCustomStyle { get; set; } = true;
+    [Parameter] public EventCallback<JMapClickEvent>  OnMapClick    { get; set; }
+    [Parameter] public EventCallback<JMapMarkerEvent> OnMarkerClick { get; set; }
+    [Parameter] public EventCallback<int>             OnZoomChange  { get; set; }
+
+    private string  _mapId   = $"jgmap-{Guid.NewGuid():N}";
+    private bool    _loading = true;
+    private string? _coords;
+    private string  _mapType = "roadmap";
+    private DotNetObjectReference<JGoogleMap>? _dotnetRef;
+
+    private record MapTypeEntry(string Id, string Icon, string Label);
+    private readonly MapTypeEntry[] _mapTypes = {
+        new("roadmap",   "⊞", "Road"),
+        new("satellite", "◪", "Sat"),
+        new("terrain",   "∿", "Terrain"),
+        new("hybrid",    "◫", "Hybrid"),
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        _dotnetRef = DotNetObjectReference.Create(this);
+        for (int i = 0; i < 60; i++) {
+            var ready = await JS.InvokeAsync<bool>("eval", "!!(window.google?.maps)");
+            if (ready) break;
+            await Task.Delay(100);
+        }
+        await JS.InvokeVoidAsync("JarvisGMap.init", _mapId, _dotnetRef, new {
+            lat = Lat, lng = Lng, zoom = Zoom, mapType = MapType,
+            useCustomStyle = UseCustomStyle,
+        });
+        _loading = false; _mapType = MapType;
+        foreach (var m in Markers) await AddMarkerInternal(m);
+        StateHasChanged();
+    }
+
+    public async Task AddMarkerAsync(JMapMarker m) { Markers.Add(m); await AddMarkerInternal(m); }
+    public async Task RemoveMarkerAsync(string id) { Markers.RemoveAll(x=>x.Id==id); await JS.InvokeVoidAsync("JarvisGMap.removeMarker",_mapId,id); }
+    public async Task ClearMarkersAsync()          { Markers.Clear(); await JS.InvokeVoidAsync("JarvisGMap.clearMarkers",_mapId); }
+    public async Task PanToAsync(double lat,double lng,int? z=null) => await JS.InvokeVoidAsync("JarvisGMap.setCenter",_mapId,lat,lng,z);
+    public async Task OpenInfoWindowAsync(string markerId, string html) {
+        var m = Markers.FirstOrDefault(x => x.Id == markerId);
+        if (m != null) await JS.InvokeVoidAsync("JarvisGMap.openInfoWindow", _mapId, markerId, m.Lat, m.Lng, html);
+    }
+
+    /// <summary>Show or hide a heatmap layer. Pass null to remove.</summary>
+    public async Task SetHeatmapAsync(List<JHeatmapPoint>? points)
+    {
+        if (points == null || points.Count == 0)
+            await JS.InvokeVoidAsync("JarvisGMap.clearHeatmap", _mapId);
+        else
+            await JS.InvokeVoidAsync("JarvisGMap.setHeatmap", _mapId,
+                points.Select(p => new { lat = p.Lat, lng = p.Lng, weight = p.Weight }).ToList());
+    }
+
+    [JSInvokable] public async Task JsMapClick(double lat,double lng)    { _coords=$"{lat:F4}°  {lng:F4}°"; await OnMapClick.InvokeAsync(new JMapClickEvent(lat,lng)); StateHasChanged(); }
+    [JSInvokable] public async Task JsZoomChange(int z)                  => await OnZoomChange.InvokeAsync(z);
+    [JSInvokable] public async Task JsCenterChange(double lat,double lng) { _coords=$"{lat:F4}°  {lng:F4}°"; StateHasChanged(); }
+    [JSInvokable] public async Task JsMarkerClick(string id,double lat,double lng) => await OnMarkerClick.InvokeAsync(new JMapMarkerEvent(id,lat,lng));
+
+    private async Task AddMarkerInternal(JMapMarker m) =>
+        await JS.InvokeVoidAsync("JarvisGMap.addMarker", _mapId, m.Id, m.Lat, m.Lng, new {
+            type        = m.Type.ToString().ToLower(),
+            title       = m.Title,
+            label       = m.Label,
+            infoContent = m.InfoContent,
+            animated    = m.Animated,
+            color       = m.Color,   // null → JS reads --j-accent CSS var
+        });
+
+    private async Task ZoomIn()  => await JS.InvokeVoidAsync("JarvisGMap.zoomIn",_mapId);
+    private async Task ZoomOut() => await JS.InvokeVoidAsync("JarvisGMap.zoomOut",_mapId);
+    private async Task LocateMe()=> await JS.InvokeVoidAsync("JarvisGMap.getCurrentLocation",_mapId);
+    private async Task FitAll()  => await JS.InvokeVoidAsync("JarvisGMap.fitBounds",_mapId,Markers.Select(m=>new{lat=m.Lat,lng=m.Lng}).ToList());
+    private async Task SetMapTypeAsync(string t) { _mapType=t; await JS.InvokeVoidAsync("JarvisGMap.setMapType",_mapId,t); StateHasChanged(); }
+
+    private string _ctrlBtn =>
+        "width:28px;height:28px;background:var(--j-bg-card);border:1px solid var(--j-border);" +
+        "color:var(--j-accent);font-family:var(--j-font);font-size:13px;font-weight:bold;cursor:pointer;" +
+        "display:flex;align-items:center;justify-content:center;" +
+        "clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);transition:all .15s;";
+
+    private string MapTypeBtnStyle(bool a) =>
+        "width:28px;height:22px;font-size:9px;cursor:pointer;font-family:var(--j-font);transition:all .15s;" +
+        $"background:{(a?"var(--j-accent-18)":"var(--j-bg-card)")};" +
+        $"border:1px solid {(a?"var(--j-accent)":"var(--j-border)")};" +
+        $"color:{(a?"var(--j-accent)":"var(--j-text-muted)")};" +
+        "clip-path:polygon(3px 0,100% 0,calc(100% - 3px) 100%,0 100%);";
+
+    public async ValueTask DisposeAsync() {
+        try { await JS.InvokeVoidAsync("JarvisGMap.destroy", _mapId); } catch { /* circuit closed on nav */ }
+        _dotnetRef?.Dispose();
+    }
+}

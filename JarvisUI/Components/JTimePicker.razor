@@ -1,0 +1,207 @@
+@* ================================================================
+   JTimePicker — JARVIS UI HUD Time Picker
+   Scrollable hour/minute/second columns with AM/PM.
+
+   USAGE:
+   <JTimePicker @bind-Value="_time" />
+   <JTimePicker @bind-Value="_time" ShowSeconds="false" Use24Hour="true" />
+   <JTimePicker @bind-Value="_time" ShowInput="true" Label="MISSION TIME" />
+================================================================ *@
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div style="font-family:'Courier New',monospace;position:relative;@(ShowInput?$"width:{Width};":"width:fit-content;")"
+     @onfocusout="OnFocusOut" tabindex="-1">
+
+    @* ── Input trigger ── *@
+    @if (ShowInput)
+    {
+        @if (!string.IsNullOrWhiteSpace(Label))
+        {
+            <div style="font-size:9px;color:var(--j-accent-70);letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px;">@Label</div>
+        }
+        <div @onclick="ToggleOpen" @onclick:stopPropagation="true"
+             style="display:flex;align-items:center;gap:8px;padding:9px 14px;
+                    background:var(--j-bg-card);border:1px solid @(_open?"var(--j-accent)":"var(--j-accent-25)");cursor:pointer;
+                    clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);
+                    position:relative;overflow:hidden;">
+            <div style="position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--j-accent);"></div>
+            <span style="font-size:11px;color:@(Value.HasValue?"var(--j-text-primary)":"var(--j-text-dim)");letter-spacing:.08em;">
+                @(Value.HasValue ? FormatTime(Value.Value) : Placeholder)
+            </span>
+            <span style="margin-left:auto;font-size:12px;color:var(--j-accent);">@(_open ? "✕" : "⏱")</span>
+        </div>
+    }
+
+    @* ── Time panel ── *@
+    @if (_open || !ShowInput)
+    {
+        <div @onclick:stopPropagation="true" style="@_panelStyle">
+            <div style="position:absolute;left:0;right:0;height:1px;top:0;
+                        background:linear-gradient(90deg,transparent,var(--j-accent-70),transparent);
+                        animation:j-scan-v 3s ease-in-out infinite;pointer-events:none;"></div>
+
+            @* Panel header *@
+            <div style="padding:8px 14px;border-bottom:1px solid var(--j-accent-18);
+                        display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:9px;color:var(--j-accent-70);letter-spacing:.14em;">SELECT TIME</span>
+                <span style="font-size:13px;font-weight:700;color:var(--j-accent);letter-spacing:.10em;">@FormatTime(new TimeSpan(_h,_m,_s))</span>
+            </div>
+
+            @* Columns *@
+            <div style="display:flex;align-items:stretch;padding:8px;gap:0;background:var(--j-bg);">
+                @* Hours *@
+                <div style="flex:1;">
+                    <div style="font-size:7px;color:var(--j-accent-50);letter-spacing:.12em;text-align:center;margin-bottom:4px;">HR</div>
+                    <div style="height:180px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--j-accent-35) var(--j-bg);">
+                        @for (int h = 0; h < (Use24Hour ? 24 : 12); h++)
+                        {
+                            int hv = h;
+                            int disp = Use24Hour ? h : (h == 0 ? 12 : h);
+                            bool sel = _h == (Use24Hour ? h : (_ampm=="AM" ? (h==0?0:h) : (h+12)));
+                            <button @onclick="()=>SetHour(hv)" style="@ColItemStyle(sel)">
+                                @disp.ToString("D2")
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <div style="display:flex;align-items:center;padding:0 6px;color:var(--j-accent-35);font-size:14px;font-weight:700;flex-shrink:0;">:</div>
+
+                @* Minutes *@
+                <div style="flex:1;">
+                    <div style="font-size:7px;color:var(--j-accent-50);letter-spacing:.12em;text-align:center;margin-bottom:4px;">MIN</div>
+                    <div style="height:180px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--j-accent-35) var(--j-bg);">
+                        @for (int mn = 0; mn < 60; mn++)
+                        {
+                            int mv = mn;
+                            bool sel = _m == mn;
+                            <button @onclick="()=>SetMinute(mv)" style="@ColItemStyle(sel)">
+                                @mn.ToString("D2")
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                @if (ShowSeconds)
+                {
+                    <div style="display:flex;align-items:center;padding:0 6px;color:var(--j-accent-35);font-size:14px;font-weight:700;flex-shrink:0;">:</div>
+                    <div style="flex:1;">
+                        <div style="font-size:7px;color:var(--j-accent-50);letter-spacing:.12em;text-align:center;margin-bottom:4px;">SEC</div>
+                        <div style="height:180px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--j-accent-35) var(--j-bg);">
+                            @for (int sc = 0; sc < 60; sc++)
+                            {
+                                int sv = sc;
+                                bool sel = _s == sc;
+                                <button @onclick="()=>SetSecond(sv)" style="@ColItemStyle(sel)">
+                                    @sc.ToString("D2")
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @if (!Use24Hour)
+                {
+                    <div style="flex:0 0 auto;margin-left:6px;display:flex;flex-direction:column;gap:4px;padding-top:22px;">
+                        @foreach (var ap in new[]{"AM","PM"})
+                        {
+                            var apv = ap;
+                            bool sel = _ampm == ap;
+                            <button @onclick="()=>SetAmPm(apv)" style="@AmPmStyle(sel)">@ap</button>
+                        }
+                    </div>
+                }
+            </div>
+
+            @* Footer *@
+            <div style="display:flex;gap:4px;padding:0 8px 8px;">
+                <button @onclick="SetNow" style="@_quickBtn">NOW</button>
+                <button @onclick="ClearTime" style="@_quickBtn">CLEAR</button>
+                @if (ShowInput) { <button @onclick="async ()=>{_open=false;await Commit();}" style="@_quickBtn">OK</button> }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public TimeSpan?        Value        { get; set; }
+    [Parameter] public EventCallback<TimeSpan?> ValueChanged { get; set; }
+    [Parameter] public JColor           Color        { get; set; } = JColor.Cyan;
+    [Parameter] public string?          Label        { get; set; }
+    [Parameter] public string           Placeholder  { get; set; } = "SELECT TIME";
+    [Parameter] public bool             ShowInput    { get; set; } = false;
+    [Parameter] public bool             ShowSeconds  { get; set; } = true;
+    [Parameter] public bool             Use24Hour    { get; set; } = true;
+    [Parameter] public string           Width        { get; set; } = "240px";
+
+    private bool   _open = false;
+    private int    _h = DateTime.Now.Hour;
+    private int    _m = DateTime.Now.Minute;
+    private int    _s = 0;
+    private string _ampm = DateTime.Now.Hour < 12 ? "AM" : "PM";
+
+    protected override void OnParametersSet()
+    {
+        if (Value.HasValue) { _h = Value.Value.Hours; _m = Value.Value.Minutes; _s = Value.Value.Seconds; }
+    }
+
+    private string FormatTime(TimeSpan t)
+    {
+        if (Use24Hour) return t.ToString(ShowSeconds ? @"hh\:mm\:ss" : @"hh\:mm");
+        var h = t.Hours % 12; if (h == 0) h = 12;
+        var ap = t.Hours < 12 ? "AM" : "PM";
+        return ShowSeconds ? $"{h:D2}:{t.Minutes:D2}:{t.Seconds:D2} {ap}" : $"{h:D2}:{t.Minutes:D2} {ap}";
+    }
+
+    private async Task SetHour(int h)
+    {
+        if (!Use24Hour) { _h = _ampm == "AM" ? h : h + 12; }
+        else _h = h;
+        await Commit();
+    }
+    private async Task SetMinute(int m) { _m = m; await Commit(); }
+    private async Task SetSecond(int s) { _s = s; await Commit(); }
+    private async Task SetAmPm(string ap) { _ampm = ap; _h = _ampm == "PM" ? (_h % 12) + 12 : _h % 12; await Commit(); }
+    private async Task SetNow()
+    {
+        var n = DateTime.Now; _h = n.Hour; _m = n.Minute; _s = n.Second;
+        _ampm = _h < 12 ? "AM" : "PM"; await Commit();
+    }
+    private async Task ClearTime() { Value = null; await ValueChanged.InvokeAsync(null); }
+
+    private async Task Commit()
+    {
+        Value = new TimeSpan(_h, _m, _s);
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+    private void ToggleOpen() => _open = !_open;
+    private async Task OnFocusOut(FocusEventArgs e) { await Task.Delay(150); _open = false; }
+
+    private string _panelStyle =>
+        (ShowInput ? "position:absolute;top:calc(100% + 4px);left:0;" : "position:relative;") +
+        "z-index:9999;background:var(--j-bg-card);border:1px solid var(--j-accent-35);" +
+        "min-width:220px;overflow:visible;" +
+        "box-shadow:0 8px 32px rgba(0,0,0,.5),0 0 0 1px var(--j-accent-12);";
+
+    private string _quickBtn =>
+        "padding:3px 10px;background:var(--j-accent-08);border:1px solid var(--j-accent-18);" +
+        "color:var(--j-accent-70);font-size:8px;letter-spacing:.12em;cursor:pointer;font-family:'Courier New',monospace;" +
+        "clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);";
+
+    private string ColItemStyle(bool sel) =>
+        $"display:block;width:100%;padding:6px 4px;text-align:center;" +
+        $"background:{(sel?"var(--j-accent-18)":"transparent")};" +
+        $"color:{(sel?"var(--j-accent)":"var(--j-text-secondary)")};" +
+        $"border:none;border-left:2px solid {(sel?"var(--j-accent)":"transparent")};" +
+        $"font-size:11px;font-weight:{(sel?"700":"400")};letter-spacing:.06em;" +
+        $"cursor:pointer;font-family:'Courier New',monospace;transition:background .1s,color .1s;";
+
+    private string AmPmStyle(bool sel) =>
+        $"padding:8px 10px;background:{(sel?"var(--j-accent)":"var(--j-accent-08)")};" +
+        $"border:1px solid {(sel?"var(--j-accent)":"var(--j-accent-25)")};" +
+        $"color:{(sel?"var(--j-bg)":"var(--j-accent)")};" +
+        $"font-size:9px;letter-spacing:.10em;cursor:pointer;font-family:'Courier New',monospace;" +
+        $"clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);";
+}

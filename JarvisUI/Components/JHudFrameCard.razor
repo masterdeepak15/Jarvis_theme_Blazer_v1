@@ -1,0 +1,134 @@
+@* ================================================================
+   JHudFrameCard — JARVIS UI HUD Frame Card (Image-1 style)
+   4 cinematic angular frame styles with circuit details.
+
+   USAGE:
+   <JHudFrameCard FrameStyle="JHudFrameCard.FrameType.Alpha" Title="ZONE-4">
+       <ChildContent>Your content</ChildContent>
+   </JHudFrameCard>
+================================================================ *@
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div class="j-hfc j-hfc-@_styleClass @_colorClass" style="@(_sizeStyle + CustomStyle)">
+
+    @* ── FRAME TYPE: ALPHA (full corner circuit) ── *@
+    @if (FrameStyle == FrameType.Alpha)
+    {
+        @* Top-left corner group *@
+        <div class="j-hfc-corner j-hfc-tl">
+            <div class="j-hfc-corner-outer"></div>
+            <div class="j-hfc-corner-inner"></div>
+            <div class="j-hfc-tick-h"></div>
+            <div class="j-hfc-tick-v"></div>
+        </div>
+        @* Top-right corner group *@
+        <div class="j-hfc-corner j-hfc-tr">
+            <div class="j-hfc-corner-outer"></div>
+            <div class="j-hfc-corner-inner"></div>
+            <div class="j-hfc-circ"></div>
+        </div>
+        @* Bottom-left corner group *@
+        <div class="j-hfc-corner j-hfc-bl">
+            <div class="j-hfc-corner-outer"></div>
+            <div class="j-hfc-corner-inner"></div>
+            <div class="j-hfc-circ"></div>
+        </div>
+        @* Bottom-right corner group *@
+        <div class="j-hfc-corner j-hfc-br">
+            <div class="j-hfc-corner-outer"></div>
+            <div class="j-hfc-corner-inner"></div>
+            <div class="j-hfc-tick-h"></div>
+            <div class="j-hfc-tick-v"></div>
+        </div>
+        <div class="j-hfc-scan-h"></div>
+        <div class="j-hfc-scan-v"></div>
+    }
+
+    @* ── FRAME TYPE: BETA (notched + rail) ── *@
+    @if (FrameStyle == FrameType.Beta)
+    {
+        <div class="j-hfc-beta-rail-t"></div>
+        <div class="j-hfc-beta-rail-b"></div>
+        <div class="j-hfc-beta-notch-tl"></div>
+        <div class="j-hfc-beta-notch-br"></div>
+        <div class="j-hfc-beta-pip-l"></div>
+        <div class="j-hfc-beta-pip-r"></div>
+        <div class="j-hfc-scan-h"></div>
+    }
+
+    @* ── FRAME TYPE: GAMMA (segmented corner arcs) ── *@
+    @if (FrameStyle == FrameType.Gamma)
+    {
+        <div class="j-hfc-g-seg-tl1"></div>
+        <div class="j-hfc-g-seg-tl2"></div>
+        <div class="j-hfc-g-seg-tr1"></div>
+        <div class="j-hfc-g-seg-tr2"></div>
+        <div class="j-hfc-g-seg-bl1"></div>
+        <div class="j-hfc-g-seg-bl2"></div>
+        <div class="j-hfc-g-seg-br1"></div>
+        <div class="j-hfc-g-seg-br2"></div>
+        <div class="j-hfc-g-center-ring"></div>
+        <div class="j-hfc-scan-v"></div>
+    }
+
+    @* ── FRAME TYPE: DELTA (heavy industrial) ── *@
+    @if (FrameStyle == FrameType.Delta)
+    {
+        <div class="j-hfc-d-top-bar"></div>
+        <div class="j-hfc-d-bot-bar"></div>
+        <div class="j-hfc-d-l-rail"></div>
+        <div class="j-hfc-d-r-rail"></div>
+        <div class="j-hfc-d-tl-block"></div>
+        <div class="j-hfc-d-tr-block"></div>
+        <div class="j-hfc-d-bl-block"></div>
+        <div class="j-hfc-d-br-block"></div>
+        <div class="j-hfc-d-hash-t"></div>
+        <div class="j-hfc-d-hash-b"></div>
+        <div class="j-hfc-scan-h"></div>
+        <div class="j-hfc-scan-v"></div>
+    }
+
+    @* ── Title label ── *@
+    @if (!string.IsNullOrWhiteSpace(Title))
+    {
+        <div class="j-hfc-title">
+            @if (ShowStatusDot) { <span class="j-hfc-dot"></span> }
+            @Title
+        </div>
+    }
+
+    @* ── ID label (bottom-right) ── *@
+    @if (!string.IsNullOrWhiteSpace(FrameId))
+    {
+        <div class="j-hfc-id">@FrameId</div>
+    }
+
+    @* ── Content ── *@
+    <div class="j-hfc-body">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    public enum FrameType { Alpha, Beta, Gamma, Delta }
+
+    [Parameter] public FrameType       FrameStyle   { get; set; } = FrameType.Alpha;
+    [Parameter] public JColor          Color        { get; set; } = JColor.Cyan;
+    [Parameter] public string?         Title        { get; set; }
+    [Parameter] public string?         FrameId      { get; set; }
+    [Parameter] public bool            ShowStatusDot{ get; set; } = true;
+    [Parameter] public string          Width        { get; set; } = "100%";
+    [Parameter] public string          Height       { get; set; } = "100%";
+    [Parameter] public string?         CustomStyle  { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string _styleClass => FrameStyle switch {
+        FrameType.Beta  => "beta",
+        FrameType.Gamma => "gamma",
+        FrameType.Delta => "delta",
+        _               => "alpha",
+    };
+    private string _colorClass => JarvisClasses.Color(Color);
+    private string _sizeStyle  => $"width:{Width};height:{Height};";
+}

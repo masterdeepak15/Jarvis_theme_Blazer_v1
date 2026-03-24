@@ -17,12 +17,12 @@
     @if (!string.IsNullOrWhiteSpace(Label))
     {
         <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-            <span style="font-size:9px;color:@_accentDim;letter-spacing:0.12em;text-transform:uppercase;">
+            <span style="font-size:9px;color:var(--j-accent-12);letter-spacing:0.12em;text-transform:uppercase;">
                 @Label
             </span>
             @if (ShowValue)
             {
-                <span style="font-size:9px;color:@_accentHex;letter-spacing:0.08em;font-weight:600;">
+                <span style="font-size:9px;color:var(--j-accent);letter-spacing:0.08em;font-weight:600;">
                     @Value@Unit
                 </span>
             }
@@ -38,7 +38,7 @@
                 double pct = (double)i / TickCount;
                 bool   lit = pct <= _fillPct;
                 <div style="width:2px;height:5px;
-                            background:@(lit ? _accentHex : "#1e3a4a");
+                            background:@(lit ? _accentHex : "var(--j-accent-18)");
                             clip-path:polygon(0 15%,100% 0,100% 100%,0 85%);"></div>
             }
         </div>
@@ -49,14 +49,14 @@
 
         @* Background track *@
         <div style="position:absolute;left:0;right:0;height:4px;
-                    background:#0f2333;
+                    background:var(--j-accent-08);
                     clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);"></div>
 
         @* Fill track *@
         <div style="position:absolute;left:0;height:4px;
                     width:@(_fillPct * 100)%;
                     background:linear-gradient(90deg,@_accentDeep,@_accentHex);
-                    box-shadow:0 0 6px @_accentGlow;
+                    box-shadow:0 0 6px var(--j-accent-25);
                     clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);
                     transition:width 0.05s;"></div>
 
@@ -74,9 +74,9 @@
         <div style="position:absolute;
                     left:calc(@(_fillPct * 100)% - 8px);
                     width:16px;height:16px;
-                    background:@_accentHex;
+                    background:var(--j-accent);
                     clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
-                    box-shadow:0 0 10px @_accentHex,0 0 20px @_accentGlow;
+                    box-shadow:0 0 10px @_accentHex,0 0 20px var(--j-accent-25);
                     pointer-events:none;transition:left 0.05s;
                     animation:j-pulse 2s ease-in-out infinite;">
         </div>
@@ -87,8 +87,8 @@
     @if (ShowMinMax)
     {
         <div style="display:flex;justify-content:space-between;margin-top:4px;">
-            <span style="font-size:8px;color:#334155;letter-spacing:0.08em;">@Min</span>
-            <span style="font-size:8px;color:#334155;letter-spacing:0.08em;">@Max</span>
+            <span style="font-size:8px;color:var(--j-text-dim);letter-spacing:0.08em;">@Min</span>
+            <span style="font-size:8px;color:var(--j-text-dim);letter-spacing:0.08em;">@Max</span>
         </div>
     }
 
@@ -120,25 +120,8 @@
         }
     }
 
-    private string _accentHex => Color switch
-    {
-        JColor.Amber => "#f97316",
-        JColor.Red   => "#ef4444",
-        JColor.Green => "#22c55e",
-        _            => "#00e5ff",
-    };
-    private string _accentDeep => Color switch
-    {
-        JColor.Amber => "#c2410c",
-        JColor.Red   => "#b91c1c",
-        JColor.Green => "#15803d",
-        _            => "#0891b2",
-    };
-    private string _accentDim  => $"{_accentHex}66";
-    private string _accentGlow => Color switch
-    {
-        JColor.Amber => "rgba(249,115,22,0.40)",
-        JColor.Red   => "rgba(239,68,68,0.40)",
-        _            => "rgba(0,229,255,0.35)",
-    };
+    private string _accentHex => "var(--j-accent)";
+    private string _accentDeep => "var(--j-accent-deep)";
+    private string _accentDim  => $"var(--j-accent)66";
+    private string _accentGlow => "var(--j-accent-25)";
 }

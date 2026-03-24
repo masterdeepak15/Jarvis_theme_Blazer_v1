@@ -1,0 +1,306 @@
+@* ================================================================
+   JNodeGraph — JARVIS UI Draggable Data Relation Graph
+   Draggable nodes connected by animated SVG bezier curves.
+   Drag any node — all connections redraw in real-time.
+
+   USAGE:
+   <JNodeGraph Nodes="@nodes" Edges="@edges" Title="MY GRAPH" />
+================================================================ *@
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+<div style="position:relative;width:@Width;height:@Height;
+            background:var(--j-bg-card);overflow:hidden;
+            border:1px solid var(--j-accent-18);font-family:'Courier New',monospace;"
+     @onmousemove="OnMouseMove" @onmousemove:preventDefault="true"
+     @onmouseup="StopDrag" @onmouseleave="StopDrag">
+
+    @* ── dot-grid background ── *@
+    <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <pattern id="@_gridId" width="32" height="32" patternUnits="userSpaceOnUse">
+                <circle cx="0" cy="0" r="0.8" fill="var(--j-accent-18)"/>
+            </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#@_gridId)"/>
+    </svg>
+
+    @* ── SVG edge layer ── *@
+    <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;overflow:visible;"
+         xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <marker id="@($"{_gridId}-a")"  markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+                <polygon points="0 0, 7 3.5, 0 7" fill="var(--j-accent-50)" />
+            </marker>
+            <marker id="@($"{_gridId}-aw")" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+                <polygon points="0 0, 7 3.5, 0 7" fill="var(--j-warn)" />
+            </marker>
+            <marker id="@($"{_gridId}-ae")" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+                <polygon points="0 0, 7 3.5, 0 7" fill="var(--j-err)" />
+            </marker>
+            <marker id="@($"{_gridId}-ag")" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+                <polygon points="0 0, 7 3.5, 0 7" fill="var(--j-ok)" />
+            </marker>
+        </defs>
+
+        @foreach (var edge in Edges)
+        {
+            if (!_pos.TryGetValue(edge.From, out var fp) || !_pos.TryGetValue(edge.To, out var tp)) continue;
+
+            var (x1,y1) = Port(fp, tp, edge.From, true);
+            var (x2,y2) = Port(tp, fp, edge.To,   false);
+            var cpx1 = x1 + (x2 - x1) * 0.5;
+            var cpy1 = y1;
+            var cpx2 = x2 - (x2 - x1) * 0.5;
+            var cpy2 = y2;
+            var d    = $"M {F(x1)} {F(y1)} C {F(cpx1)} {F(cpy1)} {F(cpx2)} {F(cpy2)} {F(x2)} {F(y2)}";
+            var col  = ECol(edge.Color);
+            var eid  = $"ep-{_gridId}-{edge.From}-{edge.To}";
+            var markerId = edge.Arrow ? $"url(#{_gridId}-{(edge.Color==JColor.Amber?"aw":edge.Color==JColor.Red?"ae":edge.Color==JColor.Green?"ag":"a")})" : "none";
+            var strokeDash = edge.Style == EdgeStyle.Dashed ? "6,4" : edge.Style == EdgeStyle.Dotted ? "2,4" : "none";
+
+            @* glow *@
+            <path d="@d" fill="none" stroke="@col" stroke-width="5" stroke-opacity="0.1"/>
+            @* main line *@
+            <path id="@eid" d="@d" fill="none" stroke="@col" stroke-width="1.5"
+                  stroke-dasharray="@(strokeDash=="none"?"":strokeDash)"
+                  marker-end="@markerId"/>
+            @* animated dot *@
+            @if (edge.Animated)
+            {
+                <circle r="3" fill="@col" opacity="0.9" style="filter:drop-shadow(0 0 3px @col)">
+                    <animateMotion dur="@(F(edge.AnimDur))s" repeatCount="indefinite">
+                        <mpath href="#@eid"/>
+                    </animateMotion>
+                </circle>
+            }
+            @* label — use raw SVG text via @: to avoid Razor <text> ambiguity *@
+            @if (!string.IsNullOrWhiteSpace(edge.Label))
+            {
+                var lx = F((x1+x2)/2); var ly = F((y1+y2)/2 - 10);
+                @:<text xmlns="http://www.w3.org/2000/svg" x="@lx" y="@ly" text-anchor="middle" font-family="'Courier New',monospace" font-size="8" fill="@col" letter-spacing="1" opacity="0.85">@edge.Label</text>
+            }
+        }
+    </svg>
+
+    @* ── Node layer ── *@
+    @foreach (var node in Nodes)
+    {
+        if (!_pos.TryGetValue(node.Id, out var p)) continue;
+        var sel = _sel == node.Id;
+        var ac  = NAcc(node.Color);
+
+        <div @key="node.Id"
+             style="position:absolute;left:@(F(p.X))px;top:@(F(p.Y))px;
+                    width:@(F(p.W))px;height:@(F(p.H))px;
+                    z-index:@(sel?20:3);cursor:grab;touch-action:none;user-select:none;"
+             @onmousedown="(e) => StartDrag(e, node.Id)"
+             @onmousedown:stopPropagation="true">
+
+            @if (node.Type == NType.Hub)
+            {
+                <div style="width:100%;height:100%;border-radius:50%;
+                            background:var(--j-bg-card);border:2px solid @ac;
+                            box-shadow:0 0 18px @ac,inset 0 0 16px var(--j-accent-05);
+                            display:flex;flex-direction:column;align-items:center;justify-content:center;
+                            text-align:center;position:relative;overflow:hidden;
+                            @(sel?"filter:brightness(1.35);":"")">
+                    <div style="position:absolute;inset:5px;border-radius:50%;border:1px solid @ac;
+                                opacity:.25;animation:j-spin 5s linear infinite;"></div>
+                    <div style="font-size:12px;font-weight:700;color:@ac;letter-spacing:.05em;
+                                text-shadow:0 0 8px @ac;z-index:1;">@node.Label</div>
+                    @if (!string.IsNullOrEmpty(node.Sub)) {
+                        <div style="font-size:7px;color:var(--j-text-muted);letter-spacing:.10em;z-index:1;">@node.Sub</div>
+                    }
+                </div>
+            }
+            else if (node.Type == NType.Diamond)
+            {
+                <div style="width:100%;height:100%;position:relative;display:flex;align-items:center;justify-content:center;">
+                    <div style="position:absolute;inset:0;
+                                clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+                                background:var(--j-bg-card);border:2px solid @ac;
+                                box-shadow:0 0 12px @ac;@(sel?"filter:brightness(1.3);":"")"></div>
+                    <div style="position:relative;z-index:1;text-align:center;">
+                        <div style="font-size:8px;font-weight:700;color:@ac;letter-spacing:.12em;text-transform:uppercase;">@node.Label</div>
+                        @if (!string.IsNullOrEmpty(node.Sub)) {
+                            <div style="font-size:7px;color:var(--j-text-muted);">@node.Sub</div>
+                        }
+                    </div>
+                </div>
+            }
+            else if (node.Type == NType.Hex)
+            {
+                <div style="width:100%;height:100%;position:relative;display:flex;align-items:center;justify-content:center;">
+                    <div style="position:absolute;inset:0;
+                                clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);
+                                background:var(--j-bg-card);border:2px solid @ac;
+                                box-shadow:0 0 12px @ac;@(sel?"filter:brightness(1.3);":"")"></div>
+                    <div style="position:relative;z-index:1;text-align:center;">
+                        <div style="font-size:8px;font-weight:700;color:@ac;letter-spacing:.12em;">@node.Label</div>
+                        @if (!string.IsNullOrEmpty(node.Sub)){<div style="font-size:7px;color:var(--j-text-muted);">@node.Sub</div>}
+                    </div>
+                </div>
+            }
+            else
+            {
+                @* Default: parallelogram chip *@
+                <div style="width:100%;height:100%;
+                            clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);
+                            background:var(--j-bg-card);border:1px solid @ac;border-left:3px solid @ac;
+                            box-shadow:@(sel?$"0 0 16px {ac}":"0 0 5px var(--j-accent-12)");
+                            display:flex;align-items:center;gap:8px;padding:0 12px;
+                            position:relative;overflow:hidden;
+                            @(sel?"filter:brightness(1.2);":"")">
+                    <div style="position:absolute;top:0;left:0;right:0;height:1px;
+                                background:linear-gradient(90deg,transparent,@ac,transparent);
+                                animation:j-scan-v 3s ease-in-out infinite;"></div>
+                    <div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:@ac;
+                                box-shadow:0 0 5px @ac;
+                                animation:@(node.Pulse?"j-pulse 1.4s ease-in-out infinite":"none");"></div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:9px;font-weight:700;color:@ac;letter-spacing:.13em;
+                                    text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@node.Label</div>
+                        @if (!string.IsNullOrEmpty(node.Sub)) {
+                            <div style="font-size:7px;color:var(--j-text-muted);letter-spacing:.07em;">@node.Sub</div>
+                        }
+                    </div>
+                    @if (!string.IsNullOrEmpty(node.Value)) {
+                        <div style="font-size:10px;font-weight:700;color:var(--j-text-primary);flex-shrink:0;
+                                    padding-left:8px;border-left:1px solid @ac;">@node.Value</div>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    @* ── Title ── *@
+    @if (!string.IsNullOrWhiteSpace(Title)) {
+        <div style="position:absolute;top:8px;left:12px;z-index:30;font-size:8px;
+                    color:var(--j-accent);letter-spacing:.16em;text-transform:uppercase;
+                    display:flex;align-items:center;gap:6px;pointer-events:none;">
+            <div style="width:6px;height:6px;border-radius:50%;background:var(--j-accent);
+                        animation:j-pulse 1.6s ease-in-out infinite;"></div>
+            @Title
+        </div>
+    }
+
+    @* ── Legend ── *@
+    @if (ShowLegend) {
+        <div style="position:absolute;bottom:8px;right:10px;z-index:30;pointer-events:none;
+                    display:flex;flex-direction:column;gap:2px;align-items:flex-end;">
+            <div style="font-size:7px;color:var(--j-accent-50);letter-spacing:.11em;">DRAG NODES · CONNECTIONS FOLLOW</div>
+        </div>
+    }
+</div>
+
+@code {
+    // ── Public types ─────────────────────────────────────────────
+    public enum NType     { Chip, Hub, Diamond, Hex }
+    public enum EdgeStyle { Solid, Dashed, Dotted }
+
+    public record NodeDef(
+        string  Id,
+        string  Label,
+        double  X      = 0,
+        double  Y      = 0,
+        NType   Type   = NType.Chip,
+        JColor  Color  = JColor.Cyan,
+        string? Sub    = null,
+        string? Value  = null,
+        bool    Pulse  = false);
+
+    public record EdgeDef(
+        string    From,
+        string    To,
+        JColor    Color    = JColor.Cyan,
+        EdgeStyle Style    = EdgeStyle.Solid,
+        bool      Arrow    = true,
+        bool      Animated = true,
+        double    AnimDur  = 2.0,
+        string?   Label    = null);
+
+    // ── Parameters ────────────────────────────────────────────────
+    [Parameter] public List<NodeDef>  Nodes      { get; set; } = new();
+    [Parameter] public List<EdgeDef>  Edges      { get; set; } = new();
+    [Parameter] public string         Width      { get; set; } = "100%";
+    [Parameter] public string         Height     { get; set; } = "420px";
+    [Parameter] public string?        Title      { get; set; }
+    [Parameter] public bool           ShowLegend { get; set; } = true;
+
+    // ── Internal ─────────────────────────────────────────────────
+    private readonly string _gridId = "ng" + Guid.NewGuid().ToString("N")[..8];
+
+    // Stores mutable node positions — uses class wrapper to allow null checks
+    private class NodePos { public double X, Y, W, H; }
+    private readonly Dictionary<string, NodePos> _pos = new();
+
+    private string? _sel;
+    private double  _offX, _offY;
+
+    protected override void OnParametersSet()
+    {
+        foreach (var n in Nodes)
+        {
+            if (!_pos.ContainsKey(n.Id))
+                _pos[n.Id] = new NodePos { X=n.X, Y=n.Y, W=NW(n), H=NH(n) };
+        }
+        // Remove stale
+        foreach (var k in _pos.Keys.ToList())
+            if (!Nodes.Any(n => n.Id == k)) _pos.Remove(k);
+    }
+
+    // ── Drag ─────────────────────────────────────────────────────
+    private void StartDrag(MouseEventArgs e, string id)
+    {
+        _sel = id;
+        var p = _pos[id];
+        _offX = e.ClientX - p.X;
+        _offY = e.ClientY - p.Y;
+    }
+
+    private void OnMouseMove(MouseEventArgs e)
+    {
+        if (_sel == null || !_pos.TryGetValue(_sel, out var p)) return;
+        p.X = Math.Max(0, e.ClientX - _offX);
+        p.Y = Math.Max(0, e.ClientY - _offY);
+    }
+
+    private void StopDrag(MouseEventArgs e) => _sel = null;
+
+    // ── Port: where edge attaches on node edge ───────────────────
+    private (double x, double y) Port(NodePos from, NodePos to, string nodeId, bool isFrom)
+    {
+        var node = Nodes.FirstOrDefault(n => n.Id == nodeId);
+        // Circle/hub/diamond/hex: centre
+        if (node?.Type == NType.Hub || node?.Type == NType.Diamond || node?.Type == NType.Hex)
+            return (from.X + from.W / 2, from.Y + from.H / 2);
+
+        // Chip: left or right mid edge based on relative position of target
+        double cy = from.Y + from.H / 2;
+        double tcx = to.X + to.W / 2;
+        double fcx = from.X + from.W / 2;
+        if (isFrom)
+            return tcx >= fcx ? (from.X + from.W, cy) : (from.X, cy);
+        else
+            return tcx < (from.X + from.W / 2) ? (from.X + from.W, cy) : (from.X, cy);
+    }
+
+    // ── Sizing ────────────────────────────────────────────────────
+    static double NW(NodeDef n) => n.Type switch {
+        NType.Hub => 88, NType.Diamond => 80, NType.Hex => 82, _ => 144 };
+    static double NH(NodeDef n) => n.Type switch {
+        NType.Hub => 88, NType.Diamond => 80, NType.Hex => 82,
+        _ => string.IsNullOrEmpty(n.Sub) ? 36 : 48 };
+
+    // ── Color helpers ─────────────────────────────────────────────
+    static string NAcc(JColor c) => c switch {
+        JColor.Amber => "var(--j-warn)", JColor.Red => "var(--j-err)",
+        JColor.Green => "var(--j-ok)",  _ => "var(--j-accent)" };
+    static string ECol(JColor c) => c switch {
+        JColor.Amber => "var(--j-warn)", JColor.Red => "var(--j-err)",
+        JColor.Green => "var(--j-ok)",  _ => "var(--j-accent)" };
+
+    // ── Format double for SVG (2 dp, invariant culture) ──────────
+    static string F(double v) => v.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+}

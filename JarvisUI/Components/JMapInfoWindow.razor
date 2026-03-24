@@ -1,0 +1,152 @@
+@* ================================================================
+   JMapInfoWindow — JARVIS UI Map Info Content Builder
+   Pre-styled HUD content for marker popups and info windows.
+   Use .BuildHtml() to get the HTML string for JS interop calls.
+
+   USAGE:
+   // Build info window HTML
+   var html = JMapInfoWindow.Build(title:"Mumbai", subtitle:"Maharashtra",
+       rows: new[] { ("Population","12.5M"), ("Area","603 km²") },
+       state: JState.Active);
+
+   // Show on map
+   await GoogleMap.ShowInfoWindowAsync(markerId, html);
+   await LeafletMap.OpenPopupAsync(lat, lng, html);
+================================================================ *@
+
+@using JarvisUI.Tokens
+@namespace JarvisUI.Components
+
+@* Not rendered directly — use static Build() method *@
+
+@code {
+    /// <summary>
+    /// Build a complete HUD-themed info window HTML string.
+    /// Pass this to JGoogleMap.ShowInfoWindowAsync or JLeafletMap.OpenPopupAsync.
+    /// </summary>
+    public static string Build(
+        string           title,
+        string?          subtitle      = null,
+        string?          description   = null,
+        IEnumerable<(string Key, string Value)>? rows = null,
+        JState           state         = JState.Active,
+        string?          badgeText     = null,
+        JMapChartData?   chart         = null,
+        IEnumerable<string>? actionHtmlButtons = null)
+    {
+        var stateColor = state switch {
+            JState.Warning  => "var(--j-warn)",
+            JState.Error    => "var(--j-err)",
+            JState.Success  => "var(--j-ok)",
+            _               => "var(--j-accent)",
+        };
+        var stateDot = state == JState.Error   ? "animation:j-pulse .6s ease-in-out infinite;" :
+                       state == JState.Warning  ? "animation:j-pulse 1.2s ease-in-out infinite;" :
+                       "animation:j-pulse 2s ease-in-out infinite;";
+
+        var sb = new System.Text.StringBuilder();
+
+        // Container
+        sb.Append($@"<div style='font-family:Courier New,monospace;color:var(--j-text-primary);min-width:160px;'>");
+
+        // Header
+        sb.Append($@"<div style='display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;gap:8px;'>");
+        sb.Append($@"<div>");
+        if (!string.IsNullOrWhiteSpace(subtitle))
+            sb.Append($@"<div style='font-size:8px;color:{stateColor};letter-spacing:.14em;text-transform:uppercase;margin-bottom:2px;opacity:.8;'>{subtitle}</div>");
+        sb.Append($@"<div style='font-size:13px;font-weight:600;color:var(--j-text-primary);letter-spacing:.08em;text-transform:uppercase;'>{title}</div>");
+        sb.Append("</div>");
+
+        // Badge + status dot
+        sb.Append($@"<div style='display:flex;align-items:center;gap:6px;'>");
+        sb.Append($@"<div style='width:7px;height:7px;background:{stateColor};clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);flex-shrink:0;{stateDot}'></div>");
+        if (!string.IsNullOrWhiteSpace(badgeText))
+            sb.Append($@"<div style='font-size:8px;color:{stateColor};background:{stateColor}18;border:1px solid {stateColor}44;padding:1px 6px;letter-spacing:.08em;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);'>{badgeText}</div>");
+        sb.Append("</div></div>");
+
+        // Divider
+        sb.Append($@"<div style='height:1px;background:linear-gradient(90deg,{stateColor},transparent);margin-bottom:8px;opacity:.4;'></div>");
+
+        // Description
+        if (!string.IsNullOrWhiteSpace(description))
+            sb.Append($@"<div style='font-size:10px;color:var(--j-text-secondary);line-height:1.5;margin-bottom:8px;'>{description}</div>");
+
+        // Data rows
+        if (rows != null)
+        {
+            foreach (var (key, val) in rows)
+            {
+                sb.Append($@"<div style='display:flex;align-items:center;padding:3px 0;border-bottom:1px solid {stateColor}12;'>");
+                sb.Append($@"<span style='font-size:9px;color:var(--j-text-muted);letter-spacing:.08em;text-transform:uppercase;flex:1;'>{key}</span>");
+                sb.Append($@"<span style='font-size:10px;color:{stateColor};font-weight:600;'>{val}</span>");
+                sb.Append("</div>");
+            }
+        }
+
+        // Mini bar chart
+        if (chart != null && chart.Values.Count > 0)
+        {
+            sb.Append(BuildMiniChart(chart, stateColor));
+        }
+
+        // Action buttons
+        if (actionHtmlButtons != null)
+        {
+            sb.Append($@"<div style='display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;'>");
+            foreach (var btn in actionHtmlButtons)
+                sb.Append(btn);
+            sb.Append("</div>");
+        }
+
+        sb.Append("</div>"); // close container
+        return sb.ToString();
+    }
+
+    /// <summary>Build a single action button suitable for use inside an info window</summary>
+    public static string ActionButton(string label, string onclick = "", string? color = null)
+    {
+        var clr = color ?? "var(--j-accent)";
+        return $@"<button onclick=""{onclick}"" style=""
+            background:{clr}18;color:{clr};border:1px solid {clr}44;
+            font-family:'Courier New',monospace;font-size:9px;font-weight:600;
+            letter-spacing:.10em;text-transform:uppercase;padding:5px 10px;
+            cursor:pointer;
+            clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);"">
+            {label}
+        </button>";
+    }
+
+    private static string BuildMiniChart(JMapChartData chart, string color)
+    {
+        var sb  = new System.Text.StringBuilder();
+        var max = chart.Values.Max();
+        if (max == 0) max = 1;
+
+        sb.Append($@"<div style='margin-top:8px;'>");
+        if (!string.IsNullOrWhiteSpace(chart.Title))
+            sb.Append($@"<div style='font-size:8px;color:{color};letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;opacity:.8;'>{chart.Title}</div>");
+
+        sb.Append($@"<div style='display:flex;align-items:flex-end;gap:3px;height:40px;'>");
+        for (int i = 0; i < chart.Values.Count; i++)
+        {
+            var h   = (int)(chart.Values[i] / max * 36);
+            var lbl = i < chart.Labels.Count ? chart.Labels[i] : i.ToString();
+            sb.Append($@"<div title=""{lbl}: {chart.Values[i]}"" style=""
+                flex:1;background:{color};height:{h}px;min-height:2px;
+                clip-path:polygon(0 15%,100% 0,100% 100%,0 85%);
+                opacity:.8;""></div>");
+        }
+        sb.Append("</div>");
+
+        if (chart.Labels.Count > 0 && chart.Labels.Count <= 6)
+        {
+            sb.Append($@"<div style='display:flex;gap:3px;margin-top:2px;'>");
+            foreach (var lbl in chart.Labels)
+                sb.Append($@"<div style='flex:1;font-size:7px;color:var(--j-text-dim);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>{lbl}</div>");
+            sb.Append("</div>");
+        }
+
+        sb.Append("</div>");
+        return sb.ToString();
+    }
+}

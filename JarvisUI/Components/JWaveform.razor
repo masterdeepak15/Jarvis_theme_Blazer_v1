@@ -38,15 +38,7 @@
     private string _colorClass  => JarvisClasses.Color(Color);
     private string _activeStyle => Active ? "" : "opacity:0.3;";
 
-    private string _accentHex => Color switch
-    {
-        JColor.Cyan  => "#00e5ff",
-        JColor.Blue  => "#0891b2",
-        JColor.Amber => "#f97316",
-        JColor.Red   => "#ef4444",
-        JColor.Green => "#22c55e",
-        _            => "#00e5ff",
-    };
+    private string _accentHex => "var(--j-accent)";
 
     private static readonly int[]    _heights = { 6,14,22,18,28,20,30,24,28,22,16,20,26,18,12,22,28,18,10,14 };
     private static readonly string[] _durs    = { ".4s",".5s",".6s",".4s",".7s",".5s",".6s",".4s",".8s",".5s" };
