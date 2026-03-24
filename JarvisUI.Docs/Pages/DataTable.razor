@@ -1,0 +1,430 @@
+@page "/datatable"
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+@using JarvisUI.Docs.Components
+
+<PageTitle>Data Table — JarvisUI</PageTitle>
+<DocsPageHeader Title="Table + Pagination" Category="Data"
+    Description="JTable + JPagination — client-side filtering, sorting, search and server-side simulation. Dummy NH-90 ITS device dataset (100 records)." />
+
+<JTabs @bind-ActiveTab="_tab">
+
+    <!-- ═══ TAB 1: CLIENT-SIDE ═══════════════════════════════════ -->
+    <JTab Label="Client-Side" Key="client" Icon="◈">
+        <div style="margin-top:12px;">
+
+            <!-- Controls -->
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                <!-- Search -->
+                <JInput Placeholder="Search devices..." @bind-Value="_clientSearch"
+                        Label=""/>
+                <!-- Status filter -->
+                <JSelect Label="" Options="@_statusOpts" @bind-Value="_clientStatus"
+                         />
+                <!-- Type filter -->
+                <JSelect Label="" Options="@_typeOpts" @bind-Value="_clientType"
+                         />
+                <!-- Page size -->
+                <JSelect Label="" Options="@_pageSizeOpts" @bind-Value="_clientPageSizeStr"
+                          />
+                <!-- Stats badges -->
+                <div style="margin-left:auto;display:flex;gap:6px;align-items:center;">
+                    <JBadge Color="JColor.Cyan">@_clientFiltered.Count RECORDS</JBadge>
+                    <JBadge Color="JColor.Green">@_clientFiltered.Count(r=>r["status"].ToString()=="Active") ONLINE</JBadge>
+                    <JBadge Color="JColor.Red">@_clientFiltered.Count(r=>r["status"].ToString()=="Error") OFFLINE</JBadge>
+                </div>
+            </div>
+
+            <!-- Sort header info -->
+            @if (_sortCol != null)
+            {
+                <div style="font-size:8px;color:var(--j-accent-50);letter-spacing:.12em;margin-bottom:5px;">
+                    SORTED BY: <span style="color:var(--j-accent)">@_sortCol.ToUpper()</span>
+                    <span>@(_sortAsc ? " ▲ ASC" : " ▼ DESC")</span>
+                    <button @onclick="ClearSort"
+                            style="background:none;border:none;color:var(--j-err);cursor:pointer;font-size:9px;margin-left:8px;">
+                        ✕ CLEAR
+                    </button>
+                </div>
+            }
+
+            <!-- Sortable column headers trick — wrap JTable with custom header row -->
+            <div style="position:relative;background:var(--j-bg-card);border:1px solid var(--j-accent-12);overflow:hidden;">
+                <div style="position:relative;height:2px;background:linear-gradient(90deg,var(--j-accent),var(--j-accent-08));overflow:hidden;">
+                    <div style="position:absolute;inset:0;width:60px;background:linear-gradient(90deg,transparent,var(--j-text-primary),transparent);animation:j-scan-h 2.5s ease-in-out infinite;"></div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-family:'Courier New',monospace;font-size:11px;">
+                        <thead>
+                            <tr>
+                                @foreach (var col in _cols)
+                                {
+                                    <th @onclick="() => SortBy(col.Key)"
+                                        style="padding:8px 14px;text-align:left;
+                                               color:var(--j-accent-mid);font-size:9px;font-weight:600;
+                                               letter-spacing:.14em;text-transform:uppercase;
+                                               background:var(--j-accent-05);border-bottom:1px solid var(--j-accent-18);
+                                               cursor:pointer;user-select:none;white-space:nowrap;
+                                               @(col.Width!=null?$"width:{col.Width}":"")">
+                                        @col.Label
+                                        @if (_sortCol == col.Key)
+                                        {
+                                            <span style="margin-left:4px;color:var(--j-accent);">@(_sortAsc?"▲":"▼")</span>
+                                        }
+                                        else
+                                        {
+                                            <span style="margin-left:4px;color:var(--j-accent-25);">⇅</span>
+                                        }
+                                    </th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{int ri=0;}
+                            @foreach (var row in _clientPage)
+                            {
+                                var st = row["status"].ToString();
+                                var rowState = StatusToState(st);
+                                var ri2 = ri++;
+                                <tr style="@TrStyle(ri2, rowState)"
+                                    @onmouseenter="()=>_hover=ri2"
+                                    @onmouseleave="()=>_hover=-1">
+                                    @foreach (var col in _cols)
+                                    {
+                                        var val = row.ContainsKey(col.Key) ? row[col.Key]?.ToString()??"" : "";
+                                        <td style="@TdStyle(col, rowState)">
+                                            @if (col.Key == "status")
+                                            {
+                                                <JStatusPill State="@rowState">@val</JStatusPill>
+                                            }
+                                            else if (col.Key == "type")
+                                            {
+                                                <JBadge Color="@TypeColor(val)" Size="JSize.Xs">@val</JBadge>
+                                            }
+                                            else if (col.Key == "health")
+                                            {
+                                                <div style="display:flex;align-items:center;gap:6px;">
+                                                    <div style="flex:1;max-width:60px;">
+                                                        <JProgress Value="@int.Parse(val)" ProgressStyle="JProgress.JProgressStyle.Bar" />
+                                                    </div>
+                                                    <span style="font-size:9px;color:var(--j-text-muted);">@val%</span>
+                                                </div>
+                                            }
+                                            else { @val }
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                            @if (!_clientPage.Any())
+                            {
+                                <tr><td colspan="@_cols.Count" style="padding:24px;text-align:center;color:var(--j-text-dim);letter-spacing:.10em;font-size:10px;">
+                                    NO RECORDS MATCH FILTER
+                                </td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div style="height:1px;background:linear-gradient(90deg,var(--j-accent-25),transparent);"></div>
+                <div style="padding:6px 14px;font-size:8px;color:var(--j-text-dim);letter-spacing:.10em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;">
+                    <span>@_clientFiltered.Count RECORDS · PAGE @_clientPage1 OF @_clientTotalPages</span>
+                    <span>SHOWING @_clientStart–@_clientEnd</span>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div style="display:flex;align-items:center;justify-content:center;margin-top:10px;">
+                <JPagination @bind-Page="_clientPage1" TotalPages="@_clientTotalPages"
+                             ShowFirstLast="true" ShowInfo="true" />
+            </div>
+
+        </div>
+    </JTab>
+
+    <!-- ═══ TAB 2: SERVER-SIDE ═══════════════════════════════════ -->
+    <JTab Label="Server-Side" Key="server" Icon="◎">
+        <div style="margin-top:12px;">
+
+            <!-- Controls -->
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                <JInput Placeholder="Search (triggers server call)..." @bind-Value="_svrSearch"
+                        Label="" />
+                <JSelect Label="" Options="@_statusOpts" @bind-Value="_svrStatus"
+                          />
+                <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm"
+                         OnClick="ServerFetch" Color="JColor.Cyan">
+                    ⟳ FETCH
+                </JButton>
+                @if (_svrLoading)
+                {
+                    <JSpinner Size="20px" ShowLabel="false" />
+                    <span style="font-size:9px;color:var(--j-accent-50);letter-spacing:.12em;">QUERYING SERVER...</span>
+                }
+                <div style="margin-left:auto;display:flex;gap:6px;">
+                    <JBadge Color="JColor.Cyan">TOTAL: @_svrTotal</JBadge>
+                    <JBadge Color="JColor.Amber">PAGE @_svrPage/@_svrTotalPages</JBadge>
+                </div>
+            </div>
+
+            <!-- Server log (simulated) -->
+            <div style="background:var(--j-bg);border:1px solid var(--j-accent-12);padding:6px 12px;margin-bottom:8px;font-family:monospace;font-size:9px;color:var(--j-text-muted);max-height:60px;overflow-y:auto;">
+                @foreach (var log in _svrLogs.TakeLast(4))
+                {
+                    <div><span style="color:var(--j-accent-50);">[@DateTime.Now.ToString("HH:mm:ss")]</span> @log</div>
+                }
+            </div>
+
+            <!-- Table -->
+            <JTable Columns="@_cols" Rows="@_svrRows" StateColumn="status"
+                    FooterLabel="@($"LATENCY: {_svrLatency}ms")" />
+
+            <!-- Pagination -->
+            <div style="display:flex;align-items:center;justify-content:center;margin-top:10px;">
+                <JPagination @bind-Page="_svrPage" TotalPages="@_svrTotalPages"
+                             ShowFirstLast="true" ShowInfo="true" />
+            </div>
+
+        </div>
+    </JTab>
+
+    <!-- ═══ TAB 3: JTABLE STYLES ═════════════════════════════════ -->
+    <JTab Label="JTable Direct" Key="direct" Icon="▣">
+        <div style="margin-top:12px;display:flex;flex-direction:column;gap:12px;">
+
+            <div style="font-size:9px;color:var(--j-text-muted);letter-spacing:.10em;">
+                Using built-in JTable component directly with <code style="color:var(--j-accent)">StateColumn</code> for auto-coloring rows.
+            </div>
+
+            <!-- Default JTable -->
+            <JTable Columns="@_simpleCols" Rows="@_simpleRows" StateColumn="status"
+                    FooterLabel="NH-90 · ITS DEVICE STATUS" />
+
+            <!-- JTable with badges -->
+            <div style="font-size:8px;color:var(--j-accent);letter-spacing:.14em;margin-top:8px;text-transform:uppercase;">
+                ▸ With IsBadge column
+            </div>
+            <JTable Columns="@_badgeCols" Rows="@_simpleRows" StateColumn="status" />
+
+        </div>
+    </JTab>
+
+</JTabs>
+
+@code {
+    string _tab = "client";
+
+    // ── Column definitions ───────────────────────────────────────
+    static readonly List<JTable.JTableColumn> _cols = new() {
+        new("ID",       "id",      Width:"90px"),
+        new("DEVICE",   "device"),
+        new("LOCATION", "location"),
+        new("TYPE",     "type",    Width:"80px"),
+        new("STATUS",   "status",  Width:"110px"),
+        new("HEALTH",   "health",  Width:"120px"),
+        new("KM",       "km",      Width:"60px"),
+        new("UPTIME",   "uptime",  Width:"80px"),
+        new("PING",     "ping",    Width:"70px"),
+    };
+
+    static readonly List<JTable.JTableColumn> _simpleCols = new() {
+        new("ID",       "id",      Width:"90px"),
+        new("DEVICE",   "device"),
+        new("TYPE",     "type"),
+        new("STATUS",   "status"),
+        new("HEALTH",   "health"),
+        new("UPTIME",   "uptime"),
+    };
+
+    static readonly List<JTable.JTableColumn> _badgeCols = new() {
+        new("ID",       "id",      Width:"90px"),
+        new("DEVICE",   "device"),
+        new("TYPE",     "type",    IsBadge:true),
+        new("STATUS",   "status"),
+        new("PING",     "ping",    Width:"80px"),
+    };
+
+    // ── 100 dummy NH-90 devices ──────────────────────────────────
+    static readonly string[] _locs = {
+        "Haridwar Toll Entry","Bypass Junction","Shivalik Nagar Overpass","BHEL Road Junction",
+        "Raiwala Check Post","Forest Zone Entry","Motichur Bridge","Chilla Range Gate",
+        "Neel Dhara Viewpoint","Kaudiyala Bend","Brahmanwala Village","NH-72A Junction",
+        "Doiwala Underpass","ISBT Bypass Entry","Rispana River Bridge","Prem Nagar Chowk",
+        "Raipur Road Intersection","Dehradun City Entry","Clock Tower Junction","Mussoorie Bypass Exit",
+    };
+    static readonly string[] _types = { "CCTV","VMS","PTZ","TOLL","CCTV","CCTV","CCTV","CCTV","CCTV","PTZ" };
+    static readonly string[] _statuses = { "Active","Active","Active","Active","Active","Active","Warning","Warning","Error","Error" };
+
+    static readonly List<Dictionary<string,object>> _allData = Enumerable.Range(0,100).Select(i => {
+        var st   = _statuses[i % _statuses.Length];
+        var typ  = _types[i % _types.Length];
+        var loc  = _locs[i % _locs.Length];
+        var km   = (i / 2);
+        var health = st=="Error" ? 0 : st=="Warning" ? 60+i%30 : 90+i%10;
+        return new Dictionary<string,object> {
+            ["id"]       = $"{typ[0]}N{i:D3}",
+            ["device"]   = $"{typ}-{i:D3}",
+            ["location"] = loc,
+            ["type"]     = typ,
+            ["status"]   = st,
+            ["health"]   = health,
+            ["km"]       = km,
+            ["uptime"]   = st=="Error" ? "0.0%" : $"{95+i%5}.{i%10}%",
+            ["ping"]     = st=="Error" ? "—" : $"{i%20+1}ms",
+        };
+    }).ToList();
+
+    // ── Client-side state ────────────────────────────────────────
+    string _clientSearch = "";
+    string _clientStatus = "";
+    string _clientType   = "";
+    string _clientPageSizeStr = "10";
+    int    _clientPage1  = 1;
+    int    _hover        = -1;
+    string? _sortCol;
+    bool   _sortAsc      = true;
+
+    int _clientPageSize  => int.TryParse(_clientPageSizeStr, out var n) ? n : 10;
+    int _clientTotalPages => Math.Max(1, (int)Math.Ceiling(_clientFiltered.Count / (double)_clientPageSize));
+    int _clientStart     => _clientFiltered.Count == 0 ? 0 : (_clientPage1-1)*_clientPageSize+1;
+    int _clientEnd       => Math.Min(_clientPage1*_clientPageSize, _clientFiltered.Count);
+
+    List<Dictionary<string,object>> _clientFiltered {
+        get {
+            var q = _allData.AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(_clientSearch)) {
+                var s = _clientSearch.ToLower();
+                q = q.Where(r => r.Values.Any(v => v?.ToString()?.ToLower().Contains(s) == true));
+            }
+            if (!string.IsNullOrWhiteSpace(_clientStatus))
+                q = q.Where(r => r["status"].ToString() == _clientStatus);
+            if (!string.IsNullOrWhiteSpace(_clientType))
+                q = q.Where(r => r["type"].ToString() == _clientType);
+            if (_sortCol != null) {
+                q = _sortAsc
+                    ? q.OrderBy(r => r.ContainsKey(_sortCol) ? r[_sortCol]?.ToString() : "")
+                    : q.OrderByDescending(r => r.ContainsKey(_sortCol) ? r[_sortCol]?.ToString() : "");
+            }
+            return q.ToList();
+        }
+    }
+
+    List<Dictionary<string,object>> _clientPage {
+        get {
+            var f = _clientFiltered;
+            var p = Math.Clamp(_clientPage1,1,Math.Max(1,(int)Math.Ceiling(f.Count/(double)_clientPageSize)));
+            if (p != _clientPage1) _clientPage1 = p;
+            return f.Skip((_clientPage1-1)*_clientPageSize).Take(_clientPageSize).ToList();
+        }
+    }
+
+    void SortBy(string col) {
+        if (_sortCol == col) _sortAsc = !_sortAsc;
+        else { _sortCol = col; _sortAsc = true; }
+        _clientPage1 = 1;
+    }
+    void ClearSort() { _sortCol = null; _sortAsc = true; }
+
+    // ── Server-side simulation state ─────────────────────────────
+    string _svrSearch = "";
+    string _svrStatus = "";
+    int    _svrPage   = 1;
+    const  int SvrPageSize = 10;
+    bool   _svrLoading = false;
+    int    _svrTotal   = 100;
+    int    _svrLatency = 0;
+    List<string> _svrLogs = new() { "Initialized · Ready" };
+    List<Dictionary<string,object>> _svrRows = new();
+    int _svrTotalPages => Math.Max(1,(int)Math.Ceiling(_svrTotal/(double)SvrPageSize));
+
+    protected override async Task OnInitializedAsync() {
+        await ServerFetch();
+    }
+
+    // Watch page change for server-side tab
+    int _svrPagePrev = 0;
+    protected override async Task OnParametersSetAsync() {
+        if (_svrPage != _svrPagePrev && _tab == "server") {
+            _svrPagePrev = _svrPage;
+            await ServerFetch();
+        }
+    }
+
+    async Task ServerFetch() {
+        _svrLoading = true;
+        _svrLogs.Add($"→ GET /api/devices?page={_svrPage}&q={_svrSearch}&status={_svrStatus}");
+        StateHasChanged();
+
+        // Simulate network delay (50–250ms)
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        await Task.Delay(new Random().Next(50,250));
+
+        // Apply filters server-side
+        var q = _allData.AsEnumerable();
+        if (!string.IsNullOrWhiteSpace(_svrSearch)) {
+            var s = _svrSearch.ToLower();
+            q = q.Where(r => r.Values.Any(v => v?.ToString()?.ToLower().Contains(s) == true));
+        }
+        if (!string.IsNullOrWhiteSpace(_svrStatus))
+            q = q.Where(r => r["status"].ToString() == _svrStatus);
+
+        var filtered = q.ToList();
+        _svrTotal   = filtered.Count;
+        var totalPg = Math.Max(1,(int)Math.Ceiling(_svrTotal/(double)SvrPageSize));
+        _svrPage    = Math.Clamp(_svrPage,1,totalPg);
+        _svrRows    = filtered.Skip((_svrPage-1)*SvrPageSize).Take(SvrPageSize).ToList();
+        sw.Stop();
+        _svrLatency = (int)sw.ElapsedMilliseconds;
+        _svrLogs.Add($"← 200 OK · {_svrTotal} total · {_svrRows.Count} rows · {_svrLatency}ms");
+        _svrLoading = false;
+    }
+
+    // ── Dropdown options ─────────────────────────────────────────
+    List<JSelect.JSelectOption> _statusOpts = new() {
+        new("","ALL STATUSES"), new("Active","Active"),
+        new("Warning","Warning"), new("Error","Error"),
+    };
+    List<JSelect.JSelectOption> _typeOpts = new() {
+        new("","ALL TYPES"), new("CCTV","CCTV"),
+        new("VMS","VMS"), new("PTZ","PTZ"), new("TOLL","TOLL"),
+    };
+    List<JSelect.JSelectOption> _pageSizeOpts = new() {
+        new("5","5 / page"), new("10","10 / page"),
+        new("20","20 / page"), new("50","50 / page"),
+    };
+
+    // ── Simple rows for JTable direct tab ────────────────────────
+    List<Dictionary<string,object>> _simpleRows = _allData.Take(8).ToList();
+
+    // ── Helpers ──────────────────────────────────────────────────
+    static JState StatusToState(string? s) => s switch {
+        "Warning" => JState.Warning,
+        "Error"   => JState.Error,
+        "Success" => JState.Success,
+        _         => JState.Active,
+    };
+    static JColor TypeColor(string? t) => t switch {
+        "VMS"  => JColor.Amber,
+        "PTZ"  => JColor.Green,
+        "TOLL" => JColor.Red,
+        _      => JColor.Cyan,
+    };
+    static string TrStyle(int idx, JState state) {
+        string bg = idx%2==0 ? "transparent" : "var(--j-accent-05)";
+        string border = state switch {
+            JState.Warning => "border-left:2px solid var(--j-warn);",
+            JState.Error   => "border-left:2px solid var(--j-err);",
+            JState.Success => "border-left:2px solid var(--j-ok);",
+            _              => "border-left:2px solid transparent;",
+        };
+        return $"background:{bg};transition:background .12s;{border}";
+    }
+    static string TdStyle(JTable.JTableColumn col, JState state) =>
+        $"padding:8px 14px;text-align:{col.Align};" +
+        "border-bottom:1px solid var(--j-accent-05);" +
+        (state switch {
+            JState.Warning => "color:var(--j-warn);",
+            JState.Error   => "color:var(--j-err);",
+            JState.Success => "color:var(--j-ok);",
+            JState.Idle    => "color:var(--j-text-muted);",
+            _              => "color:var(--j-text-secondary);",
+        });
+}

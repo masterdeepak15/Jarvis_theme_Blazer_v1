@@ -1,148 +1,164 @@
-@page "/alerts"
-@page "/toasts"
-@page "/progress"
-@page "/modal"
+@page "/feedback"
 @using JarvisUI.Components
 @using JarvisUI.Tokens
 @using JarvisUI.Docs.Components
+@inject JToastService Toast
 
-<PageTitle>Feedback — JarvisUI Docs</PageTitle>
+<PageTitle>Feedback — JarvisUI</PageTitle>
+<DocsPageHeader Title="Feedback" Category="Components"
+    Description="JAlert · JProgress · JToast · JModal — every state live." />
 
-<DocsPageHeader Title="Feedback Components"
-                Category="Feedback"
-                Description="Alerts, toast notifications, progress bars, and modal dialogs. All HUD-styled with angular shapes and state-driven animations." />
+<!-- JTOASTPROVIDER + JTOASTSERVICE SETUP -->
+<DocSection Title="JToastProvider + JToastService — Setup (Infrastructure)"
+    Description="Place JToastProvider once. Already included inside JPageLayout — do not add again if using JPageLayout."
+    Code=@(@"<!-- App.razor or MainLayout — place ONCE only if not using JPageLayout -->
+<JToastProvider />
 
-<DocSection Title="JAlert — Inline alerts"
-            Code="@jAlertCode">
+<!-- Any component anywhere in the tree -->
+@inject JToastService Toast
+
+Toast.Show(""Message"");                                      // info
+Toast.Show(""Saved"",    JState.Success);                    // success (3s)
+Toast.Show(""Degraded"", JState.Warning, duration: 6000);   // warning (6s)
+Toast.Show(""Fault"",    JState.Error,   title: ""CRITICAL""); // error with title")>
+    <Preview>
+        <div style="display:flex;flex-direction:column;gap:6px;max-width:440px;">
+            <JAlert State="JState.Active" Title="NOTE">
+                JToastProvider is already inside JPageLayout. Only add it manually if building a custom layout.
+            </JAlert>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+                <JBadge Color="JColor.Cyan">JToastProvider</JBadge>
+                <JBadge Color="JColor.Cyan">JToastService</JBadge>
+                <JBadge Color="JColor.Ghost">&#64;inject</JBadge>
+            </div>
+        </div>
+    </Preview>
+</DocSection>
+
+
+<DocSection Title="JAlert — All 5 States">
     <Preview>
         <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
-            <JAlert State="JState.Active">JARVIS is online and listening for commands.</JAlert>
-            <JAlert State="JState.Warning" Title="Warning" Dismissible="true">Microphone noise level is high.</JAlert>
-            <JAlert State="JState.Error"   Title="Critical" Blink="true">Speech recognition engine failed.</JAlert>
-            <JAlert State="JState.Success" Title="Complete">Skill package loaded successfully.</JAlert>
+            <JAlert State="JState.Active"     Title="SYSTEM">All nodes nominal. Last sync 2s ago.</JAlert>
+            <JAlert State="JState.Success"    Title="UPLOAD">Transfer complete — 26 files verified.</JAlert>
+            <JAlert State="JState.Warning"    Title="BATTERY">Power grid at 18% — switch to backup.</JAlert>
+            <JAlert State="JState.Error"      Title="BREACH">CCTV-005 offline. Zone 3 unmonitored.</JAlert>
+            <JAlert State="JState.Processing" Title="SYNC">Synchronising node cluster...</JAlert>
         </div>
     </Preview>
 </DocSection>
 
-<DocSection Title="JProgress — Bar and Tick styles"
-            Code="@jProgressCode">
+<!-- PROGRESS - BAR + TICKS + LIVE -->
+<DocSection Title="JProgress — Bar, Ticks, Indeterminate">
     <Preview>
-        <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:360px;">
-            <JProgress Value="@_progVal" Label="System load" ShowPercent="true" />
-            <JProgress Value="@_progVal" Label="Warning level" State="JState.Warning" />
-            <JProgress Value="@_progVal" Label="Critical" State="JState.Error" />
-            <JProgress Value="12" Label="Skills loaded" ProgressStyle="JProgress.JProgressStyle.Ticks" Total="16" />
-            <JProgress Indeterminate="true" Label="Processing..." />
-            <JButton Shape="JButtonShape.BracketFrame" Size="JSize.Sm" OnClick='CycleProgress'>Cycle Value</JButton>
+        <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:420px;">
+            <div style="font-size:8px;color:var(--j-accent);letter-spacing:.12em;">BAR STYLE</div>
+            <JProgress Value="@_pval" ShowPercent="true" />
+            <JProgress Value="78" Color="JColor.Green"  ShowPercent="true" />
+            <JProgress Value="95" Color="JColor.Amber"  ShowPercent="true" />
+            <JProgress Value="22" Color="JColor.Red"    ShowPercent="true" />
+            <div style="font-size:8px;color:var(--j-accent);letter-spacing:.12em;margin-top:4px;">TICK STYLE</div>
+            <JProgress Value="@_pval" ProgressStyle="JProgress.JProgressStyle.Ticks" />
+            <JProgress Value="60" ProgressStyle="JProgress.JProgressStyle.Ticks" Color="JColor.Amber" />
+            <div style="font-size:8px;color:var(--j-accent);letter-spacing:.12em;margin-top:4px;">INDETERMINATE</div>
+            <JProgress Indeterminate="true" />
+            <div style="display:flex;gap:8px;align-items:center;">
+                <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" OnClick="ProgDown">−</JButton>
+                <span style="font-size:10px;color:var(--j-accent);min-width:32px;text-align:center;">@_pval%</span>
+                <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" OnClick="ProgUp">+</JButton>
+            </div>
         </div>
     </Preview>
 </DocSection>
 
-<DocSection Title="JToast — Notification stack"
-            Description="Inject JToastService. Call Toast.Show(). Place &lt;JToastProvider /&gt; in App.razor once."
-            Code="@jToastCode">
+<!-- TOAST -->
+<DocSection Title="JToast — 4 Notification Types">
     <Preview>
         <div style="display:flex;flex-wrap:wrap;gap:8px;">
-            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Color="JColor.Cyan"
-                     OnClick='() => _toast.Show("Skill loaded successfully", JState.Success)'>
-                ✓ Success
-            </JButton>
-            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Color="JColor.Cyan"
-                     OnClick='() => _toast.Show("High memory usage", JState.Warning, title: "Warning")'>
-                ⚠ Warning
-            </JButton>
-            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Color="JColor.Red"
-                     OnClick='() => _toast.Show("Speech engine failed", JState.Error, title: "Critical", duration: 8000)'>
-                ✕ Error
-            </JButton>
-            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm"
-                     OnClick='() => _toast.Show("JARVIS online and listening")'>
-                ℹ Info
-            </JButton>
+            <JButton Shape="JButtonShape.LeftNotch"                     OnClick="ToastInfo">ℹ INFO</JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Green" OnClick="ToastOk">✓ SUCCESS</JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Amber" OnClick="ToastWarn">⚠ WARNING 6s</JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Red"   OnClick="ToastErr">✕ ERROR</JButton>
         </div>
+        <p style="font-size:9px;color:var(--j-text-muted);margin-top:8px;">
+            Toasts appear top-right. Duration default 4s. Usage: <code style="color:var(--j-accent)">Toast.Show("msg", JState.Warning)</code>
+        </p>
     </Preview>
 </DocSection>
 
-<DocSection Title="JModal — Dialog"
-            Code="@jModalCode">
+<!-- MODAL -->
+<DocSection Title="JModal — Warning · Error · Success Dialogs">
     <Preview>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <JButton Shape="JButtonShape.LeftNotch" OnClick='() => _modal1 = true'>Open Modal</JButton>
-            <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Red" OnClick='() => _modal2 = true'>Danger Modal</JButton>
-            <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Amber" OnClick='() => _modal3 = true'>Warning Modal</JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Amber" OnClick="@(()=>_m1=true)">⚠ WARNING</JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Red"   OnClick="@(()=>_m2=true)">✕ ERROR</JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Green" OnClick="@(()=>_m3=true)">✓ SUCCESS</JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Cyan"  OnClick="@(()=>_m4=true)">◈ WITH FORM</JButton>
         </div>
     </Preview>
 </DocSection>
 
-@* Modals rendered outside preview area *@
-<JModal @bind-Visible="_modal1" Title="Confirm Action" SubTitle="System Command">
-    <ChildContent> 
-        <p style="color:#94a3b8;font-size:12px;line-height:1.6;">
-        This will execute the selected command across all connected subsystems.
-        Confirm to proceed.
-        </p> 
+<JModal @bind-Visible="_m1" Title="CONFIRM SHUTDOWN" State="JState.Warning">
+    <ChildContent>
+        <p style="color:var(--j-text-secondary);font-size:11px;line-height:1.6;margin:0 0 10px;">
+            Initiating shutdown will take all 26 NH-90 devices offline.
+        </p>
+        <JAlert State="JState.Warning" Title="CAUTION">Sensor network enters standby. Resume in 30s.</JAlert>
     </ChildContent>
     <FooterContent>
-        <JButton Shape="JButtonShape.LeftNotch" Variant="JVariant.Solid" Size="JSize.Sm"
-                 OnClick='() => _modal1 = false'>Confirm</JButton>
-        <JButton Shape="JButtonShape.GhostSkew" Size="JSize.Sm"
-                 OnClick='() => _modal1 = false'>Cancel</JButton>
+        <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Amber" OnClick="@(()=>_m1=false)">CONFIRM</JButton>
+        <JButton Shape="JButtonShape.LeftNotch" Variant="JVariant.Outline" OnClick="@(()=>_m1=false)">CANCEL</JButton>
     </FooterContent>
 </JModal>
 
-<JModal @bind-Visible="_modal2" Title="Shutdown JARVIS" State="JState.Error" SubTitle="Critical Action">
+<JModal @bind-Visible="_m2" Title="SYSTEM FAULT" State="JState.Error">
     <ChildContent>
-        <p style="color:#f87171;font-size:12px;line-height:1.6;">
-            All active processes will be terminated. Voice pipeline will go offline.
-            This action cannot be undone during active session.
-        </p>
+        <JAlert State="JState.Error" Title="CRITICAL">Primary uplink severed. Zone 4 offline.</JAlert>
+        <div style="margin-top:8px;"><JDataRow Key="FAULT CODE" Value="ERR-0x4F2" /><JDataRow Key="SINCE" Value="17:34:02" /></div>
     </ChildContent>
     <FooterContent>
-        <JButton Shape="JButtonShape.LeftNotch" Variant="JVariant.Danger" Size="JSize.Sm"
-                 OnClick='() => _modal2 = false'>Shutdown</JButton>
-        <JButton Shape="JButtonShape.GhostSkew" Size="JSize.Sm"
-                 OnClick='() => _modal2 = false'>Abort</JButton>
+        <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Red" OnClick="@(()=>_m2=false)">ACKNOWLEDGE</JButton>
     </FooterContent>
 </JModal>
 
-<JModal @bind-Visible="_modal3" Title="High Memory Usage" State="JState.Warning" SubTitle="System Alert">
+<JModal @bind-Visible="_m3" Title="SYNC COMPLETE" State="JState.Success">
     <ChildContent>
-        <p style="color:#fb923c;font-size:12px;line-height:1.6;">
-            Memory usage has reached 91%. Consider closing unused skill plugins or restarting the memory subsystem.
-        </p>
+        <JAlert State="JState.Success" Title="SUCCESS">All 26 devices synced successfully.</JAlert>
+        <div style="margin-top:8px;"><JDataRow Key="DEVICES" Value="26/26" BarPercent="100" /><JDataRow Key="DURATION" Value="4.2s" /></div>
     </ChildContent>
     <FooterContent>
-        <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Amber" Size="JSize.Sm"
-                 OnClick='() => _modal3 = false'>Acknowledge</JButton>
+        <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Green" OnClick="@(()=>_m3=false)">CLOSE</JButton>
+    </FooterContent>
+</JModal>
+
+<JModal @bind-Visible="_m4" Title="ADD WAYPOINT" State="JState.Active">
+    <ChildContent>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+            <JInput Label="LOCATION NAME" Placeholder="e.g. Motichur Bridge" @bind-Value="_mInput" />
+            <JSelect Label="TYPE" Options="@_mTypeOpts" @bind-Value="_mType" />
+            <JToggle Label="ACTIVE" @bind-Value="_mActive" />
+        </div>
+    </ChildContent>
+    <FooterContent>
+        <JButton Shape="JButtonShape.LeftNotch" OnClick="@(()=>{ Toast.Show($"Added: {_mInput}", JState.Success); _m4=false; })">ADD</JButton>
+        <JButton Shape="JButtonShape.LeftNotch" Variant="JVariant.Outline" OnClick="@(()=>_m4=false)">CANCEL</JButton>
     </FooterContent>
 </JModal>
 
 @code {
-    [Inject] private JToastService _toast { get; set; } = default!;
+    bool _m1, _m2, _m3, _m4;
+    int _pval = 42;
+    void ProgUp()   => _pval = Math.Min(100, _pval + 10);
+    void ProgDown() => _pval = Math.Max(0,   _pval - 10);
+    void ToastInfo()  => Toast.Show("Uplink established");
+    void ToastOk()    => Toast.Show("All 26 devices synced", JState.Success);
+    void ToastWarn()  => Toast.Show("Memory at 87%", JState.Warning, duration: 6000);
+    void ToastErr()   => Toast.Show("CCTV-005 offline", JState.Error, title: "CRITICAL");
 
-    int  _progVal = 72;
-    bool _modal1, _modal2, _modal3;
-
-    void CycleProgress() => _progVal = (_progVal + 15) % 105;
-
-    // -------------------- Code snippets as strings --------------------
-    private string jAlertCode = @"<JAlert State=""JState.Active"">JARVIS is online.</JAlert>";
-    private string jProgressCode = @"<JProgress Value=""72"" Label=""System Load"" />
-<JProgress Value=""12"" ProgressStyle=""JProgress.JProgressStyle.Ticks"" Total=""16"" />";
-    private string jToastCode = @"// Program.cs — already registered by AddJarvisUI()
-// App.razor
-<JToastProvider />
-
-// Any component
-@inject JToastService Toast
-Toast.Show(""Skill loaded"", JState.Success);
-Toast.Show(""Memory high"",  JState.Warning, duration: 6000);
-Toast.Show(""Engine error"", JState.Error,   title: ""Critical"");";
-    private string jModalCode = @"<JButton OnClick='() => showModal = true'>Open</JButton>
-<JModal @bind-Visible=""showModal"" Title=""Confirm Shutdown"">
-    <p>Are you sure?</p>
-    <FooterContent>
-        <JButton Variant=""JVariant.Danger"">Confirm</JButton>
-    </FooterContent>
-</JModal>";
+    string? _mInput;
+    string? _mType = "cctv";
+    bool _mActive = true;
+    List<JSelect.JSelectOption> _mTypeOpts = new() {
+        new("cctv","CCTV"), new("vms","VMS"), new("ptz","PTZ"), new("toll","TOLL"),
+    };
 }

@@ -19,10 +19,10 @@
                                 clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
                                 box-shadow:0 0 12px @hex;">
                     </div>
-                    <span style="font-size:8px;color:#475569;letter-spacing:0.10em;text-transform:uppercase;">
+                    <span style="font-size:8px;color:var(--j-text-muted);letter-spacing:0.10em;text-transform:uppercase;">
                         @name
                     </span>
-                    <span style="font-size:8px;color:#22d3ee44;letter-spacing:0.06em;">@hex</span>
+                    <span style="font-size:8px;color:var(--j-accent-35);letter-spacing:0.06em;">@hex</span>
                 </div>
             }
         </div>
@@ -71,18 +71,57 @@
 </DocSection>
 
 <DocSection Title="CSS Custom Properties" Description="Override in your own CSS to re-theme the entire library instantly."
-            Code="@cssRoot">
+            Code="@_code01">
     <Preview>
-        <div style="font-size:10px;color:#475569;letter-spacing:0.06em;line-height:1.8;">
+        <div style="font-size:10px;color:var(--j-text-muted);letter-spacing:0.06em;line-height:1.8;">
             Override any property to retheme the entire library.<br/>
-            <span style="color:#22d3ee;">--j-cyan</span> changes the primary accent everywhere.<br/>
-            <span style="color:#22d3ee;">--j-dur-scan</span> speeds up or slows all scan lines.<br/>
-            <span style="color:#22d3ee;">--j-notch-lg</span> changes corner cut depth on all cards.
+            <span style="color:var(--j-accent);">--j-accent</span> changes the primary HUD color everywhere.<br/>
+            <span style="color:var(--j-accent);">--j-dur-scan</span> speeds up or slows all scan lines.<br/>
+            <span style="color:var(--j-accent);">--j-notch-lg</span> changes corner cut depth on all cards.
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="Theme System" Description="JarvisUI ships with 6 presets and a full CSS variable foundation. Use JThemeProvider and JThemePicker for runtime switching.">
+    <Preview>
+        <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
+            <div style="font-size:10px;color:var(--j-text-secondary);line-height:1.8;letter-spacing:.04em;">
+                <span style="color:var(--j-accent);">JThemeProvider</span> — wraps your app, writes CSS vars to the page<br/>
+                <span style="color:var(--j-accent);">JThemePicker</span> — visual swatch component for runtime switching<br/>
+                <span style="color:var(--j-accent);">JarvisTheme</span> — C# model with ToCss() for custom themes
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+                @foreach (var (color, label) in _presetSwatches)
+                {
+                    <div style="display:flex;align-items:center;gap:5px;
+                                padding:4px 10px;background:@(color)18;
+                                border:1px solid @(color)44;
+                                clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);">
+                        <div style="width:8px;height:8px;background:@color;
+                                    clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);"></div>
+                        <span style="font-size:9px;color:@color;letter-spacing:.08em;text-transform:uppercase;">@label</span>
+                    </div>
+                }
+            </div>
+            <a href="/theme" style="font-size:9px;color:var(--j-accent);letter-spacing:.10em;text-transform:uppercase;margin-top:4px;">
+                → Full Theme System docs
+            </a>
         </div>
     </Preview>
 </DocSection>
 
 @code {
+    string _code01 = @"
+:root {
+  --j-accent:      #00e5ff;   /* Primary HUD color — drives everything */
+  --j-bg:          #020d18;   /* Root background    */
+  --j-bg-card:     #030f1e;   /* Card background    */
+  --j-text-primary:#e0f7ff;   /* Primary text       */
+  --j-dur-scan:    3.5s;      /* Scan line speed    */
+  --j-dur-pulse:   2.8s;      /* Pulse speed        */
+  --j-notch-lg:    20px;      /* Corner notch size  */
+}";
+
     private List<(JColor, string, string)> _colors = new()
     {
         (JColor.Cyan,  "#00e5ff", "Cyan"),
@@ -94,17 +133,12 @@
         (JColor.White, "#ffffff", "White"),
     };
 
-    string cssRoot = @":root {
-      --j-cyan:      #00e5ff;   /* Primary HUD color  */
-      --j-amber:     #f97316;   /* Warning             */
-      --j-red:       #ef4444;   /* Danger / error      */
-      --j-green:     #22c55e;   /* Success             */
-      --j-bg:        #020d18;   /* Root background     */
-      --j-bg-card:   #030f1e;   /* Card background     */
-      --j-dur-scan:  3.5s;      /* Scan line speed     */
-      --j-dur-pulse: 2.8s;      /* Pulse speed         */
-      --j-notch:     14px;      /* Corner notch size   */
-      --j-notch-lg:  20px;      /* Large notch size    */
-    }";
+    private static readonly (string, string)[] _presetSwatches = {
+        ("#00e5ff", "Cyan"),
+        ("#f97316", "Amber"),
+        ("#22c55e", "Green"),
+        ("#ef4444", "Red"),
+        ("#a855f7", "Purple"),
+        ("#0891b2", "White"),
+    };
 }
-

@@ -1,102 +1,103 @@
 @page "/"
 @using JarvisUI.Components
 @using JarvisUI.Tokens
-@using JarvisUI.Docs.Components
 
-<PageTitle>JarvisUI Docs — Overview</PageTitle>
+<PageTitle>JarvisUI — Overview</PageTitle>
 
-<DocsPageHeader Title="JarvisUI"
-Category="Overview"
-Description="Cinematic HUD-style Blazor Server component library. 38 components. Inspired by JARVIS / LINKS Mark II. Every element is alive — scan lines, pulsing glows, animated corners, waveforms." />
+<div style="display:flex;flex-direction:column;gap:20px;max-width:900px;">
 
-@* Stats row *@
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:28px;">
-    <JStatCard Title="Components"  Value="38"    Sub="ready to use"    Style="JCardStyle.Notched" />
-    <JStatCard Title="Card Styles" Value="9"     Sub="HUD frame types" Style="JCardStyle.SideRail" />
-    <JStatCard Title="Btn Shapes"  Value="9"     Sub="angular shapes"  Style="JCardStyle.CornerBracket" />
-    <JStatCard Title="CSS Lines"   Value="1044"  Sub="zero JS"         Style="JCardStyle.PartialBorder" />
-    <JStatCard Title="Animations"  Value="18"    Sub="keyframes"       Style="JCardStyle.GlowBorder" />
+    <!-- Header Orb + Title -->
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:8px 0;">
+        <JOrb Size="80px" State="JState.Active" SystemName="J-UI" />
+        <div>
+            <h1 style="font-size:22px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+                       margin:0 0 4px;text-shadow:0 0 18px var(--j-accent-35);">JARVIS UI</h1>
+            <p style="font-size:11px;color:var(--j-text-muted);margin:0;line-height:1.7;max-width:500px;">
+                Cinematic JARVIS / LINKS Mark II HUD component library for Blazor Server.
+                43 components · 6 themes · Google Maps · India GeoJSON drill-down · Zero hardcoded colors.
+            </p>
+        </div>
+    </div>
+
+    <!-- Quick stats -->
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <JStatCard Title="COMPONENTS" Value="43"   Sub="Razor components" />
+        <JStatCard Title="THEMES"     Value="6"    Sub="Built-in presets" Color="JColor.Amber" />
+        <JStatCard Title="MAP DEVS"   Value="26"   Sub="NH-90 ITS devices" Color="JColor.Green" />
+        <JStatCard Title="CSS VARS"   Value="40+"  Sub="Design tokens" Color="JColor.Cyan" />
+    </div>
+
+    <!-- Quick nav cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;">
+        @foreach (var (icon, title, href, desc, col) in _navCards)
+        {
+            <a href="@href" style="text-decoration:none;">
+                <JCard Style="JCardStyle.CornerBracket" Color="@col">
+                    <div style="padding:12px 14px;">
+                        <div style="font-size:16px;margin-bottom:4px;">@icon</div>
+                        <div style="font-size:10px;font-weight:600;color:var(--j-accent);letter-spacing:.12em;">@title</div>
+                        <div style="font-size:9px;color:var(--j-text-muted);margin-top:3px;">@desc</div>
+                    </div>
+                </JCard>
+            </a>
+        }
+    </div>
+
+    <!-- Component coverage -->
+    <JCard Style="JCardStyle.SideRail" Title="COMPONENT COVERAGE">
+        <div style="padding:10px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px;">
+            @foreach (var (grp, items) in _coverage)
+            {
+                <div style="padding:6px 0;border-bottom:1px solid var(--j-accent-08);">
+                    <div style="font-size:7px;color:var(--j-accent);letter-spacing:.14em;margin-bottom:3px;">@grp</div>
+                    <div style="font-size:9px;color:var(--j-text-secondary);">@string.Join(" · ", items)</div>
+                </div>
+            }
+        </div>
+    </JCard>
+
+    <!-- Quick Start -->
+    <JCard Style="JCardStyle.Notched" Title="QUICK START">
+        <div style="padding:10px 14px;font-family:monospace;font-size:10px;line-height:1.9;color:var(--j-text-secondary);">
+            <div><span style="color:var(--j-accent-60);">// 1. Register in Program.cs</span></div>
+            <div><span style="color:var(--j-ok);">builder</span>.Services.<span style="color:var(--j-warn);">AddJarvisUI</span>();</div>
+            <br/>
+            <div><span style="color:var(--j-accent-60);">// 2. Add CSS in App.razor &lt;head&gt;</span></div>
+            <div><span style="color:var(--j-warn);">&lt;link</span> href=<span style="color:var(--j-ok);">"_content/JarvisUI/css/jarvis-theme.css"</span> /&gt;</div>
+            <div><span style="color:var(--j-warn);">&lt;link</span> href=<span style="color:var(--j-ok);">"_content/JarvisUI/css/jarvis-ui.css"</span> /&gt;</div>
+            <br/>
+            <div><span style="color:var(--j-accent-60);">// 3. Wrap in layout with theme provider</span></div>
+            <div><span style="color:var(--j-warn);">&lt;JThemeProvider</span> Preset=<span style="color:var(--j-ok);">"JThemePreset.Cyan"</span>&gt;</div>
+            <div>&nbsp;&nbsp;<span style="color:var(--j-warn);">&lt;JPageLayout</span> SystemName=<span style="color:var(--j-ok);">"JARVIS"</span>&gt;...&lt;/JPageLayout&gt;</div>
+            <div><span style="color:var(--j-warn);">&lt;/JThemeProvider&gt;</span></div>
+        </div>
+    </JCard>
+
 </div>
 
-@* Live demo — main orb *@
-<DocSection Title="Live Identity Orb"
-Description="The JOrb component — the centerpiece of any JARVIS interface. Click to toggle listening state."
-Code="@jorbMarkup">
-    <Preview>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
-            <JOrb SystemName="JARVIS" State="@_orbState" Size="160px"
-            Listening="@_listening" OnClick="ToggleListen" />
-            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
-                <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm"
-                OnClick="() => _orbState = JState.Active">Active</JButton>
-                <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Color="JColor.Amber"
-                OnClick="() => _orbState = JState.Processing">Processing</JButton>
-                <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Color="JColor.Red"
-                OnClick="() => _orbState = JState.Error">Error</JButton>
-                <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Color="JColor.Ghost"
-                OnClick="() => _orbState = JState.Idle">Idle</JButton>
-            </div>
-        </div>
-    </Preview>
-</DocSection>
-
-@* Quick start *@
-<DocSection Title="Quick Start"
-Code="@_quickStart">
-    <Preview>
-        <div style="font-size:11px;color:#475569;letter-spacing:0.04em;line-height:1.8;">
-            <div style="color:#22d3ee;">1.</div> Reference JarvisUI project<br/>
-            <div style="color:#22d3ee;">2.</div> Call <span style="color:#22d3ee;">builder.Services.AddJarvisUI()</span><br/>
-            <div style="color:#22d3ee;">3.</div> Add CSS link in App.razor<br/>
-            <div style="color:#22d3ee;">4.</div> Add @("@using") JarvisUI.Components to _Imports.razor<br/>
-            <div style="color:#22d3ee;">5.</div> Use <span style="color:#22d3ee;">&lt;JPageLayout&gt;</span> as your app shell
-        </div>
-    </Preview>
-</DocSection>
-
-@* Cards preview *@
-<DocSection Title="Card Styles — All 9" Description="Every frame style at a glance.">
-    <Preview>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;width:100%;">
-            <JStatCard Title="Corner Bracket" Value="S1" Style="JCardStyle.CornerBracket" />
-            <JStatCard Title="Notched"        Value="S2" Style="JCardStyle.Notched" />
-            <JStatCard Title="Side Rail"      Value="S3" Style="JCardStyle.SideRail" />
-            <JStatCard Title="Glow Border"    Value="S4" Style="JCardStyle.GlowBorder" />
-            <JStatCard Title="Partial"        Value="S5" Style="JCardStyle.PartialBorder" />
-            <JStatCard Title="Danger"         Value="S6" Style="JCardStyle.DangerPulse" State="JState.Error" />
-        </div>
-    </Preview>
-</DocSection>
-
 @code {
+    static readonly (string, string, string, string, JColor)[] _navCards = {
+        ("◉", "THEME",          "/theme",      "6 presets + custom",    JColor.Cyan),
+        ("◎", "IDENTITY",       "/identity",   "Orb HUD Boot Radial",   JColor.Cyan),
+        ("▣", "CARDS",          "/cards",      "9 frame styles",        JColor.Cyan),
+        ("▷", "BUTTONS",        "/buttons",    "9 shapes × 5 variants", JColor.Cyan),
+        ("◆", "BADGE + PILL",   "/actions",    "Labels + indicators",   JColor.Cyan),
+        ("⌨", "FORMS",          "/forms",      "8 input types",         JColor.Cyan),
+        ("◱", "FEEDBACK",       "/feedback",   "Alert Toast Modal",     JColor.Cyan),
+        ("⊟", "NAV + DATA",     "/navigation", "Tabs Table Pagination", JColor.Cyan),
+        ("◎", "NH-90 ITS MAP",  "/map",        "Live Google Maps",      JColor.Green),
+    };
 
-    private bool   _listening = false;
-    private JState _orbState  = JState.Active;
-
-    private void ToggleListen() => _listening = !_listening;
-
-    private string _quickStart = @"
-        <ProjectReference Include=""..\JarvisUI\JarvisUI.csproj"" />
-
-        // Program.cs
-        builder.Services.AddJarvisUI();
-
-        // App.razor
-        <link rel=""stylesheet"" href=""_content/JarvisUI/css/jarvis-ui.css"" />
-
-        // _Imports.razor
-        @@using JarvisUI.Components
-        @@using JarvisUI.Tokens
-
-        // Any page
-        <JPageLayout SystemName=""JARVIS"" Version=""v4"" State=""JState.Active"">
-            <SidebarNav>
-                <JNavItem Href=""/"" Icon=""⊞"" Label=""Dashboard"" Active=""true"" />
-            </SidebarNav>
-            <MainContent>@@Body</MainContent>
-        </JPageLayout>
-        ";
-    private string jorbMarkup = @"
-        <JOrb SystemName=""JARVIS"" State=""JState.Active"" Size=""160px"" @bind-Listening=""listening"" />
-        ";
+    static readonly (string, string[])[] _coverage = {
+        ("Identity / HUD", new[]{"JOrb","JArcMeter","JSpinner","JWaveform","JHudBar","JHudFrame","JBootScreen","JRadialMenu"}),
+        ("Cards",          new[]{"JCard (9 styles)","JStatCard"}),
+        ("Actions",        new[]{"JButton (9 shapes)","JBadge","JStatusPill"}),
+        ("Forms",          new[]{"JInput","JTextArea","JSelect","JToggle","JSlider","JCheckbox","JRadio","JFormField"}),
+        ("Feedback",       new[]{"JAlert","JProgress","JToast","JModal"}),
+        ("Navigation",     new[]{"JTabs","JAccordion","JCommandPalette","JPagination"}),
+        ("Data",           new[]{"JTable","JDataRow","JDivider"}),
+        ("Theme",          new[]{"JThemeProvider","JThemePicker"}),
+        ("Layout",         new[]{"JPageLayout","JSidebar","JNavItem","JHudBar"}),
+        ("Maps",           new[]{"JGoogleMap","JLeafletMap","JMapMarker","JHeatmapPoint"}),
+    };
 }

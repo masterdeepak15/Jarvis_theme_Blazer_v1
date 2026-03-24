@@ -1,0 +1,398 @@
+@page "/map"
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+
+<PageTitle>NH-90 ITS — JarvisUI</PageTitle>
+
+<!-- FULL HEIGHT MAP LAYOUT - NO SCROLLING -->
+<div style="display:flex;height:calc(100vh - 88px);overflow:hidden;margin:-20px -24px;gap:0;">
+
+    <!-- ═══ LEFT: MAP PANEL ═══════════════════════════════════════ -->
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;">
+
+        <!-- Map Title Bar -->
+        <div style="display:flex;align-items:center;justify-content:space-between;
+                    padding:7px 14px;background:var(--j-bg);
+                    border-bottom:1px solid var(--j-accent-25);
+                    border-right:1px solid var(--j-accent-12);flex-wrap:wrap;gap:6px;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <JOrb Size="28px" State="JState.Active" SystemName="" />
+                <span style="font-size:10px;color:var(--j-accent);letter-spacing:.16em;font-weight:600;">
+                    NH-90 · ITS CORRIDOR · HARIDWAR → DEHRADUN
+                </span>
+                <JStatusPill State="JState.Active">LIVE</JStatusPill>
+            </div>
+            <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+                @foreach (var (lbl, f, col) in _filterBtns)
+                {
+                    <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Xs" Color="@col"
+                             Variant="@(_filter==f?JVariant.Solid:JVariant.Outline)"
+                             OnClick="@(()=>SetFilter(f))">@lbl</JButton>
+                }
+                <JButton Shape="JButtonShape.IconSquare" Size="JSize.Xs" Color="JColor.Cyan"
+                         OnClick="ToggleHeat" Variant="@(_heatOn?JVariant.Solid:JVariant.Outline)">🌡</JButton>
+            </div>
+        </div>
+
+        <!-- Stats strip -->
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--j-border-dim);flex-shrink:0;">
+            <JStatCard Title="TOTAL"   Value="26"               Sub="Devices"     Color="JColor.Cyan" />
+            <JStatCard Title="CCTV"    Value="20"               Sub="Cameras"     Color="JColor.Cyan" />
+            <JStatCard Title="ONLINE"  Value="@_onlineCount.ToString()" Sub="Operational" Color="JColor.Green" />
+            <JStatCard Title="WARN"    Value="@_warnCount.ToString()"   Sub="Degraded"    Color="JColor.Amber" />
+            <JStatCard Title="OFFLINE" Value="@_offlineCount.ToString()" Sub="Critical"   Color="JColor.Red"   State="@(_offlineCount>0?JState.Error:JState.Active)" />
+        </div>
+
+        <!-- Offline alert -->
+        @if (_offlineCount > 0)
+        {
+            <div style="padding:5px 12px;flex-shrink:0;border-bottom:1px solid var(--j-border-dim);">
+                <JAlert State="JState.Error" Title="@($"{_offlineCount} OFFLINE")">
+                    @string.Join(" · ", _devices.Where(d=>d.St==St.Offline).Select(d=>d.Id))
+                </JAlert>
+            </div>
+        }
+
+        <!-- GOOGLE MAP -->
+        <div style="flex:1;min-height:0;position:relative;">
+            <JGoogleMap @ref="_gmap"
+                        ApiKey="GmapKey"
+                        Lat="29.988" Lng="78.126" Zoom="12"
+                        Height="100%"
+                        Markers="@_visibleMarkers"
+                        OnMarkerClick="OnMarkerClick"
+                        OnMapClick="OnMapClick" />
+        </div>
+
+    </div>
+
+    <!-- ═══ RIGHT: DEVICE + TOLL PANEL ═══════════════════════════ -->
+    <div style="width:300px;flex-shrink:0;display:flex;flex-direction:column;
+                border-left:1px solid var(--j-accent-18);background:var(--j-bg-card);overflow:hidden;">
+
+        <JTabs @bind-ActiveTab="_rightTab">
+
+            <!-- TAB: DEVICES -->
+            <JTab Label="DEVICES" Key="dev">
+                <div style="overflow-y:auto;height:calc(100vh - 210px);padding:0;">
+                    @foreach (var dev in _visibleDevs)
+                    {
+                        <div @onclick="@(()=>SelectDev(dev))"
+                             style="display:flex;align-items:center;gap:6px;padding:6px 10px;
+                                    border-bottom:1px solid var(--j-accent-08);cursor:pointer;
+                                    background:@(_sel==dev?"var(--j-accent-08)":"transparent");">
+                            <div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;
+                                        background:@DevCol(dev.St);box-shadow:0 0 5px @DevCol(dev.St);
+                                        @(dev.St!=St.Online?"animation:j-pulse 1.8s ease-in-out infinite;":"")"></div>
+                            <span style="font-family:monospace;font-size:9px;color:var(--j-accent-80);min-width:60px;">@dev.Id</span>
+                            <span style="font-size:9px;color:var(--j-text-secondary);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">@dev.Loc</span>
+                            <JBadge Color="@TCol(dev.T)" Size="JSize.Xs">@dev.TLabel</JBadge>
+                        </div>
+                    }
+                </div>
+            </JTab>
+
+            <!-- TAB: SELECTED DETAIL -->
+            <JTab Label="DETAIL" Key="det">
+                @if (_sel != null)
+                {
+                    <div style="padding:12px 10px;overflow-y:auto;height:calc(100vh - 210px);">
+                        <div style="font-size:8px;color:var(--j-accent-70);letter-spacing:.12em;">SELECTED UNIT</div>
+                        <div style="font-size:14px;font-weight:600;color:var(--j-text-primary);margin:3px 0;">@_sel.Id</div>
+                        <JBadge Color="@TCol(_sel.T)" Size="JSize.Xs">@_sel.TLabel</JBadge>
+                        <div style="margin-top:10px;display:flex;flex-direction:column;gap:3px;">
+                            <JDataRow Key="LOCATION" Value="@_sel.Loc" />
+                            <JDataRow Key="STATUS"   Value="@_sel.St.ToString().ToUpper()" />
+                            <JDataRow Key="HEALTH"   Value="@($"{_sel.Health}%")" BarPercent="@_sel.Health" />
+                            <JDataRow Key="UPTIME"   Value="@_sel.Uptime" />
+                            <JDataRow Key="LAST MSG" Value="@_sel.LastMsg" />
+                            <JDataRow Key="KM MARK"  Value="@($"KM {_sel.Km}")" />
+                            @if (_sel.T == DT.VMS)
+                            {
+                                <div style="margin-top:6px;padding:8px;background:var(--j-accent-05);border:1px solid var(--j-accent-18);">
+                                    <div style="font-size:7px;color:var(--j-accent);letter-spacing:.12em;margin-bottom:3px;">VMS MESSAGE</div>
+                                    <div style="font-size:10px;color:var(--j-warn);">@_sel.VmsMsg</div>
+                                </div>
+                            }
+                            @if (_sel.T == DT.Toll)
+                            {
+                                <JDataRow Key="LANES" Value="@_sel.TollLane" />
+                                <JDataRow Key="QUEUE" Value="@_sel.TollQueue" />
+                                <JDataRow Key="RATE"  Value="₹80 / axle" />
+                            }
+                        </div>
+                        <div style="margin-top:10px;">
+                            <JStatusPill State="@DevState(_sel.St)">@_sel.St.ToString().ToUpper()</JStatusPill>
+                        </div>
+                        <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
+                            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm"
+                                     OnClick="@(()=>PanTo(_sel))">PAN TO</JButton>
+                            @if (_sel.T == DT.Toll)
+                            {
+                                <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Color="JColor.Amber"
+                                         OnClick="@(()=>{ _rightTab="toll"; })">SERVER ROOM</JButton>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div style="padding:20px;text-align:center;color:var(--j-text-muted);font-size:10px;">
+                        Click a marker or device row to view details
+                    </div>
+                }
+            </JTab>
+
+            <!-- TAB: ECB TOLL SERVER ROOM -->
+            <JTab Label="TOLL SCR" Key="toll">
+                <div style="overflow-y:auto;height:calc(100vh - 210px);padding:10px;">
+                    <!-- ECB TOLL SERVER ROOM -->
+                    <div style="font-size:9px;color:var(--j-accent);letter-spacing:.14em;margin-bottom:8px;font-weight:600;">
+                        ECB TOLL CONTROL ROOM · HARIDWAR
+                    </div>
+                    <JCard Style="JCardStyle.CornerBracket" State="JState.Active">
+                        <div style="padding:8px 10px;">
+                            <div style="font-size:7px;color:var(--j-accent-70);letter-spacing:.12em;margin-bottom:6px;">LANE STATUS</div>
+                            @foreach (var lane in _tollLanes)
+                            {
+                                <div style="display:flex;align-items:center;gap:6px;padding:4px 0;
+                                            border-bottom:1px solid var(--j-accent-08);">
+                                    <div style="width:7px;height:7px;border-radius:50%;
+                                                background:@(lane.Open?"var(--j-ok)":"var(--j-err)");
+                                                box-shadow:0 0 5px @(lane.Open?"var(--j-ok)":"var(--j-err)");"></div>
+                                    <span style="font-size:9px;color:var(--j-accent-80);min-width:55px;">@lane.Id</span>
+                                    <span style="font-size:9px;color:var(--j-text-secondary);flex:1;">@lane.Type</span>
+                                    <JBadge Size="JSize.Xs" Color="@(lane.Open?JColor.Green:JColor.Red)">
+                                        @(lane.Open?"OPEN":"CLOSED")
+                                    </JBadge>
+                                    <JButton Shape="JButtonShape.IconSquare" Size="JSize.Xs"
+                                             Color="@(lane.Open?JColor.Red:JColor.Green)"
+                                             OnClick="@(()=>ToggleLane(lane))">
+                                        @(lane.Open?"■":"▶")
+                                    </JButton>
+                                </div>
+                            }
+                        </div>
+                    </JCard>
+
+                    <div style="margin-top:8px;">
+                        <JCard Style="JCardStyle.SideRail">
+                            <div style="padding:8px 10px;">
+                                <div style="font-size:7px;color:var(--j-accent-70);letter-spacing:.12em;margin-bottom:6px;">LIVE METRICS</div>
+                                <JDataRow Key="QUEUE"       Value="@_tollQueue"  />
+                                <JDataRow Key="THROUGHPUT"  Value="@_tollThroughput" BarPercent="@_tollTP" />
+                                <JDataRow Key="REVENUE"     Value="@_tollRevenue" />
+                                <JDataRow Key="ACTIVE LANES" Value="@($"{_tollLanes.Count(l=>l.Open)}/{_tollLanes.Count}")" />
+                                <JDataRow Key="SHIFT"       Value="@_tollShift" />
+                            </div>
+                        </JCard>
+                    </div>
+
+                    <div style="margin-top:8px;">
+                        <JCard Style="JCardStyle.Notched">
+                            <div style="padding:8px 10px;">
+                                <div style="font-size:7px;color:var(--j-accent-70);letter-spacing:.12em;margin-bottom:6px;">SERVER ROOM STATUS</div>
+                                <JDataRow Key="CPU"      Value="@($"{_srCpu}%")"   BarPercent="@_srCpu"  />
+                                <JDataRow Key="MEMORY"   Value="@($"{_srMem}%")"   BarPercent="@_srMem"  />
+                                <JDataRow Key="STORAGE"  Value="@($"{_srDisk}%")"  BarPercent="@_srDisk" />
+                                <JDataRow Key="TEMP"     Value="@($"{_srTemp}°C")" BarPercent="@_srTemp" />
+                                <JDataRow Key="UPS"      Value="99.9%"             BarPercent="99" />
+                                <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">
+                                    <JStatusPill State="JState.Active">DB: OK</JStatusPill>
+                                    <JStatusPill State="JState.Active">API: OK</JStatusPill>
+                                    <JStatusPill State="@(_srTemp>70?JState.Warning:JState.Active)">
+                                        THERMAL: @(_srTemp>70?"HIGH":"OK")
+                                    </JStatusPill>
+                                </div>
+                            </div>
+                        </JCard>
+                    </div>
+
+                    <div style="margin-top:8px;">
+                        <JCard Style="JCardStyle.GlowBorder">
+                            <div style="padding:8px 10px;">
+                                <div style="font-size:7px;color:var(--j-accent-70);letter-spacing:.12em;margin-bottom:6px;">QUICK ACTIONS</div>
+                                <div style="display:flex;flex-direction:column;gap:5px;">
+                                    <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Color="JColor.Green"
+                                             OnClick="OpenAllLanes">▶ OPEN ALL LANES</JButton>
+                                    <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Color="JColor.Amber"
+                                             OnClick="SetPeakMode">⚡ PEAK HOUR MODE</JButton>
+                                    <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Color="JColor.Red"
+                                             OnClick="EmergencyMode">🚨 EMERGENCY STOP</JButton>
+                                    <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Variant="JVariant.Outline"
+                                             OnClick="PrintShiftReport">📋 SHIFT REPORT</JButton>
+                                </div>
+                            </div>
+                        </JCard>
+                    </div>
+
+                </div>
+            </JTab>
+
+        </JTabs>
+    </div>
+
+</div>
+
+@inject JToastService Toast
+
+@code {
+    // ── Enums ────────────────────────────────────────────────────
+    enum St  { Online, Warning, Offline }
+    enum DT  { CCTV, VMS, PTZ, Toll }
+
+    record Dev(int Km, double Lat, double Lng, string Id, string Loc,
+               St St, DT T, string Uptime, string LastMsg, int Health,
+               string VmsMsg="", string TollLane="", string TollQueue="") {
+        public string TLabel => T switch { DT.CCTV=>"CCTV", DT.VMS=>"VMS", DT.PTZ=>"PTZ", _=>"TOLL" };
+    }
+
+    // ── Full NH-90 device list ────────────────────────────────────
+    static readonly List<Dev> _devices = new() {
+        new(0,  29.9457,78.1642,"CCTV-000","Haridwar Toll Entry",     St.Online,  DT.CCTV,"99.8%","0s",  98),
+        new(1,  29.9502,78.1588,"CCTV-001","Bypass Junction",          St.Online,  DT.CCTV,"99.1%","1s",  97),
+        new(2,  29.9551,78.1532,"CCTV-002","Shivalik Nagar Overpass",  St.Warning, DT.CCTV,"81.3%","14s", 79),
+        new(3,  29.9597,78.1477,"CCTV-003","BHEL Road Junction",       St.Online,  DT.CCTV,"99.5%","0s",  99),
+        new(4,  29.9643,78.1420,"CCTV-004","Raiwala Check Post",       St.Online,  DT.CCTV,"98.7%","2s",  97),
+        new(5,  29.9690,78.1364,"CCTV-005","Forest Zone Entry",        St.Offline, DT.CCTV,"0.0%", "72m",  0),
+        new(6,  29.9736,78.1308,"CCTV-006","Motichur Bridge",          St.Online,  DT.CCTV,"99.9%","0s",  99),
+        new(7,  29.9780,78.1251,"CCTV-007","Chilla Range Gate",        St.Warning, DT.CCTV,"74.2%","38s", 72),
+        new(8,  29.9825,78.1195,"CCTV-008","Neel Dhara Viewpoint",     St.Online,  DT.CCTV,"97.3%","1s",  96),
+        new(9,  29.9870,78.1139,"CCTV-009","Kaudiyala Bend",           St.Online,  DT.CCTV,"98.9%","0s",  98),
+        new(10, 29.9915,78.1082,"CCTV-010","Brahmanwala Village",      St.Online,  DT.CCTV,"99.4%","0s",  99),
+        new(11, 29.9959,78.1026,"CCTV-011","NH-72A Junction",          St.Offline, DT.CCTV,"0.0%", "3h",   0),
+        new(12, 30.0004,78.0970,"CCTV-012","Doiwala Underpass",        St.Online,  DT.CCTV,"96.8%","2s",  96),
+        new(13, 30.0049,78.0913,"CCTV-013","ISBT Bypass Entry",        St.Warning, DT.CCTV,"88.1%","8s",  86),
+        new(14, 30.0094,78.0857,"CCTV-014","Rispana River Bridge",     St.Online,  DT.CCTV,"99.7%","0s",  99),
+        new(15, 30.0139,78.0801,"CCTV-015","Prem Nagar Chowk",        St.Online,  DT.CCTV,"98.2%","1s",  97),
+        new(16, 30.0183,78.0744,"CCTV-016","Raipur Road Intersection", St.Online,  DT.CCTV,"99.0%","0s",  98),
+        new(17, 30.0228,78.0688,"CCTV-017","Dehradun City Entry",      St.Warning, DT.CCTV,"70.5%","52s", 68),
+        new(18, 30.0273,78.0631,"CCTV-018","Clock Tower Junction",     St.Online,  DT.CCTV,"99.8%","0s", 100),
+        new(19, 30.0318,78.0575,"CCTV-019","Mussoorie Bypass Exit",    St.Online,  DT.CCTV,"97.9%","2s",  97),
+        new(5,  29.9693,78.1368,"VMS-001", "Forest Zone VMS",          St.Online,  DT.VMS, "100%", "0s", 100,
+            VmsMsg:"⚠ WILDLIFE CROSSING — REDUCE SPEED"),
+        new(12, 30.0006,78.0975,"VMS-002", "Doiwala VMS Board",        St.Warning, DT.VMS, "82.0%","11s", 80,
+            VmsMsg:"SIGNAL FAULT — USE ALTERNATE ROUTE"),
+        new(18, 30.0275,78.0635,"VMS-003", "Dehradun Entry VMS",       St.Online,  DT.VMS, "99.5%","0s", 100,
+            VmsMsg:"MAX SPEED 60 KM/H · FOG ZONE AHEAD"),
+        new(3,  29.9600,78.1480,"PTZ-001", "BHEL Intersection PTZ",    St.Online,  DT.PTZ, "99.2%","0s",  99),
+        new(14, 30.0096,78.0860,"PTZ-002", "Rispana Bridge PTZ",       St.Online,  DT.PTZ, "98.6%","1s",  98),
+        new(0,  29.9455,78.1640,"TOLL-01", "Haridwar ECB Toll Plaza",  St.Online,  DT.Toll,"100%", "0s", 100,
+            TollLane:"Lane 3 of 6 Active", TollQueue:"~4 min"),
+    };
+
+    // ── State ─────────────────────────────────────────────────────
+    JGoogleMap? _gmap;
+    string _filter = "all";
+    string? _rightTab = "dev";
+    Dev? _sel;
+    bool _heatOn = false;
+
+    int _onlineCount  => _devices.Count(d=>d.St==St.Online);
+    int _warnCount    => _devices.Count(d=>d.St==St.Warning);
+    int _offlineCount => _devices.Count(d=>d.St==St.Offline);
+
+    List<Dev> _visibleDevs => _filter switch {
+        "cctv"   => _devices.Where(d=>d.T==DT.CCTV).ToList(),
+        "vms"    => _devices.Where(d=>d.T==DT.VMS).ToList(),
+        "ptz"    => _devices.Where(d=>d.T==DT.PTZ).ToList(),
+        "toll"   => _devices.Where(d=>d.T==DT.Toll).ToList(),
+        "offline"=> _devices.Where(d=>d.St==St.Offline).ToList(),
+        _        => _devices.ToList(),
+    };
+
+    List<JMapMarker> _visibleMarkers => _visibleDevs.Select(d => new JMapMarker {
+        Id    = d.Id, Lat = d.Lat, Lng = d.Lng,
+        Title = $"{d.Id} · {d.Loc}",
+        Type  = d.T==DT.VMS   ? JMarkerType.Diamond  :
+                d.T==DT.Toll  ? JMarkerType.Diamond   :
+                d.St==St.Online ? JMarkerType.Default : JMarkerType.Pulse,
+        Color = d.St==St.Offline ? "var(--j-err)" :
+                d.St==St.Warning ? "var(--j-warn)" :
+                d.T==DT.Toll     ? "var(--j-err)"  :
+                d.T==DT.VMS      ? "var(--j-warn)" :
+                d.T==DT.PTZ      ? "var(--j-ok)"   : "var(--j-accent)",
+        Pulse     = d.St!=St.Online,
+        Animated  = true,
+        InfoContent = BuildInfo(d),
+    }).ToList();
+
+    string BuildInfo(Dev d) {
+        var col = DevCol(d.St);
+        return $"<div style='font-family:monospace;font-size:11px;min-width:180px;'>" +
+               $"<div style='color:{col};font-weight:600;margin-bottom:3px;'>{d.Id}</div>" +
+               $"<div style='font-size:9px;color:#aaa;margin-bottom:5px;'>{d.Loc}</div>" +
+               $"<div>STATUS: <span style='color:{col}'>{d.St}</span></div>" +
+               $"<div>HEALTH: {d.Health}% · UPTIME: {d.Uptime}</div>" +
+               (d.T==DT.VMS ? $"<div style='margin-top:5px;color:var(--j-warn);font-size:10px;'>{d.VmsMsg}</div>" : "") +
+               (d.T==DT.Toll ? $"<div>LANES: {d.TollLane}</div><div>QUEUE: {d.TollQueue}</div>" : "") +
+               "</div>";
+    }
+
+    async Task OnMarkerClick(JMapMarkerEvent e) {
+        var dev = _devices.FirstOrDefault(d=>d.Id==e.MarkerId);
+        if (dev!=null) { SelectDev(dev); }
+    }
+
+    void OnMapClick(JMapClickEvent e) { _sel = null; StateHasChanged(); }
+
+    void SelectDev(Dev d) {
+        _sel = d; _rightTab = "det";
+    }
+
+    async Task PanTo(Dev d) => await _gmap!.PanToAsync(d.Lat, d.Lng, 16);
+
+    void SetFilter(string f) { _filter = f; }
+
+    async Task ToggleHeat() {
+        _heatOn = !_heatOn;
+        if (_heatOn) {
+            var pts = _devices.Select(d=>new JHeatmapPoint(d.Lat, d.Lng, (100-d.Health)/100.0+0.1)).ToList();
+            await _gmap!.SetHeatmapAsync(pts);
+        } else {
+            await _gmap!.SetHeatmapAsync(null);
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────
+    static string DevCol(St s) => s switch { St.Online=>"var(--j-ok)", St.Warning=>"var(--j-warn)", _=>"var(--j-err)" };
+    static JColor TCol(DT t)   => t switch { DT.CCTV=>JColor.Cyan, DT.VMS=>JColor.Amber, DT.PTZ=>JColor.Green, _=>JColor.Red };
+    static JState DevState(St s) => s switch { St.Online=>JState.Active, St.Warning=>JState.Warning, _=>JState.Error };
+
+    // ── Filter buttons ────────────────────────────────────────────
+    static readonly (string, string, JColor)[] _filterBtns = {
+        ("ALL","all",JColor.Cyan), ("CCTV","cctv",JColor.Cyan), ("VMS","vms",JColor.Amber),
+        ("PTZ","ptz",JColor.Green), ("TOLL","toll",JColor.Red), ("OFFLINE","offline",JColor.Red),
+    };
+
+    // ── Toll Server Room State ────────────────────────────────────
+    class TollLane { public string Id=""; public string Type=""; public bool Open=true; }
+
+    List<TollLane> _tollLanes = new() {
+        new(){ Id="LANE 1", Type="FASTag ETC",    Open=true  },
+        new(){ Id="LANE 2", Type="FASTag ETC",    Open=true  },
+        new(){ Id="LANE 3", Type="Cash + FASTag", Open=true  },
+        new(){ Id="LANE 4", Type="Cash + FASTag", Open=false },
+        new(){ Id="LANE 5", Type="Heavy Vehicle", Open=false },
+        new(){ Id="LANE 6", Type="Emergency",     Open=true  },
+    };
+
+    string _tollQueue       = "~4 min";
+    string _tollThroughput  = "840 veh/hr";
+    int    _tollTP          = 70;
+    string _tollRevenue     = "₹ 1,24,680";
+    string _tollShift       = "Shift B · 14:00–22:00";
+    int    _srCpu  = 44;
+    int    _srMem  = 61;
+    int    _srDisk = 38;
+    int    _srTemp = 34;
+
+    void ToggleLane(TollLane lane) {
+        lane.Open = !lane.Open;
+        Toast.Show($"{lane.Id} {(lane.Open?"opened":"closed")}", lane.Open?JState.Success:JState.Warning);
+    }
+    void OpenAllLanes()  { _tollLanes.ForEach(l=>l.Open=true);  Toast.Show("All lanes opened", JState.Success); }
+    void EmergencyMode() { _tollLanes.ForEach(l=>l.Open=false); _tollLanes.First(l=>l.Type=="Emergency").Open=true; Toast.Show("EMERGENCY MODE — All lanes closed", JState.Error); }
+    void SetPeakMode()   { _tollLanes.ForEach(l=>l.Open=true);  Toast.Show("Peak hour mode active", JState.Warning); }
+    void PrintShiftReport() => Toast.Show("Shift report queued for printing", JState.Active);
+}

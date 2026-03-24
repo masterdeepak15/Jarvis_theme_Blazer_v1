@@ -1,0 +1,221 @@
+@page "/theme"
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+@using JarvisUI.Docs.Components
+
+<PageTitle>Theme — JarvisUI</PageTitle>
+<DocsPageHeader Title="Theme System" Category="Visual"
+    Description="6 built-in presets. Runtime switching via JThemeProvider + JThemePicker. Full custom theme via JarvisTheme model." />
+
+<!-- NOTE: Global theme switching is in the sidebar (bottom-left). This page shows a local demo. -->
+
+<!-- LIVE LOCAL PRESET DEMO -->
+<DocSection Title="Live Local Theme Preview — Isolated Demo Area">
+    <Preview>
+        <JThemeProvider @ref="_demoTp" Preset="@_demoPreset">
+            <div style="padding:14px;background:var(--j-bg);border:1px solid var(--j-border-dim);">
+                <!-- Preset buttons -->
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+                    @foreach (var (name, preset, hex) in _presets)
+                    {
+                        <button @onclick="@(()=>ApplyDemo(preset))"
+                                style="display:flex;align-items:center;gap:6px;padding:6px 14px;cursor:pointer;
+                                       font-family:monospace;font-size:9px;letter-spacing:.10em;text-transform:uppercase;
+                                       background:@(_demoPreset==preset?hex:"var(--j-bg-card)");
+                                       border:1px solid @(_demoPreset==preset?hex:"var(--j-border-dim)");
+                                       color:@(_demoPreset==preset?"var(--j-bg)":"var(--j-text-primary)");">
+                            <span style="width:9px;height:9px;border-radius:50%;background:@hex;flex-shrink:0;"></span>
+                            @name
+                        </button>
+                    }
+                </div>
+                <!-- Components that react to the local theme -->
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+                    <JStatusPill State="JState.Active">ACTIVE</JStatusPill>
+                    <JStatusPill State="JState.Warning">WARNING</JStatusPill>
+                    <JStatusPill State="JState.Error">ERROR</JStatusPill>
+                    <JBadge Color="JColor.Cyan">TAG</JBadge>
+                    <JBadge Color="JColor.Amber">WARN</JBadge>
+                    <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm">ACTION</JButton>
+                    <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Variant="JVariant.Solid">SOLID</JButton>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+                    <JStatCard Title="DEVICES" Value="26" Sub="NH-90 Corridor" />
+                    <JStatCard Title="ONLINE"  Value="22" Sub="Operational" Color="JColor.Green" />
+                    <JStatCard Title="OFFLINE" Value="2"  Sub="Critical" Color="JColor.Red" State="JState.Error" />
+                </div>
+                <div style="max-width:280px;">
+                    <JProgress Value="72" ShowPercent="true" />
+                    <div style="margin-top:6px;"><JProgress Value="44" ProgressStyle="JProgress.JProgressStyle.Ticks" /></div>
+                </div>
+            </div>
+        </JThemeProvider>
+        <p style="font-size:9px;color:var(--j-text-muted);margin-top:8px;">
+            ↖ The sidebar's theme picker at the bottom-left switches the global app theme.
+            This demo panel is isolated — it has its own JThemeProvider.
+        </p>
+    </Preview>
+</DocSection>
+
+<!-- JTHEMEPICKER COMPONENT -->
+<DocSection Title="JThemePicker — Integrated Swatch Picker"
+    Description="Place once in your layout. Bind to Preset and pass Provider ref to apply instantly."
+    Code=@(@"// In DocsLayout.razor:
+<JThemeProvider @ref=""_tp"" Preset=""@_preset"">
+    ...
+    <SidebarFooter>
+        <JThemePicker @bind-Preset=""_preset"" Provider=""_tp"" ShowCustom=""false"" Compact=""true"" />
+    </SidebarFooter>
+</JThemeProvider>
+
+@code {
+    JThemePreset    _preset = JThemePreset.Cyan;
+    JThemeProvider? _tp;
+}")>
+    <Preview>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+            <div>
+                <div style="font-size:8px;color:var(--j-accent);letter-spacing:.12em;margin-bottom:6px;">NORMAL MODE</div>
+                <JThemePicker @bind-Preset="_demoPreset" Provider="_demoTp" ShowCustom="false" />
+            </div>
+            <div>
+                <div style="font-size:8px;color:var(--j-accent);letter-spacing:.12em;margin-bottom:6px;">COMPACT MODE (sidebar)</div>
+                <JThemePicker @bind-Preset="_demoPreset" Provider="_demoTp" Compact="true" ShowCustom="false" />
+            </div>
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- PROGRAMMATIC CONTROL -->
+<DocSection Title="JThemeProvider — Programmatic SetPreset / SetTheme"
+    Code=@(@"@code {
+    JThemeProvider? _tp;
+
+    // Switch preset at runtime
+    async Task GoAmber() => await _tp!.SetPresetAsync(JThemePreset.Amber);
+
+    // Full custom theme — override any token
+    async Task GoCustom() => await _tp!.SetThemeAsync(new JarvisTheme {
+        Accent      = ""#a855f7"",
+        Bg          = ""#050010"",
+        BgCard      = ""#080018"",
+        TextPrimary = ""#faf5ff"",
+        DurScan     = ""2s"",
+        NotchLg     = ""24px"",
+    });
+}")>
+    <Preview>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            @foreach (var (name, preset, hex) in _presets)
+            {
+                <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm"
+                         OnClick="@(()=>ApplyDemo(preset))">@name</JButton>
+            }
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- CSS VARIABLES REFERENCE TABLE -->
+<DocSection Title="CSS Custom Properties — Full Token Reference">
+    <Preview>
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:10px;">
+                <thead>
+                    <tr style="border-bottom:1px solid var(--j-accent-25);">
+                        <th style="text-align:left;color:var(--j-accent);padding:5px 8px;font-size:8px;letter-spacing:.10em;width:30px;">SWATCH</th>
+                        <th style="text-align:left;color:var(--j-accent);padding:5px 8px;font-size:8px;letter-spacing:.10em;">VARIABLE</th>
+                        <th style="text-align:left;color:var(--j-accent);padding:5px 8px;font-size:8px;letter-spacing:.10em;">DESCRIPTION</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var (varName, desc) in _cssVars)
+                    {
+                        <tr style="border-bottom:1px solid var(--j-accent-08);">
+                            <td style="padding:4px 8px;">
+                                <div style="width:14px;height:14px;border-radius:2px;background:var(@varName);border:1px solid var(--j-border-dim);"></div>
+                            </td>
+                            <td style="padding:4px 8px;font-family:monospace;color:var(--j-accent-80);font-size:9px;">@varName</td>
+                            <td style="padding:4px 8px;color:var(--j-text-secondary);font-size:9px;">@desc</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- DESIGN TOKEN ENUMS -->
+<DocSection Title="Design Token Enums — C# Reference"
+    Code=@(@"JColor   // Cyan, Blue, Amber, Red, Green, Ghost, White
+JSize    // Xs, Sm, Md, Lg, Xl
+JVariant // Outline, Solid, Ghost, Danger, Scan
+JState   // Active, Processing, Warning, Error, Success, Idle
+JCardStyle    // CornerBracket, Notched, SideRail, GlowBorder, PartialBorder,
+              // DangerPulse, Hexagonal, Radar, DoubleFrame
+JButtonShape  // LeftNotch, RightNotch, BothNotch, Parallelogram, GhostSkew,
+              // BracketFrame, Hexagonal, IconSquare, ScanFull
+JAnimSpeed    // Slow, Normal, Fast, Off
+JThemePreset  // Cyan, Amber, Green, Red, Purple, White, Custom")>
+    <Preview>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            @foreach (var (e, v) in _enumSamples)
+            {
+                <div style="background:var(--j-accent-05);border:1px solid var(--j-accent-18);padding:3px 8px;">
+                    <span style="font-size:8px;color:var(--j-text-muted);">@e.</span><span style="font-size:8px;color:var(--j-accent);">@v</span>
+                </div>
+            }
+        </div>
+    </Preview>
+</DocSection>
+
+@code {
+    JThemePreset    _demoPreset = JThemePreset.Cyan;
+    JThemeProvider? _demoTp;
+
+    async Task ApplyDemo(JThemePreset p) {
+        _demoPreset = p;
+        if (_demoTp != null) await _demoTp.SetPresetAsync(p);
+    }
+
+    static readonly (string, JThemePreset, string)[] _presets = {
+        ("Cyan",   JThemePreset.Cyan,   "#00e5ff"),
+        ("Amber",  JThemePreset.Amber,  "#f97316"),
+        ("Green",  JThemePreset.Green,  "#22c55e"),
+        ("Red",    JThemePreset.Red,    "#ef4444"),
+        ("Purple", JThemePreset.Purple, "#a855f7"),
+        ("White",  JThemePreset.White,  "#e2e8f0"),
+    };
+
+    static readonly (string, string)[] _cssVars = {
+        ("--j-accent",       "Primary HUD color — everything inherits this"),
+        ("--j-accent-35",    "35% opacity tint of accent"),
+        ("--j-accent-25",    "25% opacity tint"),
+        ("--j-accent-18",    "18% opacity tint"),
+        ("--j-accent-12",    "12% opacity tint"),
+        ("--j-accent-08",    "8% opacity tint"),
+        ("--j-accent-05",    "5% opacity tint"),
+        ("--j-warn",         "Warning / amber state"),
+        ("--j-err",          "Error / red state"),
+        ("--j-ok",           "Success / green state"),
+        ("--j-bg",           "Page background"),
+        ("--j-bg-card",      "Card / panel surface"),
+        ("--j-text-primary", "Primary text"),
+        ("--j-text-secondary","Secondary text"),
+        ("--j-text-muted",   "Muted / helper text"),
+        ("--j-border",       "Standard accent border (18% opacity)"),
+        ("--j-border-dim",   "Dim border (7% opacity)"),
+        ("--j-border-mid",   "Mid border (35% opacity)"),
+        ("--j-dur-scan",     "Scan line animation speed"),
+        ("--j-dur-pulse",    "Glow pulse animation speed"),
+        ("--j-notch-lg",     "Large corner notch depth"),
+    };
+
+    static readonly (string, string)[] _enumSamples = {
+        ("JColor","Cyan"), ("JColor","Amber"), ("JColor","Red"), ("JColor","Green"), ("JColor","Ghost"),
+        ("JSize","Xs"), ("JSize","Sm"), ("JSize","Md"), ("JSize","Lg"), ("JSize","Xl"),
+        ("JVariant","Outline"), ("JVariant","Solid"), ("JVariant","Ghost"), ("JVariant","Danger"), ("JVariant","Scan"),
+        ("JState","Active"), ("JState","Processing"), ("JState","Warning"), ("JState","Error"), ("JState","Success"), ("JState","Idle"),
+        ("JThemePreset","Cyan"), ("JThemePreset","Amber"), ("JThemePreset","Green"), ("JThemePreset","Red"),
+        ("JAnimSpeed","Slow"), ("JAnimSpeed","Normal"), ("JAnimSpeed","Fast"), ("JAnimSpeed","Off"),
+    };
+}

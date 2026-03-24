@@ -1,0 +1,289 @@
+@page "/hud-elements"
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+@using JarvisUI.Docs.Components
+
+<PageTitle>HUD Elements — JarvisUI</PageTitle>
+<DocsPageHeader Title="HUD Elements" Category="Visual"
+    Description="JHudFrameCard · JHudLabel — cinematic HUD frames and sci-fi display labels inspired by JARVIS / LINKS Mark II." />
+
+<!-- ════════════════════════════════════════════════════════
+     JHUDFRAMECARD — 4 FRAME STYLES
+═══════════════════════════════════════════════════════════ -->
+
+<DocSection Title="JHudFrameCard — Alpha (Corner Circuit Brackets)"
+    Description="Full corner L-brackets with inner pip brackets, circuit tick lines and corner circle accents. Animated blink on each corner."
+    Code=@(@"<JHudFrameCard FrameStyle=""JHudFrameCard.FrameType.Alpha""
+              Title=""ZONE-4"" FrameId=""SYS-001""
+              Width=""300px"" Height=""180px"">
+    <ChildContent><!-- your content --></ChildContent>
+</JHudFrameCard>")>
+    <Preview>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;">
+            @foreach (var col in new[]{ JColor.Cyan, JColor.Amber, JColor.Red, JColor.Green })
+            {
+                <JHudFrameCard FrameStyle="JHudFrameCard.FrameType.Alpha"
+                               Color="@col" Title="@col.ToString().ToUpper()"
+                               FrameId="@($"SYS-00{(int)col+1}")"
+                               Width="240px" Height="150px">
+                    <ChildContent>
+                        <div style="padding:28px 14px 14px;display:flex;flex-direction:column;gap:4px;">
+                            <JDataRow Key="STATUS" Value="ONLINE" />
+                            <JDataRow Key="HEALTH" Value="99%" BarPercent="99" />
+                            <JDataRow Key="UPTIME" Value="148d" />
+                        </div>
+                    </ChildContent>
+                </JHudFrameCard>
+            }
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="JHudFrameCard — Beta (Notched + Rail)"
+    Description="Clip-path notched corners with accent triangles, side rail pips and animated border glow."
+    Code=@(@"<JHudFrameCard FrameStyle=""JHudFrameCard.FrameType.Beta""
+              Title=""NETWORK"" Color=""JColor.Amber"" />")>
+    <Preview>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;">
+            @foreach (var col in new[]{ JColor.Cyan, JColor.Amber, JColor.Green, JColor.Red })
+            {
+                <JHudFrameCard FrameStyle="JHudFrameCard.FrameType.Beta"
+                               Color="@col" Title="@col.ToString().ToUpper()"
+                               Width="240px" Height="140px">
+                    <ChildContent>
+                        <div style="padding:28px 14px 14px;display:flex;flex-direction:column;gap:4px;">
+                            <JStatCard Title="LOAD" Value="74%" Color="@col" />
+                        </div>
+                    </ChildContent>
+                </JHudFrameCard>
+            }
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="JHudFrameCard — Gamma (Segmented Corner Arcs)"
+    Description="Individual corner segment lines with staggered blink animation. Center spinning ring."
+    Code=@(@"<JHudFrameCard FrameStyle=""JHudFrameCard.FrameType.Gamma""
+              Title=""RADAR"" Width=""260px"" Height=""260px"" />")>
+    <Preview>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;">
+            <JHudFrameCard FrameStyle="JHudFrameCard.FrameType.Gamma"
+                           Color="JColor.Cyan" Title="RADAR" FrameId="GMA-001"
+                           Width="220px" Height="220px">
+                <ChildContent>
+                    <div style="padding:40px 14px 14px;text-align:center;">
+                        <JOrb Size="80px" State="JState.Active" SystemName="SCAN" />
+                    </div>
+                </ChildContent>
+            </JHudFrameCard>
+            <JHudFrameCard FrameStyle="JHudFrameCard.FrameType.Gamma"
+                           Color="JColor.Blue" Title="SENSORS" FrameId="GMA-002"
+                           Width="220px" Height="220px">
+                <ChildContent>
+                    <div style="padding:36px 14px 14px;display:flex;flex-direction:column;gap:3px;">
+                        <JDataRow Key="TEMP"    Value="38.2°C" BarPercent="38" />
+                        <JDataRow Key="HUMID"   Value="62%"    BarPercent="62" />
+                        <JDataRow Key="WIND"    Value="18km/h" BarPercent="18" />
+                        <JDataRow Key="VIS"     Value="4.2km"  BarPercent="42" />
+                    </div>
+                </ChildContent>
+            </JHudFrameCard>
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="JHudFrameCard — Delta (Heavy Industrial)"
+    Description="Thick top/bottom bars, side rails, corner block inserts with diagonal hash tick strips."
+    Code=@(@"<JHudFrameCard FrameStyle=""JHudFrameCard.FrameType.Delta""
+              Title=""ECB CONTROL"" Color=""JColor.Amber"" Width=""300px"" Height=""180px"" />")>
+    <Preview>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;">
+            <JHudFrameCard FrameStyle="JHudFrameCard.FrameType.Delta"
+                           Color="JColor.Cyan" Title="NH-90 ITS" FrameId="DLT-001"
+                           Width="280px" Height="160px">
+                <ChildContent>
+                    <div style="padding:24px 14px 14px;display:flex;flex-direction:column;gap:4px;">
+                        <JDataRow Key="DEVICES"  Value="26/26" BarPercent="100" />
+                        <JDataRow Key="ONLINE"   Value="22"    BarPercent="85" />
+                        <JDataRow Key="OFFLINE"  Value="2"     BarPercent="8" />
+                    </div>
+                </ChildContent>
+            </JHudFrameCard>
+            <JHudFrameCard FrameStyle="JHudFrameCard.FrameType.Delta"
+                           Color="JColor.Amber" Title="ECB TOLL" FrameId="DLT-002"
+                           Width="280px" Height="160px">
+                <ChildContent>
+                    <div style="padding:24px 14px 14px;display:flex;flex-direction:column;gap:4px;">
+                        <JDataRow Key="LANES"    Value="4/6"   BarPercent="67" />
+                        <JDataRow Key="QUEUE"    Value="4 min" BarPercent="40" />
+                        <JDataRow Key="REVENUE"  Value="₹1.2L" />
+                    </div>
+                </ChildContent>
+            </JHudFrameCard>
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- ════════════════════════════════════════════════════════
+     JHUDLABEL — 5 LABEL STYLES
+═══════════════════════════════════════════════════════════ -->
+
+<DocSection Title="JHudLabel — Chip (Parallelogram Tag)"
+    Description="Skewed parallelogram chip with optional dot, text and value. With/without connecting line."
+    Code=@(@"<JHudLabel Text=""UPLOAD"" LabelStyle=""JHudLabel.LabelType.Chip"" />
+<JHudLabel Text=""SIGNAL"" Value=""–62 dBm"" Color=""JColor.Amber"" />
+<JHudLabel Text=""ONLINE"" ShowLine=""false"" Color=""JColor.Green"" />")>
+    <Preview>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+            <JHudLabel Text="UPLOAD"   LabelStyle="JHudLabel.LabelType.Chip" Color="JColor.Cyan" />
+            <JHudLabel Text="NETWORK"  LabelStyle="JHudLabel.LabelType.Chip" Color="JColor.Amber" ShowLine="false" />
+            <JHudLabel Text="SIGNAL"   LabelStyle="JHudLabel.LabelType.Chip" Value="–62 dBm" Color="JColor.Amber" />
+            <JHudLabel Text="LIVE"     LabelStyle="JHudLabel.LabelType.Chip" Color="JColor.Red" ShowLine="false" />
+            <JHudLabel Text="ONLINE"   LabelStyle="JHudLabel.LabelType.Chip" Value="99.8%" Color="JColor.Green" />
+            <JHudLabel Text="SENSORS"  LabelStyle="JHudLabel.LabelType.Chip" Color="JColor.Cyan" ShowLine="false" />
+            <JHudLabel Text="ECB TOLL" LabelStyle="JHudLabel.LabelType.Chip" Value="₹80" Color="JColor.Amber" />
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="JHudLabel — Callout (Two-Line Lower Third)"
+    Description="Two-line callout box with connecting line and terminal dot. Perfect for naming locations and entities."
+    Code=@(@"<JHudLabel Text=""RISPANA BRIDGE"" SubText=""LOCATION""
+          LabelStyle=""JHudLabel.LabelType.Callout"" />
+<JHudLabel Text=""CCTV-014"" SubText=""DEVICE ID""
+          LabelStyle=""JHudLabel.LabelType.Callout"" Color=""JColor.Green"" />")>
+    <Preview>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;padding:8px 0;">
+            <JHudLabel Text="NH-90 CORRIDOR" SubText="HIGHWAY" LabelStyle="JHudLabel.LabelType.Callout" Color="JColor.Cyan" />
+            <JHudLabel Text="CCTV-014" SubText="DEVICE ID" LabelStyle="JHudLabel.LabelType.Callout" Color="JColor.Green" />
+            <JHudLabel Text="WARNING" SubText="SYSTEM STATE" LabelStyle="JHudLabel.LabelType.Callout" Color="JColor.Amber" />
+            <JHudLabel Text="ECB CTRL ROOM" SubText="HARIDWAR" LabelStyle="JHudLabel.LabelType.Callout" Color="JColor.Red" />
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="JHudLabel — Circuit (Bracket + Circuit Arm)"
+    Description="Bracket-framed label with circuit-board node-track-node arm. Use for device or component callouts."
+    Code=@(@"<JHudLabel Text=""BHEL PTZ"" Value=""ONLINE""
+          LabelStyle=""JHudLabel.LabelType.Circuit"" />")>
+    <Preview>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:8px 0;">
+            <JHudLabel Text="CCTV-005" Value="OFFLINE" LabelStyle="JHudLabel.LabelType.Circuit" Color="JColor.Red" />
+            <JHudLabel Text="VMS-001" Value="ACTIVE" LabelStyle="JHudLabel.LabelType.Circuit" Color="JColor.Cyan" />
+            <JHudLabel Text="PTZ-001" Value="TRACKING" LabelStyle="JHudLabel.LabelType.Circuit" Color="JColor.Green" />
+            <JHudLabel Text="TOLL-01" Value="OPEN" LabelStyle="JHudLabel.LabelType.Circuit" Color="JColor.Amber" ShowLine="false" />
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="JHudLabel — Badge (Radial Circle Callout)"
+    Description="Circle ring with value inside + label text. Like the '90 CONNECT' style in image 2."
+    Code=@(@"<JHudLabel Text=""CONNECT"" Value=""90""
+          LabelStyle=""JHudLabel.LabelType.Badge"" />")>
+    <Preview>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;">
+            <JHudLabel Text="CONNECT" Value="90" LabelStyle="JHudLabel.LabelType.Badge" Color="JColor.Cyan" />
+            <JHudLabel Text="LANES" Value="4" LabelStyle="JHudLabel.LabelType.Badge" Color="JColor.Amber" />
+            <JHudLabel Text="DEVICES" Value="26" LabelStyle="JHudLabel.LabelType.Badge" Color="JColor.Green" />
+            <JHudLabel Text="OFFLINE" Value="2" LabelStyle="JHudLabel.LabelType.Badge" Color="JColor.Red" />
+        </div>
+    </Preview>
+</DocSection>
+
+<DocSection Title="JHudLabel — Panel (Bordered Info Panel)"
+    Description="Notched bordered panel with header line, sub-label and main value. Like 'DATA ANALYSIS' in image 2."
+    Code=@(@"<JHudLabel Text=""ULTRA-MODERN"" SubText=""SYSTEM""
+          LabelStyle=""JHudLabel.LabelType.Panel"" />
+<JHudLabel Text=""ANALYSIS"" SubText=""DATA"" Value=""4.2 TB""
+          LabelStyle=""JHudLabel.LabelType.Panel"" Color=""JColor.Amber"" />")>
+    <Preview>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+            <JHudLabel Text="ULTRA-MODERN" SubText="SYSTEM" LabelStyle="JHudLabel.LabelType.Panel" Color="JColor.Cyan" />
+            <JHudLabel Text="ANALYSIS" SubText="DATA" Value="4.2 TB" LabelStyle="JHudLabel.LabelType.Panel" Color="JColor.Amber" />
+            <JHudLabel Text="PROGRESSIVE" LabelStyle="JHudLabel.LabelType.Panel" Color="JColor.Green" ShowLine="false" />
+            <JHudLabel Text="ESTABLISH" SubText="LINK" LabelStyle="JHudLabel.LabelType.Panel" Color="JColor.Red" />
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- ════════════════════════════════════════════════════════
+     COMBINED DEMO — All 4 HudFrameCards with Labels
+═══════════════════════════════════════════════════════════ -->
+
+<DocSection Title="Combined — Frame Cards + HUD Labels"
+    Description="All 4 frame styles together with HUD labels as overlays and callouts."
+    NoPad="true">
+    <Preview>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;background:var(--j-bg);">
+
+            <!-- Card 1: Alpha + Cyan -->
+            <div style="position:relative;">
+                <JHudFrameCard FrameStyle="JHudFrameCard.FrameType.Alpha"
+                               Color="JColor.Cyan" Title="CCTV NETWORK" FrameId="NH90-A"
+                               Width="100%" Height="180px">
+                    <ChildContent>
+                        <div style="padding:28px 14px 10px;display:flex;flex-direction:column;gap:3px;">
+                            <JDataRow Key="CAMERAS"  Value="20/20" BarPercent="100" />
+                            <JDataRow Key="ONLINE"   Value="18"    BarPercent="90" />
+                            <JDataRow Key="COVERAGE" Value="100%"  BarPercent="100" />
+                        </div>
+                        <div style="padding:0 14px;display:flex;gap:6px;flex-wrap:wrap;">
+                            <JHudLabel Text="LIVE" LabelStyle="JHudLabel.LabelType.Chip" Color="JColor.Cyan" ShowLine="false" />
+                            <JHudLabel Text="4K" LabelStyle="JHudLabel.LabelType.Chip" Color="JColor.Green" ShowLine="false" />
+                        </div>
+                    </ChildContent>
+                </JHudFrameCard>
+            </div>
+
+            <!-- Card 2: Beta + Amber -->
+            <div style="position:relative;">
+                <JHudFrameCard FrameStyle="JHudFrameCard.FrameType.Beta"
+                               Color="JColor.Amber" Title="ECB TOLL PLAZA" FrameId="NH90-B"
+                               Width="100%" Height="180px">
+                    <ChildContent>
+                        <div style="padding:28px 14px 10px;display:flex;flex-direction:column;gap:3px;">
+                            <JDataRow Key="LANES"   Value="4/6"   BarPercent="67" />
+                            <JDataRow Key="QUEUE"   Value="4 min" BarPercent="40" />
+                            <JDataRow Key="REVENUE" Value="₹1.2L" />
+                        </div>
+                        <div style="padding:0 14px;">
+                            <JHudLabel Text="HARIDWAR" SubText="LOCATION" LabelStyle="JHudLabel.LabelType.Callout" Color="JColor.Amber" />
+                        </div>
+                    </ChildContent>
+                </JHudFrameCard>
+            </div>
+
+            <!-- Card 3: Gamma + Green -->
+            <div style="position:relative;">
+                <JHudFrameCard FrameStyle="JHudFrameCard.FrameType.Gamma"
+                               Color="JColor.Green" Title="VMS BOARD" FrameId="NH90-C"
+                               Width="100%" Height="180px">
+                    <ChildContent>
+                        <div style="padding:28px 14px 10px;">
+                            <div style="padding:8px;background:var(--j-accent-05);border:1px solid var(--j-accent-25);margin-bottom:8px;">
+                                <div style="font-size:8px;color:var(--j-accent-50);letter-spacing:.12em;margin-bottom:3px;">VMS-001 · FOREST ZONE</div>
+                                <div style="font-size:11px;color:var(--j-warn);font-weight:700;letter-spacing:.08em;">⚠ WILDLIFE CROSSING</div>
+                            </div>
+                            <JHudLabel Text="VMS-001" Value="ACTIVE" LabelStyle="JHudLabel.LabelType.Circuit" Color="JColor.Green" />
+                        </div>
+                    </ChildContent>
+                </JHudFrameCard>
+            </div>
+
+            <!-- Card 4: Delta + Red -->
+            <div style="position:relative;">
+                <JHudFrameCard FrameStyle="JHudFrameCard.FrameType.Delta"
+                               Color="JColor.Red" Title="OFFLINE DEVICES" FrameId="NH90-D"
+                               Width="100%" Height="180px">
+                    <ChildContent>
+                        <div style="padding:24px 14px 10px;display:flex;flex-direction:column;gap:4px;">
+                            <JAlert State="JState.Error" Title="CCTV-005">Forest Zone Entry offline 72m</JAlert>
+                            <JAlert State="JState.Error" Title="CCTV-011">NH-72A Junction offline 3h</JAlert>
+                        </div>
+                    </ChildContent>
+                </JHudFrameCard>
+            </div>
+
+        </div>
+    </Preview>
+</DocSection>

@@ -1,170 +1,182 @@
-@page "/input"
-@page "/select"
-@page "/toggle"
-@page "/slider"
-@page "/checkbox"
-@page "/radio"
-@page "/textarea"
-@page "/formfield"
+@page "/forms"
 @using JarvisUI.Components
 @using JarvisUI.Tokens
 @using JarvisUI.Docs.Components
 
-<PageTitle>Forms — JarvisUI Docs</PageTitle>
+<PageTitle>Forms — JarvisUI</PageTitle>
+<DocsPageHeader Title="Form Controls" Category="Interaction"
+    Description="JInput · JTextArea · JSelect · JToggle · JSlider · JCheckbox · JRadio · JFormField — all two-way bound, all live." />
 
-<DocsPageHeader Title="Form Components"
-                Category="Forms"
-                Description="All HUD-styled form inputs. Angular shapes, corner brackets, diamond indicators. Fully bound with bind — no JavaScript." />
-
-<DocSection Title="JInput — Text Field"
-            Code="@jInputCode">
+<!-- JINPUT ALL TYPES -->
+<DocSection Title="JInput — Types, States, Sizes"
+    Code=@(@"<JInput Label=""CALLSIGN"" Placeholder=""Enter..."" />
+<JInput Label=""ACCESS"" Type=""password"" />
+<JInput Label=""OFFLINE"" Disabled=""true"" Value=""NH-90-CTRL"" />
+<JInput Label=""ERROR"" State=""JState.Error"" HelperText=""Invalid"" />")>
     <Preview>
-        <div style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px;">
-            <JInput @bind-Value="_inputVal" Label="Voice command" Placeholder="Speak or type..." />
-            <JInput @bind-Value="_inputVal" Label="Amber variant" Color="JColor.Amber" Placeholder="Warning input..." />
-            <JInput @bind-Value="_inputVal" Label="Disabled" Disabled="true" Placeholder="Cannot edit" />
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;width:100%;">
+            <JInput Label="CALLSIGN"    Placeholder="Enter callsign..." @bind-Value="_inp1" />
+            <JInput Label="ACCESS CODE" Type="password" Placeholder="••••••" @bind-Value="_inp2" />
+            <JInput Label="NODE ID"     Disabled="true" Value="NH-90-CTRL-001" />
+            <JInput Label="FREQUENCY"   Placeholder="149.750 MHz" @bind-Value="_inp3" />
+            <JInput Label="ERROR STATE" State="JState.Error" HelperText="Invalid entry format" @bind-Value="_inp4" />
+            <JInput Label="WARNING"     State="JState.Warning" HelperText="Value out of range" @bind-Value="_inp5" />
+        </div>
+        @if (!string.IsNullOrWhiteSpace(_inp1))
+        {
+            <div style="margin-top:8px;font-size:9px;color:var(--j-text-muted);">CALLSIGN: <span style="color:var(--j-accent);">@_inp1</span></div>
+        }
+    </Preview>
+</DocSection>
+
+<!-- JTEXTAREA -->
+<DocSection Title="JTextArea — Multi-line with Line Count"
+    Code=@(@"<JTextArea Label=""MISSION BRIEFING"" Placeholder=""Enter details..."" Rows=""4"" />")>
+    <Preview>
+        <div style="width:100%;max-width:480px;">
+            <JTextArea Label="MISSION BRIEFING" Placeholder="Enter mission details..."
+                       Rows="4" @bind-Value="_textarea" />
+            @if (!string.IsNullOrWhiteSpace(_textarea))
+            {
+                <div style="font-size:8px;color:var(--j-text-muted);margin-top:4px;">
+                    @_textarea.Split('\n').Length line(s) · @_textarea.Length char(s)
+                </div>
+            }
         </div>
     </Preview>
 </DocSection>
 
+<!-- JSELECT -->
 <DocSection Title="JSelect — Dropdown"
-            Code="@jSelectCode">
+    Code=@(@"var opts = new List<JSelect.JSelectOption> { new(""a"",""Alpha""), new(""b"",""Bravo"") };
+<JSelect Label=""STATION"" Options=""@opts"" @bind-Value=""_sel"" />")>
     <Preview>
-        <div style="width:100%;max-width:300px;display:flex;flex-direction:column;gap:10px;">
-            <JSelect @bind-Value="_selectVal" Label="AI Model" Options="@_models" Placeholder="Select model..." />
-            <JSelect @bind-Value="_langVal"   Label="Language" Color="JColor.Amber" Options="@_langs" />
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <div style="width:220px;">
+                <JSelect Label="STATION"  Options="@_stationOpts" @bind-Value="_selStation" />
+                <div style="margin-top:4px;font-size:9px;color:var(--j-text-muted);">Selected: <span style="color:var(--j-accent);">@_selStation</span></div>
+            </div>
+            <div style="width:220px;">
+                <JSelect Label="ALERT LEVEL" Options="@_alertOpts" @bind-Value="_selAlert" Color="JColor.Amber" />
+                <div style="margin-top:4px;font-size:9px;color:var(--j-text-muted);">Selected: <span style="color:var(--j-warn);">@_selAlert</span></div>
+            </div>
         </div>
     </Preview>
 </DocSection>
 
-<DocSection Title="JToggle — Switch"
-            Code="@jToggleCode">
+<!-- JTOGGLE -->
+<DocSection Title="JToggle — On/Off Switch"
+    Code=@(@"<JToggle Label=""NIGHT MODE"" @bind-Value=""_night"" />
+<JToggle Label=""LOCKDOWN"" Color=""JColor.Red"" @bind-Value=""_lock"" />")>
     <Preview>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-            <JToggle @bind-Value="_toggle1" Label="Voice listening" />
-            <JToggle @bind-Value="_toggle2" Label="HUD overlay" Color="JColor.Amber" />
-            <JToggle @bind-Value="_toggle3" Label="Auto-start" Color="JColor.Green" />
-            <JToggle @bind-Value="_toggle4" Label="Disabled" Disabled="true" />
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+            <JToggle Label="NIGHT MODE"  @bind-Value="_tog1" />
+            <JToggle Label="SENSORS"     @bind-Value="_tog2" Color="JColor.Green" />
+            <JToggle Label="AUTO LOCK"   @bind-Value="_tog3" Color="JColor.Amber" />
+            <JToggle Label="LOCKDOWN"    @bind-Value="_tog4" Color="JColor.Red" />
+            <JToggle Label="DISABLED ON" Value="true" Disabled="true" />
+        </div>
+        <div style="margin-top:8px;display:flex;gap:10px;font-size:9px;color:var(--j-text-muted);">
+            <span>Night: <span style="color:var(--j-accent)">@_tog1</span></span>
+            <span>Sensors: <span style="color:var(--j-ok)">@_tog2</span></span>
+            <span>Lockdown: <span style="color:var(--j-err)">@_tog4</span></span>
         </div>
     </Preview>
 </DocSection>
 
+<!-- JSLIDER -->
 <DocSection Title="JSlider — Range"
-            Code="@jSliderCode">
+    Code=@(@"<JSlider Label=""GAIN"" Min=""0"" Max=""100"" @bind-Value=""_gain"" />
+<JSlider Label=""FREQ"" Min=""100"" Max=""500"" Step=""10"" Color=""JColor.Amber"" @bind-Value=""_freq"" />")>
     <Preview>
-        <div style="width:100%;max-width:320px;display:flex;flex-direction:column;gap:14px;">
-            <JSlider @bind-Value="_slider1" Label="Volume" Unit="%" ShowTicks="true" TickCount="8" />
-            <JSlider @bind-Value="_slider2" Label="Temperature" Color="JColor.Amber" Min="16" Max="30" Unit="°C" ShowMinMax="true" />
-            <JSlider @bind-Value="_slider3" Label="Sensitivity" Color="JColor.Green" />
+        <div style="display:flex;flex-direction:column;gap:12px;max-width:360px;width:100%;">
+            <JSlider Label="GAIN"      Min="0"   Max="100" @bind-Value="_gain" />
+            <JSlider Label="FREQUENCY" Min="100" Max="500" Step="10" @bind-Value="_freq" Color="JColor.Amber" />
+            <JSlider Label="THRESHOLD" Min="0"   Max="10"  Step="0.5" @bind-Value="_thr" Color="JColor.Red" />
+            <div style="font-size:9px;color:var(--j-text-muted);">
+                Gain: <span style="color:var(--j-accent)">@_gain</span> &nbsp;
+                Freq: <span style="color:var(--j-warn)">@_freq</span> MHz &nbsp;
+                Thr: <span style="color:var(--j-err)">@_thr</span>
+            </div>
         </div>
     </Preview>
 </DocSection>
 
-<DocSection Title="JCheckbox — Multi-select"
-            Code="@jCheckboxCode">
+<!-- JCHECKBOX + JRADIO -->
+<DocSection Title="JCheckbox + JRadio">
     <Preview>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-            <JCheckbox @bind-Value="_chk1" Label="Enable voice commands" />
-            <JCheckbox @bind-Value="_chk2" Label="Auto-start on boot" Color="JColor.Amber" />
-            <JCheckbox @bind-Value="_chk3" Label="Show HUD overlay" Color="JColor.Green" />
-            <JCheckbox @bind-Value="_chk4" Label="Disabled option" Disabled="true" />
+        <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+            <div>
+                <div style="font-size:8px;color:var(--j-accent);letter-spacing:.12em;margin-bottom:8px;">JCHECKBOX</div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                    <JCheckbox Label="ENABLE RADAR"  @bind-Value="_cb1" />
+                    <JCheckbox Label="AUTO LOCK"     @bind-Value="_cb2" Color="JColor.Green" />
+                    <JCheckbox Label="NIGHT MODE"    @bind-Value="_cb3" Color="JColor.Amber" />
+                    <JCheckbox Label="DISABLED"      Value="true"      Disabled="true" />
+                </div>
+                <div style="margin-top:6px;font-size:9px;color:var(--j-text-muted);">
+                    Radar:@_cb1 Lock:@_cb2 Night:@_cb3
+                </div>
+            </div>
+            <div>
+                <div style="font-size:8px;color:var(--j-accent);letter-spacing:.12em;margin-bottom:8px;">JRADIO</div>
+                <JRadio Label="ALERT LEVEL" Options="@_radioOpts" @bind-Value="_radioVal" />
+                <div style="margin-top:6px;font-size:9px;color:var(--j-text-muted);">
+                    Selected: <span style="color:var(--j-accent)">@_radioVal</span>
+                </div>
+            </div>
         </div>
     </Preview>
 </DocSection>
 
-<DocSection Title="JRadio — Single select"
-            Code="@jRadioCode">
+<!-- JFORMFIELD -->
+<DocSection Title="JFormField — Label Wrapper with Validation"
+    Code=@(@"<JFormField Label=""COORDINATES"" Helper=""Format: Lat, Lng"">
+    <JInput Placeholder=""28.6139, 77.2090"" />
+</JFormField>
+<JFormField Label=""TARGET ID"" Error=""Required"" HasError=""true"">
+    <JInput State=""JState.Error"" />
+</JFormField>")>
     <Preview>
-        <div style="display:flex;flex-direction:column;gap:12px;">
-            <JRadio @bind-Value="_radioVal" Label="Select Model" Options="@_radioModels" />
-            <JRadio @bind-Value="_radioLang" Label="Language" Options="@_radioLangs" Horizontal="true" Color="JColor.Amber" />
-        </div>
-    </Preview>
-</DocSection>
-
-<DocSection Title="JTextArea — Multi-line"
-            Code="@jTextAreaCode">
-    <Preview>
-        <div style="width:100%;max-width:400px;">
-            <JTextArea @bind-Value="_textVal" Label="Mission log" Rows="4" ShowLineCount="true"
-                       Placeholder="Enter command or notes..." />
-        </div>
-    </Preview>
-</DocSection>
-
-<DocSection Title="JFormField — Wrapper with validation"
-            Code="@jFormFieldCode">
-    <Preview>
-        <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px;">
-            <JFormField Label="API Key" Required="true" Tag="Secret"
-                        Helper="Your Anthropic API key — never logged">
-                <JInput @bind-Value="_apiKey" Placeholder="sk-ant-..." />
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;max-width:700px;">
+            <JFormField Label="COORDINATES" Helper="Format: Lat, Lng">
+                <JInput Placeholder="28.6139, 77.2090" @bind-Value="_coord" />
             </JFormField>
-            <JFormField Label="Model" Error="@_modelError">
-                <JSelect @bind-Value="_selectVal" Options="@_models" />
+            <JFormField Label="TARGET ID" Error="@(_targetId==""?"ID is required":null)" Tag="REQ">
+                <JInput Placeholder="Enter ID..." State="@(_targetId==""?JState.Error:JState.Active)" @bind-Value="_targetId" />
             </JFormField>
-            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm"
-                     OnClick="SimulateError">Simulate Error</JButton>
+            <JFormField Label="SPEED LIMIT" Helper="Max 120 km/h" Tag="VMS">
+                <JSlider Min="20" Max="120" Step="10" @bind-Value="_speed" Color="JColor.Amber" />
+            </JFormField>
         </div>
     </Preview>
 </DocSection>
 
 @code {
-    // -------------------- Form state --------------------
-    string? _inputVal;
-    string? _selectVal;
-    string? _langVal;
-    bool    _toggle1 = true, _toggle2, _toggle3, _toggle4;
-    double  _slider1 = 65, _slider2 = 22, _slider3 = 50;
-    bool   _chk1 = true, _chk2, _chk3, _chk4;
-    string? _radioVal  = "llama3:8b";
-    string? _radioLang = "en-US";
-    string? _textVal;
-    string? _apiKey;
-    string? _modelError;
+    string? _inp1, _inp2, _inp3, _inp4, _inp5;
+    string? _textarea;
 
-    private void SimulateError() =>
-        _modelError = _modelError == null ? "Model not available in current config" : null;
-
-    private List<JSelect.JSelectOption> _models = new()
-    {
-        new("llama3:8b",  "LLaMA 3 8B"),
-        new("phi3:mini",  "Phi-3 Mini"),
-        new("mistral:7b", "Mistral 7B"),
+    List<JSelect.JSelectOption> _stationOpts = new() {
+        new("hw","Haridwar Entry"), new("mc","Motichur Bridge"), new("di","Doiwala"),
+        new("ri","Rispana Bridge"), new("deh","Dehradun Exit"),
     };
+    string? _selStation = "hw";
 
-    private List<JSelect.JSelectOption> _langs = new()
-    {
-        new("en-US", "English (US)"),
-        new("en-GB", "English (UK)"),
-        new("fr-FR", "French"),
-        new("de-DE", "German"),
+    List<JSelect.JSelectOption> _alertOpts = new() {
+        new("l","LOW"), new("m","MEDIUM"), new("h","HIGH"), new("c","CRITICAL"),
     };
+    string? _selAlert = "m";
 
-    private List<JRadio.JRadioOption> _radioModels = new()
-    {
-        new("llama3:8b",  "LLaMA 3 8B",  "Fastest · 8B params"),
-        new("phi3:mini",  "Phi-3 Mini",  "Lightweight · 3.8B"),
-        new("mistral:7b", "Mistral 7B",  "Balanced · 7B params"),
+    bool _tog1=true, _tog2=false, _tog3=false, _tog4=false;
+    double _gain=65, _freq=240, _thr=3;
+    bool _cb1=true, _cb2=false, _cb3=true;
+
+    List<JRadio.JRadioOption> _radioOpts = new() {
+        new("low","LOW"), new("med","MEDIUM"), new("high","HIGH"), new("crit","CRITICAL"),
     };
+    string? _radioVal = "med";
 
-    private List<JRadio.JRadioOption> _radioLangs = new()
-    {
-        new("en-US", "English"),
-        new("fr-FR", "French"),
-        new("de-DE", "German"),
-    };
-
-    // -------------------- Razor markup strings --------------------
-    private string jInputCode = @"<JInput @bind-Value=""val"" Label=""Command"" Placeholder=""Type here..."" />";
-    private string jSelectCode = @"<JSelect @bind-Value=""selected"" Label=""Model"" Options=""@opts"" />";
-    private string jToggleCode = @"<JToggle @bind-Value=""enabled"" Label=""Listening"" />";
-    private string jSliderCode = @"<JSlider @bind-Value=""vol"" Label=""Volume"" Min=""0"" Max=""100"" />";
-    private string jCheckboxCode = @"<JCheckbox @bind-Value=""checked"" Label=""Enable voice commands"" />";
-    private string jRadioCode = @"<JRadio @bind-Value=""sel"" Options=""@opts"" Label=""Model"" />";
-    private string jTextAreaCode = @"<JTextArea @bind-Value=""txt"" Label=""Mission log"" Rows=""4"" ShowLineCount=""true"" />";
-    private string jFormFieldCode = @"
-<JFormField Label=""API Key"" Required=""true"" Error=""@error"">
-    <JInput @bind-Value=""key"" Placeholder=""sk-..."" />
-</JFormField>";
+    string? _coord;
+    string _targetId = "NK-001";
+    double _speed = 80;
 }

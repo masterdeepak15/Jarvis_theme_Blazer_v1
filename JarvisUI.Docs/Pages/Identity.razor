@@ -1,149 +1,217 @@
-@page "/orb"
-@page "/arcmeter"
-@page "/spinner"
-@page "/waveform"
-@page "/radialmenu"
-@page "/bootscreen"
+@page "/identity"
 @using JarvisUI.Components
 @using JarvisUI.Tokens
 @using JarvisUI.Docs.Components
 
-<PageTitle>Identity — JarvisUI Docs</PageTitle>
+<PageTitle>Identity / HUD — JarvisUI</PageTitle>
+<DocsPageHeader Title="Identity / HUD" Category="Visual"
+    Description="JOrb · JArcMeter · JSpinner · JWaveform · JBootScreen · JRadialMenu · JHudBar · JHudFrame" />
 
-<DocsPageHeader Title="Identity & HUD Components"
-                Category="Identity"
-                Description="The signature JARVIS elements — the orb, arc meter, radial menu, waveform. These are what make the interface feel alive." />
-
-<DocSection Title="JOrb — Main Identity Orb"
-            Description="The centerpiece. Concentric rotating rings at different speeds. State changes affect ring speed. Click to toggle listening. Tick marks on outer orbit."
-            Code="@jOrbCode">
+<!-- JORB -->
+<DocSection Title="JOrb — All States" Align="center"
+    Code=@(@"<JOrb State=""JState.Active""     SystemName=""JARVIS"" />
+<JOrb State=""JState.Processing"" SystemName=""SYNC"" />
+<JOrb State=""JState.Warning""    SystemName=""CAUTION"" />
+<JOrb State=""JState.Error""      SystemName=""FAULT"" />
+<JOrb State=""JState.Idle""       SystemName=""IDLE"" />
+<JOrb Listening=""true""          SystemName=""LISTENING"" />")>
     <Preview>
-        <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;justify-content:center;">
-            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-                <JOrb SystemName="JARVIS" State="JState.Active" Size="120px" Listening="@_listen1" OnClick="() => _listen1 = !_listen1" />
-                <span class="j-text-xs">Active</span>
+        <div style="display:flex;flex-wrap:wrap;gap:24px;justify-content:center;padding:12px 0;">
+            @foreach (var (lbl, st, list) in _orbStates)
+            {
+                <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+                    <JOrb State="@st" SystemName="@lbl" Listening="@list" Size="100px" />
+                    <span style="font-size:8px;color:var(--j-text-muted);letter-spacing:.12em;">@lbl</span>
+                </div>
+            }
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- JORB SIZES + CLICK -->
+<DocSection Title="JOrb — Sizes + Click Event"
+    Code=@(@"<JOrb Size=""80px""  SystemName=""SM"" />
+<JOrb Size=""120px"" SystemName=""MD"" />
+<JOrb Size=""160px"" SystemName=""LG"" OnClick=""HandleClick"" />")>
+    <Preview>
+        <div style="display:flex;gap:20px;align-items:flex-end;flex-wrap:wrap;">
+            <JOrb Size="70px"  SystemName="XS" />
+            <JOrb Size="100px" SystemName="SM" />
+            <JOrb Size="140px" SystemName="MD" State="@_orbClickState" OnClick="CycleOrb" />
+        </div>
+        <div style="margin-top:10px;">
+            <JBadge Color="JColor.Cyan">Click the MD orb to cycle states</JBadge>
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- JARCMETER -->
+<DocSection Title="JArcMeter — Signal Level Meter"
+    Code=@(@"<JArcMeter Level=""3"" TotalArcs=""6"" Label=""SIGNAL"" ShowLabel=""true"" />
+<JArcMeter Level=""5"" TotalArcs=""6"" Color=""JColor.Green"" />
+<JArcMeter Level=""2"" TotalArcs=""6"" Color=""JColor.Red"" />")>
+    <Preview>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                <JArcMeter Level="@_arcLevel" TotalArcs="6" Label="SIGNAL" ShowLabel="true" />
+                <div style="display:flex;gap:4px;margin-top:4px;">
+                    <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Xs" OnClick="ArcDown">−</JButton>
+                    <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Xs" OnClick="ArcUp">+</JButton>
+                </div>
             </div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-                <JOrb SystemName="JARVIS" State="JState.Processing" Size="120px" Color="JColor.Cyan" />
-                <span class="j-text-xs">Processing</span>
+            <JArcMeter Level="5" TotalArcs="6" Color="JColor.Green" ShowLabel="true" Label="STRONG" />
+            <JArcMeter Level="2" TotalArcs="6" Color="JColor.Red" ShowLabel="true" Label="WEAK" />
+            <JArcMeter Level="4" TotalArcs="6" Color="JColor.Amber" ShowLabel="true" Label="MID" />
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- JSPINNER -->
+<DocSection Title="JSpinner — Loading States"
+    Code=@(@"<JSpinner Size=""48px"" State=""JState.Active"" Label=""LOADING"" />
+<JSpinner Size=""64px"" Color=""JColor.Green"" />
+<JSpinner Size=""80px"" State=""JState.Processing"" />")>
+    <Preview>
+        <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
+            <JSpinner Size="48px" Label="LOADING" />
+            <JSpinner Size="64px" Color="JColor.Green" Label="OK" />
+            <JSpinner Size="64px" State="JState.Warning" Label="WAIT" />
+            <JSpinner Size="64px" State="JState.Error" Label="FAULT" />
+            <JSpinner Size="80px" State="JState.Processing" Label="SYNC" />
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- JWAVEFORM -->
+<DocSection Title="JWaveform — Audio Bars"
+    Code=@(@"<JWaveform Active=""true"" BarCount=""20"" Height=""32px"" />
+<JWaveform Active=""false"" Color=""JColor.Amber"" />  @* frozen *@")>
+    <Preview>
+        <div style="display:flex;flex-direction:column;gap:10px;width:100%;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <JWaveform Active="@_waveActive" BarCount="24" Height="36px" />
+                <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm"
+                         OnClick="@(()=>_waveActive=!_waveActive)">
+                    @(_waveActive ? "⏸ PAUSE" : "▶ PLAY")
+                </JButton>
             </div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-                <JOrb SystemName="WARN" State="JState.Warning" Size="120px" Color="JColor.Amber" />
-                <span class="j-text-xs">Warning</span>
+            <JWaveform Active="true" BarCount="16" Height="24px" Color="JColor.Green" />
+            <JWaveform Active="true" BarCount="32" Height="20px" Color="JColor.Amber" />
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- JHUDBAR -->
+<DocSection Title="JHudBar — Top / Bottom Status Bars"
+    Code=@(@"<JHudBar Position=""JHudBar.JHudBarPosition.Top""    SystemLabel=""NH-90 ITS"" ShowWaveform=""true"" />
+<JHudBar Position=""JHudBar.JHudBarPosition.Bottom"" ShowDots=""true"" />")>
+    <Preview>
+        <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
+            <div style="position:relative;height:36px;border:1px solid var(--j-border-dim);">
+                <JHudBar Position="JHudBar.JHudBarPosition.Top"    SystemLabel="NH-90 ITS" ShowWaveform="true" />
             </div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-                <JOrb SystemName="ERROR" State="JState.Error" Size="120px" Color="JColor.Red" />
-                <span class="j-text-xs">Error</span>
+            <div style="position:relative;height:36px;border:1px solid var(--j-border-dim);">
+                <JHudBar Position="JHudBar.JHudBarPosition.Bottom" SystemLabel="ECB CTRL" ShowDots="true" />
             </div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-                <JOrb SystemName="IDLE" State="JState.Idle" Size="120px" Color="JColor.Ghost" />
-                <span class="j-text-xs">Idle</span>
+            <div style="position:relative;height:36px;border:1px solid var(--j-border-dim);">
+                <JHudBar Position="JHudBar.JHudBarPosition.Top"    Color="JColor.Amber" SystemLabel="WARNING" ShowWaveform="false" />
             </div>
         </div>
     </Preview>
 </DocSection>
 
-<DocSection Title="JArcMeter — Mic / Signal Level"
-            Description="6 angled tick segments. Exactly replicates the LINKS Mark II microphone level display. Simulated live level below."
-            Code="@jArcMeterCode">
+<!-- JHUDFRAME -->
+<DocSection Title="JHudFrame — Corner Bracket Overlay"
+    Code=@(@"<div style=""position:relative;padding:24px;"">
+    <JHudFrame SystemLabel=""ZONE-4"" ShowLive=""true"" />
+    <p>Content inside the frame</p>
+</div>")>
     <Preview>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
-            <div style="display:flex;gap:24px;align-items:flex-end;flex-wrap:wrap;">
-                <div style="text-align:center;">
-                    <JArcMeter Level="@_arcLevel" ShowLabel="true" Label="MIC" ShowValue="true" />
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+            @foreach (var (lbl, col) in new[]{("ZONE-1","JColor.Cyan"),("ZONE-2","JColor.Amber"),("ZONE-3","JColor.Red")})
+            {
+                <div style="position:relative;width:180px;height:80px;display:flex;align-items:center;justify-content:center;">
+                    <JHudFrame SystemLabel="@lbl" ShowLive="true" ShowDots="true" />
+                    <span style="font-size:10px;color:var(--j-accent);">@lbl</span>
                 </div>
-                <div style="text-align:center;">
-                    <JArcMeter Level="4" TotalArcs="8" ShowLabel="true" Label="SIG" Color="JColor.Green" />
-                </div>
-                <div style="text-align:center;">
-                    <JArcMeter Level="6" TotalArcs="6" ShowLabel="true" Label="MAX" Color="JColor.Red" />
-                </div>
-                <div style="text-align:center;">
-                    <JArcMeter Level="2" TotalArcs="6" ShowLabel="true" Label="LOW" Color="JColor.Amber" />
-                </div>
-            </div>
-            <JSlider @bind-Value="_arcSlider" Label="Simulate level" Min="0" Max="6" Step="1"
-                     ShowTicks="true" TickCount="6" />
+            }
         </div>
     </Preview>
 </DocSection>
 
-<DocSection Title="JSpinner — Loading Orb"
-            Description="Three concentric rings at different speeds. Speed driven by State. Diamond center pulses."
-            Code="@jSpinnerCode">
+<!-- JRADIAL MENU -->
+<DocSection Title="JRadialMenu — Fly-out Radial Menu"
+    Code=@(@"<JRadialMenu @bind-Open=""_open"" TriggerLabel=""MENU"" Color=""JColor.Cyan"">
+    <JRadialItem Icon=""◎"" Label=""MAP"" Angle=""0"" />
+    <JRadialItem Icon=""⌨"" Label=""FORMS"" Angle=""60"" />
+    <JRadialItem Icon=""▣"" Label=""CARDS"" Angle=""120"" />
+</JRadialMenu>")>
     <Preview>
-        <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
-            <div style="text-align:center;">
-                <JSpinner Size="64px" State="JState.Active" Label="JARVIS" />
-                <div class="j-text-xs" style="margin-top:6px;">Active</div>
-            </div>
-            <div style="text-align:center;">
-                <JSpinner Size="64px" State="JState.Processing" Color="JColor.Cyan" />
-                <div class="j-text-xs" style="margin-top:6px;">Processing</div>
-            </div>
-            <div style="text-align:center;">
-                <JSpinner Size="48px" Color="JColor.Amber" State="JState.Warning" ShowLabel="false" />
-                <div class="j-text-xs" style="margin-top:6px;">Amber · 48px</div>
-            </div>
-            <div style="text-align:center;">
-                <JSpinner Size="32px" Color="JColor.Red" ShowLabel="false" />
-                <div class="j-text-xs" style="margin-top:6px;">Red · 32px</div>
-            </div>
-            <div style="text-align:center;">
-                <JSpinner Size="24px" ShowLabel="false" />
-                <div class="j-text-xs" style="margin-top:6px;">Inline · 24px</div>
-            </div>
-        </div>
-    </Preview>
-</DocSection>
-
-<DocSection Title="JWaveform — Audio Visualizer"
-            Description="Animated bars with independent duration and delay CSS variables for organic movement. Frozen when Active=false."
-            Code="@jWaveformCode">
-    <Preview>
-        <div style="display:flex;flex-direction:column;gap:12px;width:100%;">
-            <JWaveform BarCount="24" Height="36px" Active="@_waveActive" />
-            <JWaveform BarCount="16" Height="24px" Color="JColor.Amber" Active="@_waveActive" />
-            <JWaveform BarCount="20" Height="32px" Color="JColor.Green" Active="@_waveActive" />
-            <JToggle @bind-Value="_waveActive" Label="Waveform active" />
-        </div>
-    </Preview>
-</DocSection>
-
-<DocSection Title="JRadialMenu — Fly-out Menu"
-            Description="The LINKS Mark II signature. Items fly out with cubic-bezier spring. Connector lines. Hover labels. Click center to toggle."
-            Code="@jRadialMenuCode">
-    <Preview>
-        <div style="height:260px;display:flex;align-items:center;justify-content:center;">
-            <JRadialMenu @bind-Open="_radialOpen" TriggerLabel="MENU" Radius="90">
-                <JRadialItem Icon="⊞" Label="Dashboard" Angle="0" OnClick="@(() => _radialOpen = false)" />
-                <JRadialItem Icon="⚡" Label="Skills" Angle="60" OnClick="@(() => _radialOpen = false)" />
-                <JRadialItem Icon="⚙" Label="Settings" Angle="120" OnClick="@(() => _radialOpen = false)" />
-                <JRadialItem Icon="📊" Label="Metrics" Angle="180" OnClick="@(() => _radialOpen = false)" />
-                <JRadialItem Icon="🎙" Label="Voice" Angle="240" OnClick="@(() => _radialOpen = false)" />
-                <JRadialItem Icon="⏻" Label="Shutdown" Angle="300" State="JState.Error" OnClick="@(() => _radialOpen = false)" />
+        <div style="height:220px;display:flex;align-items:center;justify-content:center;position:relative;">
+            <JRadialMenu @bind-Open="_radialOpen" TriggerLabel="MENU">
+                <JRadialItem Icon="◎" Label="MAP"    Angle="0"   OnClick="@(()=>_radialOpen=false)" />
+                <JRadialItem Icon="⌨" Label="FORMS"  Angle="72"  OnClick="@(()=>_radialOpen=false)" />
+                <JRadialItem Icon="▣" Label="CARDS"  Angle="144" OnClick="@(()=>_radialOpen=false)" />
+                <JRadialItem Icon="▷" Label="BTNS"   Angle="216" OnClick="@(()=>_radialOpen=false)" />
+                <JRadialItem Icon="◱" Label="ALERTS" Angle="288" OnClick="@(()=>_radialOpen=false)" />
             </JRadialMenu>
         </div>
     </Preview>
 </DocSection>
 
+<!-- JBOOTSCREEN -->
+<DocSection Title="JBootScreen — Cinematic Startup Sequence"
+    Description="Full-screen boot animation. Shows system init log lines, then fires OnComplete. Duration in ms."
+    Code=@(@"<JBootScreen SystemName=""JARVIS"" Version=""v4.2.1"" Duration=""4000"" OnComplete=""HandleBoot"" />")>
+    <Preview>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Green" OnClick="@(()=>_bootVisible=true)">
+                ▶ LAUNCH BOOT SCREEN
+            </JButton>
+            @if (_bootDone)
+            {
+                <JStatusPill State="JState.Success">BOOT COMPLETE</JStatusPill>
+            }
+        </div>
+        <p style="font-size:9px;color:var(--j-text-muted);margin-top:8px;">
+            Boot screen overlays the full viewport for the specified Duration, then fires OnComplete.
+        </p>
+    </Preview>
+</DocSection>
+
+@if (_bootVisible)
+{
+    <JBootScreen SystemName="JARVIS UI" Version="v1.0" Duration="3500" OnComplete="BootDone" />
+}
+
 @code {
-    bool _listen1 = false;
-    double _arcSlider = 3;
+    // Orb
+    static readonly (string, JState, bool)[] _orbStates = {
+        ("ACTIVE",     JState.Active,     false),
+        ("PROCESSING", JState.Processing, false),
+        ("WARNING",    JState.Warning,    false),
+        ("ERROR",      JState.Error,      false),
+        ("IDLE",       JState.Idle,       false),
+        ("LISTENING",  JState.Active,     true),
+    };
+    JState _orbClickState = JState.Active;
+    readonly JState[] _orbCycle = { JState.Active, JState.Processing, JState.Warning, JState.Error, JState.Idle };
+    int _orbCycleIdx = 0;
+    void CycleOrb() { _orbCycleIdx = (_orbCycleIdx + 1) % _orbCycle.Length; _orbClickState = _orbCycle[_orbCycleIdx]; }
+
+    // ArcMeter
+    int _arcLevel = 3;
+    void ArcUp()   => _arcLevel = Math.Min(6, _arcLevel + 1);
+    void ArcDown()  => _arcLevel = Math.Max(0, _arcLevel - 1);
+
+    // Waveform
     bool _waveActive = true;
+
+    // BootScreen
+    bool _bootVisible = false;
+    bool _bootDone    = false;
+    void BootDone() { _bootVisible = false; _bootDone = true; StateHasChanged(); }
+
+    // Radial
     bool _radialOpen = false;
-
-    private int _arcLevel => (int)_arcSlider;
-
-    // -------------------- All Razor markup strings --------------------
-    private string jOrbCode = @"<JOrb SystemName=""JARVIS"" State=""JState.Active"" Size=""160px"" @bind-Listening=""listening"" />";
-    private string jArcMeterCode = @"<JArcMeter Level=""@micLevel"" ShowLabel=""true"" Label=""MIC"" />";
-    private string jSpinnerCode = @"<JSpinner Size=""64px"" State=""JState.Active"" Label=""JARVIS"" />";
-    private string jWaveformCode = @"<JWaveform BarCount=""20"" Height=""32px"" Active=""@speaking"" />";
-    private string jRadialMenuCode = @"
-<JRadialMenu @bind-Open=""menuOpen"" TriggerLabel=""MENU"">
-    <JRadialItem Icon=""⊞"" Label=""Dashboard"" Angle=""0""   OnClick=""GoToDash"" />
-    <JRadialItem Icon=""⚡"" Label=""Skills""    Angle=""60""  OnClick=""GoToSkills"" />
-    <JRadialItem Icon=""⏻"" Label=""Shutdown""  Angle=""300"" State=""JState.Error"" />
-</JRadialMenu>";
 }

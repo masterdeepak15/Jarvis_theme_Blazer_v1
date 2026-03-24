@@ -1,0 +1,435 @@
+@page "/leaflet"
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+@using JarvisUI.Docs.Components
+@inject HttpClient Http
+@inject IHttpContextAccessor HttpCtx
+
+<PageTitle>Leaflet Map — JarvisUI</PageTitle>
+<DocsPageHeader Title="Leaflet Map" Category="Maps"
+    Description="JLeafletMap · JMapInfoWindow — no API key, India GeoJSON drill-down, HUD dark tiles, animated markers, custom controls." />
+
+<!-- TAB: DRILL-DOWN vs MARKERS vs MAPINFOWINDOW -->
+<JTabs>
+
+    <!-- ── TAB 1: INDIA DRILL-DOWN ────────────────────────────── -->
+    <JTab Label="🗺 India Drill-Down" Key="india">
+        <div style="margin-top:10px;">
+            <DocSection Title="State → District → Taluk — Live Drill-Down"
+                        Description="Click any state to load districts. Click a district to load taluks. Breadcrumb nav to go back."
+                        NoPad="true">
+                <Preview>
+                    <!-- Title bar -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 14px;
+                                background:var(--j-bg);border-bottom:1px solid var(--j-accent-25);flex-wrap:wrap;gap:6px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <span style="font-size:9px;color:var(--j-accent);letter-spacing:.16em;font-weight:600;">INDIA · GEO DRILL-DOWN</span>
+                            <JStatusPill State="@_indiaState">@_level.ToString().ToUpper()</JStatusPill>
+                        </div>
+                        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                            <!-- Breadcrumb -->
+                            <button @onclick="ResetIndia"
+                                    style="font-size:8px;color:var(--j-accent);background:var(--j-accent-08);
+                                           border:1px solid var(--j-accent-25);padding:2px 8px;cursor:pointer;font-family:monospace;">
+                                INDIA
+                            </button>
+                            @if (_selState != null) {
+                                <span style="color:var(--j-accent-35);">›</span>
+                                <button @onclick="GoToState"
+                                        style="font-size:8px;color:var(--j-accent);background:var(--j-accent-08);
+                                               border:1px solid var(--j-accent-25);padding:2px 8px;cursor:pointer;font-family:monospace;">
+                                    @_selState
+                                </button>
+                            }
+                            @if (_selDistrict != null) {
+                                <span style="color:var(--j-accent-35);">›</span>
+                                <span style="font-size:8px;color:var(--j-text-muted);font-family:monospace;padding:2px 5px;">@_selDistrict</span>
+                            }
+                            <JBadge Color="JColor.Cyan" Size="JSize.Xs">36 States</JBadge>
+                            <JBadge Color="JColor.Ghost" Size="JSize.Xs">596 Districts</JBadge>
+                        </div>
+                    </div>
+                    <!-- Map -->
+                    <JLeafletMap @ref="_indiaMap"
+                                 GeoJsonUrl="/geojson/india-states.geojson"
+                                 OnFeatureClick="@_featureClick"
+                                 OnMarkerClick="OnCityClick"
+                                 Markers="@_cityMarkers"
+                                 Lat="22.5" Lng="82.0" Zoom="5"
+                                 Height="520px"
+                                 FitBoundsOnLoad="true"
+                                 ShowFeatureInfo="false"
+                                 ShowBuiltinControls="true" />
+                    <!-- Info strip -->
+                    @if (_selFeature != null)
+                    {
+                        <div style="padding:8px 14px;background:var(--j-bg-card);border-top:1px solid var(--j-accent-18);
+                                    display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                            <div style="font-size:8px;color:var(--j-accent-70);letter-spacing:.12em;">@_level.ToString().ToUpper()</div>
+                            <div style="font-size:12px;font-weight:600;color:var(--j-text-primary);">@_selFeature</div>
+                            @if (_level < JIndiaLevel.Taluka) {
+                                <div style="font-size:8px;color:var(--j-accent-50);">↑ Click map to drill deeper</div>
+                            }
+                        </div>
+                    }
+                </Preview>
+            </DocSection>
+        </div>
+    </JTab>
+
+    <!-- ── TAB 2: MARKERS + TILE PROVIDERS ────────────────────── -->
+    <JTab Label="📍 Markers + Tiles" Key="markers">
+        <div style="margin-top:10px;">
+            <DocSection Title="Markers — All Types + Tile Providers"
+                        Description="Default, Pulse, Diamond, Cluster markers. Switch tile provider live."
+                        NoPad="true">
+                <Preview>
+                    <div style="display:flex;align-items:center;gap:8px;padding:7px 14px;
+                                background:var(--j-bg);border-bottom:1px solid var(--j-accent-25);flex-wrap:wrap;">
+                        <span style="font-size:8px;color:var(--j-accent);letter-spacing:.12em;">TILE:</span>
+                        @foreach (var (lbl, tp) in _tileProviders)
+                        {
+                            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Xs"
+                                     Variant="@(_tileProvider==tp?JVariant.Solid:JVariant.Outline)"
+                                     OnClick="@(()=>SetTile(tp))">@lbl</JButton>
+                        }
+                    </div>
+                    <JLeafletMap @ref="_markersMap"
+                                 Markers="@_demoMarkers"
+                                 OnMarkerClick="OnDemoMarkerClick"
+                                 TileProvider="@_tileProvider"
+                                 Lat="20.5" Lng="79.0" Zoom="5"
+                                 Height="460px"
+                                 ShowBuiltinControls="true" />
+                    <div style="padding:8px 14px;background:var(--j-bg-card);border-top:1px solid var(--j-accent-18);">
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                            @foreach (var (t, col, lbl) in _markerLegend)
+                            {
+                                <div style="display:flex;align-items:center;gap:5px;">
+                                    <div style="width:8px;height:8px;border-radius:50%;background:@col;box-shadow:0 0 4px @col;"></div>
+                                    <span style="font-size:8px;color:var(--j-text-muted);">@t — @lbl</span>
+                                </div>
+                            }
+                        </div>
+                        @if (_lastMarkerInfo != null) {
+                            <div style="margin-top:6px;font-size:9px;color:var(--j-accent);">Clicked: @_lastMarkerInfo</div>
+                        }
+                    </div>
+                </Preview>
+            </DocSection>
+        </div>
+    </JTab>
+
+    <!-- ── TAB 3: JMAPINFOWINDOW ──────────────────────────────── -->
+    <JTab Label="💬 InfoWindow" Key="info">
+        <div style="margin-top:10px;">
+            <DocSection Title="JMapInfoWindow — HUD Popup Builder"
+                        Description="Static helper class. Call JMapInfoWindow.Build() to generate styled HTML for any popup — works with both Google Maps and Leaflet."
+                        Code=@(@"// Build a styled info popup
+var html = JMapInfoWindow.Build(
+    title:     ""CCTV-014"",
+    subtitle:  ""Rispana River Bridge"",
+    rows: new[] {
+        (""STATUS"",  ""ONLINE""),
+        (""HEALTH"",  ""99.7%""),
+        (""UPTIME"",  ""99.8%""),
+        (""KM MARK"", ""KM 14""),
+    },
+    state:     JState.Active,
+    badgeText: ""CCTV""
+);
+
+// Use with Leaflet
+await _map.OpenPopupAsync(lat, lng, html);
+
+// Use with Google Maps
+await _gmap.OpenInfoWindowAsync(markerId, html);")>
+                <Preview>
+                    <div style="display:flex;flex-wrap:wrap;gap:12px;">
+                        <!-- Show rendered preview of all states -->
+                        @foreach (var (title, sub, rows, state, badge) in _infoWindows)
+                        {
+                            <div style="border:1px solid var(--j-border-dim);padding:14px;
+                                        background:var(--j-bg-card);min-width:200px;">
+                                <div style="font-size:7px;color:var(--j-accent-50);letter-spacing:.12em;margin-bottom:6px;">
+                                    JState.@state
+                                </div>
+                                <div @onclick="@(()=>ShowInfoOnMap(title,sub,rows,state,badge))"
+                                     style="cursor:pointer;">
+                                    @((MarkupString)JMapInfoWindow.Build(title,sub,
+                                        rows:rows, state:state, badgeText:badge))
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div style="margin-top:12px;">
+                        <JAlert State="JState.Active" Title="TIP">
+                            Click any info window above to display it on the map below via OpenPopupAsync.
+                        </JAlert>
+                    </div>
+                    <div style="margin-top:8px;">
+                        <JLeafletMap @ref="_infoMap"
+                                     Markers="@_infoMarkers"
+                                     OnMarkerClick="OnInfoMarkerClick"
+                                     Lat="20.5" Lng="79.0" Zoom="5"
+                                     Height="360px"
+                                     ShowBuiltinControls="true" />
+                    </div>
+                </Preview>
+            </DocSection>
+        </div>
+    </JTab>
+
+    <!-- ── TAB 4: CODE REFERENCE ──────────────────────────────── -->
+    <JTab Label="{ } Code" Key="code">
+        <div style="margin-top:10px;">
+            <DocSection Title="Setup — App.razor"
+                Code=@(@"<!-- <head> -->
+<link rel=""stylesheet"" href=""https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"" />
+<link rel=""stylesheet"" href=""_content/JarvisUI/css/jarvis-maps.css"" />
+
+<!-- <body> before blazor.web.js -->
+<script src=""https://unpkg.com/leaflet@1.9.4/dist/leaflet.js""></script>
+<script src=""_content/JarvisUI/js/jarvis-leaflet.js""></script>
+
+<!-- Program.cs -->
+builder.Services.AddJarvisUI();
+builder.Services.AddHttpContextAccessor();
+var ctp = new FileExtensionContentTypeProvider();
+ctp.Mappings["".geojson""] = ""application/json"";
+app.UseStaticFiles(new StaticFileOptions { ContentTypeProvider = ctp });")>
+                <Preview>
+                    <div style="font-size:10px;color:var(--j-text-secondary);line-height:1.9;">
+                        <div style="color:var(--j-accent);font-weight:600;margin-bottom:4px;">Key facts:</div>
+                        <div>• No API key needed — uses OpenStreetMap tiles</div>
+                        <div>• GeoJSON files live in <code style="color:var(--j-accent);">wwwroot/geojson/</code></div>
+                        <div>• Register <code style="color:var(--j-accent);">.geojson</code> MIME type or static files return 404</div>
+                        <div>• Use <code style="color:var(--j-accent);">GeoUrl()</code> helper — Blazor Server HttpClient has no base address</div>
+                    </div>
+                </Preview>
+            </DocSection>
+            <DocSection Title="India Drill-Down Pattern"
+                Code=@(@"@inject HttpClient Http
+@inject IHttpContextAccessor HttpCtx
+
+<JLeafletMap @ref=""_map"" GeoJsonUrl=""/geojson/india-states.geojson""
+             OnFeatureClick=""@_click"" FitBoundsOnLoad=""true"" Height=""520px"" />
+
+@code {
+    JLeafletMap? _map;
+    string? _stateId;
+    EventCallback<(string,string,string,string)> _click;
+
+    protected override void OnInitialized()
+        => _click = EventCallback.Factory.Create<(string,string,string,string)>(this, OnState);
+
+    async Task OnState((string L, string Name, string Code, string Props) e) {
+        var doc = System.Text.Json.JsonDocument.Parse(e.Props).RootElement;
+        _stateId = doc.TryGetProperty(""ID_1"", out var id) ? id.ToString() : e.Code;
+        var geo  = await Http.GetStringAsync(GeoUrl($""/geojson/districts/{_stateId}.geojson""));
+        await _map!.ClearLayersAsync();
+        await _map.LoadGeoJsonAsync(""d"", geo, new JGeoLayerOptions { FitBounds=true });
+        _map.AddBreadcrumb(e.Name, ""d"", JIndiaLevel.District);
+        // Swap handler to district level
+        _click = EventCallback.Factory.Create<(string,string,string,string)>(this, OnDistrict);
+    }
+
+    string GeoUrl(string path) {
+        var r = HttpCtx.HttpContext?.Request;
+        return r != null ? $""{r.Scheme}://{r.Host}{path}"" : path;
+    }
+}")>
+                <Preview>
+                    <div style="display:flex;flex-direction:column;gap:4px;font-size:10px;color:var(--j-text-secondary);">
+                        <div>① <code style="color:var(--j-accent);">EventCallback</code> field — reassign to swap drill level at runtime</div>
+                        <div>② Parse <code style="color:var(--j-accent);">ID_1</code> from PropsJson → district file path</div>
+                        <div>③ Parse <code style="color:var(--j-accent);">ID_2</code> from PropsJson → taluk file: <code style="color:var(--j-accent);">{ID_1}_{ID_2}.geojson</code></div>
+                        <div>④ <code style="color:var(--j-accent);">GeoUrl()</code> — required because Blazor Server HttpClient has no BaseAddress</div>
+                    </div>
+                </Preview>
+            </DocSection>
+        </div>
+    </JTab>
+
+</JTabs>
+
+@code {
+    // ── India drill-down ──────────────────────────────────────────
+    JLeafletMap? _indiaMap;
+    JIndiaLevel  _level      = JIndiaLevel.Country;
+    string?      _selState, _selDistrict, _selFeature, _stateId, _distId;
+    EventCallback<(string,string,string,string)> _featureClick;
+
+    JState _indiaState => _level switch {
+        JIndiaLevel.District => JState.Processing,
+        JIndiaLevel.Taluka   => JState.Success,
+        _                    => JState.Active,
+    };
+
+    readonly List<JMapMarker> _cityMarkers = new() {
+        new(){ Id="del", Lat=28.6139, Lng=77.2090, Title="New Delhi",  Type=JMarkerType.Diamond, Color="var(--j-accent)", Size=13 },
+        new(){ Id="mum", Lat=19.0760, Lng=72.8777, Title="Mumbai",     Type=JMarkerType.Pulse,   Color="var(--j-warn)",   Size=12 },
+        new(){ Id="blr", Lat=12.9716, Lng=77.5946, Title="Bengaluru",  Type=JMarkerType.Default, Color="var(--j-ok)",     Size=10 },
+        new(){ Id="che", Lat=13.0827, Lng=80.2707, Title="Chennai",    Type=JMarkerType.Default, Color="var(--j-accent)", Size=10 },
+        new(){ Id="kol", Lat=22.5726, Lng=88.3639, Title="Kolkata",    Type=JMarkerType.Cluster, Count=5,                 Size=10 },
+        new(){ Id="hyd", Lat=17.3850, Lng=78.4867, Title="Hyderabad",  Type=JMarkerType.Pulse,   Color="var(--j-ok)",     Size=10 },
+        new(){ Id="pun", Lat=18.5204, Lng=73.8567, Title="Pune",       Type=JMarkerType.Default, Color="var(--j-accent)", Size=10 },
+        new(){ Id="jai", Lat=26.9124, Lng=75.7873, Title="Jaipur",     Type=JMarkerType.Default, Color="var(--j-warn)",   Size=10 },
+    };
+
+    protected override void OnInitialized() {
+        _featureClick = EventCallback.Factory.Create<(string,string,string,string)>(this, OnStateClick);
+    }
+
+    async Task OnStateClick((string LayerId, string Name, string Code, string Props) e) {
+        var doc = System.Text.Json.JsonDocument.Parse(e.Props).RootElement;
+        _stateId = doc.TryGetProperty("ID_1", out var id1) ? id1.ToString() : e.Code;
+        _selState = e.Name; _selDistrict = null; _selFeature = e.Name;
+        _level = JIndiaLevel.State;
+        try {
+            var geo = await Http.GetStringAsync(GeoUrl($"/geojson/districts/{_stateId}.geojson"));
+            await _indiaMap!.ClearLayersAsync();
+            await _indiaMap.LoadGeoJsonAsync("d", geo, new JGeoLayerOptions { FitBounds=true, MaxClickZoom=10 });
+            _indiaMap.AddBreadcrumb(e.Name, "d", JIndiaLevel.District);
+            _featureClick = EventCallback.Factory.Create<(string,string,string,string)>(this, OnDistrictClick);
+        } catch(Exception ex) { Console.Error.WriteLine(ex.Message); }
+        StateHasChanged();
+    }
+
+    async Task OnDistrictClick((string LayerId, string Name, string Code, string Props) e) {
+        var doc = System.Text.Json.JsonDocument.Parse(e.Props).RootElement;
+        _distId = doc.TryGetProperty("ID_2", out var id2) ? id2.ToString() : e.Code;
+        _selDistrict = e.Name; _selFeature = e.Name; _level = JIndiaLevel.District;
+        try {
+            var geo = await Http.GetStringAsync(GeoUrl($"/geojson/taluks/{_stateId}_{_distId}.geojson"));
+            await _indiaMap!.ClearLayersAsync();
+            await _indiaMap.LoadGeoJsonAsync("t", geo, new JGeoLayerOptions { FitBounds=true, MaxClickZoom=14 });
+            _indiaMap.AddBreadcrumb(e.Name, "t", JIndiaLevel.Taluka);
+            _featureClick = EventCallback.Factory.Create<(string,string,string,string)>(this, OnTalukClick);
+        } catch(Exception ex) { Console.Error.WriteLine(ex.Message); }
+        StateHasChanged();
+    }
+
+    Task OnTalukClick((string LayerId, string Name, string Code, string Props) e) {
+        _selFeature = e.Name; _level = JIndiaLevel.Taluka; StateHasChanged(); return Task.CompletedTask;
+    }
+
+    async Task ResetIndia() {
+        _level = JIndiaLevel.Country; _selState = _selDistrict = _selFeature = _stateId = _distId = null;
+        await _indiaMap!.ClearLayersAsync(); _indiaMap.ClearBreadcrumbs();
+        var geo = await Http.GetStringAsync(GeoUrl("/geojson/india-states.geojson"));
+        await _indiaMap.LoadGeoJsonAsync("s", geo, new JGeoLayerOptions { FitBounds=true });
+        _featureClick = EventCallback.Factory.Create<(string,string,string,string)>(this, OnStateClick);
+        StateHasChanged();
+    }
+
+    async Task GoToState() {
+        if (_selState == null || _stateId == null) return;
+        _level = JIndiaLevel.State; _selDistrict = null; _selFeature = _selState; _distId = null;
+        await _indiaMap!.ClearLayersAsync();
+        var geo = await Http.GetStringAsync(GeoUrl($"/geojson/districts/{_stateId}.geojson"));
+        await _indiaMap.LoadGeoJsonAsync("d", geo, new JGeoLayerOptions { FitBounds=true });
+        _indiaMap.ClearBreadcrumbs(); _indiaMap.AddBreadcrumb(_selState, "d", JIndiaLevel.District);
+        _featureClick = EventCallback.Factory.Create<(string,string,string,string)>(this, OnDistrictClick);
+        StateHasChanged();
+    }
+
+    async Task OnCityClick((string Id, double Lat, double Lng, string Title, string Data) e) {
+        var html = JMapInfoWindow.Build(title: e.Title, subtitle: "Major City",
+            rows: new[] { ("LAT", $"{e.Lat:F4}"), ("LNG", $"{e.Lng:F4}") },
+            state: JState.Active, badgeText: "CITY");
+        await _indiaMap!.OpenPopupAsync(e.Lat, e.Lng, html);
+    }
+
+    string GeoUrl(string path) {
+        var r = HttpCtx.HttpContext?.Request;
+        return r != null ? $"{r.Scheme}://{r.Host}{path}" : path;
+    }
+
+    // ── Markers + Tiles ───────────────────────────────────────────
+    JLeafletMap?  _markersMap;
+    JTileProvider _tileProvider = JTileProvider.JarvisDark;
+    string?       _lastMarkerInfo;
+
+    void SetTile(JTileProvider tp) => _tileProvider = tp;
+
+    static readonly (string, JTileProvider)[] _tileProviders = {
+        ("JARVIS DARK", JTileProvider.JarvisDark),
+        ("CARTO DARK",  JTileProvider.CartoDark),
+        ("CARTO LIGHT", JTileProvider.CartoLight),
+        ("OSM",         JTileProvider.OpenStreetMap),
+    };
+
+    static readonly (string, string, string)[] _markerLegend = {
+        ("Default",  "var(--j-accent)", "Solid circle"),
+        ("Pulse",    "var(--j-warn)",   "Animated ring"),
+        ("Diamond",  "var(--j-ok)",     "HUD diamond"),
+        ("Cluster",  "var(--j-err)",    "Count badge"),
+    };
+
+    readonly List<JMapMarker> _demoMarkers = new() {
+        new(){ Id="d1", Lat=28.6139, Lng=77.2090, Title="New Delhi",  Type=JMarkerType.Diamond,  Color="var(--j-accent)", Size=14 },
+        new(){ Id="d2", Lat=19.0760, Lng=72.8777, Title="Mumbai",     Type=JMarkerType.Pulse,    Color="var(--j-warn)",   Size=12 },
+        new(){ Id="d3", Lat=12.9716, Lng=77.5946, Title="Bengaluru",  Type=JMarkerType.Default,  Color="var(--j-ok)",     Size=11 },
+        new(){ Id="d4", Lat=13.0827, Lng=80.2707, Title="Chennai",    Type=JMarkerType.Default,  Color="var(--j-accent)", Size=11 },
+        new(){ Id="d5", Lat=22.5726, Lng=88.3639, Title="Kolkata",    Type=JMarkerType.Cluster,  Color="var(--j-err)",    Count=5  },
+        new(){ Id="d6", Lat=17.3850, Lng=78.4867, Title="Hyderabad",  Type=JMarkerType.Pulse,    Color="var(--j-ok)",     Size=11 },
+        new(){ Id="d7", Lat=26.9124, Lng=75.7873, Title="Jaipur",     Type=JMarkerType.Diamond,  Color="var(--j-warn)",   Size=11 },
+        new(){ Id="d8", Lat=23.0225, Lng=72.5714, Title="Ahmedabad",  Type=JMarkerType.Default,  Color="var(--j-accent)", Size=11 },
+        new(){ Id="d9", Lat=18.5204, Lng=73.8567, Title="Pune",       Type=JMarkerType.Default,  Color="var(--j-accent)", Size=11 },
+    };
+
+    async Task OnDemoMarkerClick((string Id, double Lat, double Lng, string Title, string Data) e) {
+        _lastMarkerInfo = $"{e.Title} ({e.Lat:F3}, {e.Lng:F3})";
+        var html = JMapInfoWindow.Build(title: e.Title,
+            rows: new[] { ("LAT", $"{e.Lat:F4}"), ("LNG", $"{e.Lng:F4}") },
+            state: JState.Active, badgeText: "CITY");
+        await _markersMap!.OpenPopupAsync(e.Lat, e.Lng, html);
+        StateHasChanged();
+    }
+
+    // ── JMapInfoWindow demos ──────────────────────────────────────
+    JLeafletMap? _infoMap;
+
+    static readonly (string title, string sub,
+        (string,string)[] rows, JState state, string badge)[] _infoWindows = {
+        ("CCTV-014",  "Rispana River Bridge",
+            new[]{("STATUS","ONLINE"),("HEALTH","99.7%"),("UPTIME","148d"),("KM MARK","KM 14")},
+            JState.Active, "CCTV"),
+        ("VMS-001",   "Forest Zone VMS",
+            new[]{("MESSAGE","WILDLIFE CROSSING"),("STATUS","ONLINE"),("LAST UPD","2s ago")},
+            JState.Warning, "VMS"),
+        ("CCTV-005",  "Forest Zone Entry",
+            new[]{("STATUS","OFFLINE"),("SINCE","72m ago"),("HEALTH","0%")},
+            JState.Error, "FAULT"),
+        ("PTZ-001",   "BHEL Intersection",
+            new[]{("PAN","142°"),("TILT","−12°"),("ZOOM","4×"),("STATUS","ACTIVE")},
+            JState.Success, "PTZ"),
+    };
+
+    readonly List<JMapMarker> _infoMarkers = new() {
+        new(){ Id="i1", Lat=30.0094, Lng=78.0857, Title="CCTV-014 · Rispana Bridge",  Type=JMarkerType.Default, Color="var(--j-ok)" },
+        new(){ Id="i2", Lat=29.9693, Lng=78.1368, Title="VMS-001 · Forest Zone",      Type=JMarkerType.Diamond, Color="var(--j-warn)" },
+        new(){ Id="i3", Lat=29.9690, Lng=78.1364, Title="CCTV-005 · Forest Entry",    Type=JMarkerType.Pulse,   Color="var(--j-err)" },
+        new(){ Id="i4", Lat=29.9600, Lng=78.1480, Title="PTZ-001 · BHEL Junction",    Type=JMarkerType.Diamond, Color="var(--j-ok)" },
+    };
+
+    async Task ShowInfoOnMap(string title, string sub, (string,string)[] rows, JState state, string badge) {
+        // Find matching marker
+        var m = _infoMarkers.FirstOrDefault(x => x.Title!.StartsWith(title));
+        if (m == null) return;
+        var html = JMapInfoWindow.Build(title: title, subtitle: sub,
+            rows: rows.Select(r=>(r.Item1,r.Item2)), state: state, badgeText: badge);
+        await _infoMap!.OpenPopupAsync(m.Lat, m.Lng, html);
+    }
+
+    async Task OnInfoMarkerClick((string Id, double Lat, double Lng, string Title, string Data) e) {
+        var m = _infoMarkers.FirstOrDefault(x => x.Id == e.Id);
+        if (m == null) return;
+        var iw = _infoWindows.FirstOrDefault(w => e.Title.StartsWith(w.title));
+        if (iw.title == null) return;
+        var html = JMapInfoWindow.Build(title: iw.title, subtitle: iw.sub,
+            rows: iw.rows?.Select(r=>(r.Item1,r.Item2)), state: iw.state, badgeText: iw.badge);
+        await _infoMap!.OpenPopupAsync(e.Lat, e.Lng, html);
+    }
+}

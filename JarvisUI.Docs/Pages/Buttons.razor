@@ -2,116 +2,146 @@
 @using JarvisUI.Components
 @using JarvisUI.Tokens
 @using JarvisUI.Docs.Components
+@inject JToastService Toast
 
-<PageTitle>JButton — JarvisUI Docs</PageTitle>
+<PageTitle>Buttons — JarvisUI</PageTitle>
+<DocsPageHeader Title="Buttons" Category="Interaction"
+    Description="9 JButton shapes × 5 variants × 4 colors × 5 sizes. All interactive — click triggers a toast." />
 
-<DocsPageHeader Title="JButton"
-                Category="Actions"
-                ComponentTag="&lt;JButton /&gt;"
-                Description="9 angular HUD button shapes. SVG polygon backgrounds, scan-shine animation, glow on hover. All shapes work with all colors and variants."
-                Parameters="@(new() {
-                    new("Shape",   "JButtonShape", "LeftNotch"),
-                    new("Variant", "JVariant",     "Outline"),
-                    new("Color",   "JColor",       "Cyan"),
-                    new("Size",    "JSize",        "Md"),
-                    new("Icon",    "string?",      "null"),
-                    new("Disabled","bool",         "false"),
-                    new("OnClick", "EventCallback"),
-                })" />
-
-<DocSection Title="Shape 1 — Left Notch" Description="Cut top-left corner with filled triangle accent. The primary action button."
-            Code="@Shape1">
+<!-- ALL 9 SHAPES - INTERACTIVE GRID -->
+<DocSection Title="All 9 Shapes — Click Any Button">
     <Preview>
-        <JButton Shape="JButtonShape.LeftNotch">Execute</JButton>
-        <JButton Shape="JButtonShape.LeftNotch" Variant="JVariant.Solid">Confirm</JButton>
-        <JButton Shape="JButtonShape.LeftNotch" Color="JColor.Amber">Warning</JButton>
-        <JButton Shape="JButtonShape.LeftNotch" Variant="JVariant.Danger" Color="JColor.Red">Shutdown</JButton>
-        <JButton Shape="JButtonShape.LeftNotch" Disabled="true">Disabled</JButton>
-    </Preview>
-</DocSection>
-
-<DocSection Title="Shape 2 — Right Notch" Description="Cut top-right corner variant."
-            Code="@Shape2">
-    <Preview>
-        <JButton Shape="JButtonShape.RightNotch">Configure</JButton>
-        <JButton Shape="JButtonShape.RightNotch" Color="JColor.Green">Deploy</JButton>
-        <JButton Shape="JButtonShape.RightNotch" Color="JColor.Red" Variant="JVariant.Danger">Abort</JButton>
-    </Preview>
-</DocSection>
-
-<DocSection Title="Shape 3 — Both Notch" Description="Both corners cut. Most angular appearance."
-            Code="@Shape3">
-    <Preview>
-        <JButton Shape="JButtonShape.BothNotch">Analyze</JButton>
-        <JButton Shape="JButtonShape.BothNotch" Color="JColor.Amber">Scan</JButton>
-    </Preview>
-</DocSection>
-
-<DocSection Title="Shape 4 — Parallelogram" Description="Skewed 11° with left accent rail and glow."
-            Code="@Shape4">
-    <Preview>
-        <JButton Shape="JButtonShape.Parallelogram">Scan</JButton>
-        <JButton Shape="JButtonShape.Parallelogram" Color="JColor.Amber">Monitor</JButton>
-        <JButton Shape="JButtonShape.GhostSkew">Cancel</JButton>
-    </Preview>
-</DocSection>
-
-<DocSection Title="Shape 5 — Bracket Frame" Description="Double L-bracket with no diagonal cuts."
-            Code="@Shape5">
-    <Preview>
-        <JButton Shape="JButtonShape.BracketFrame">Settings</JButton>
-        <JButton Shape="JButtonShape.BracketFrame" Color="JColor.Amber">Debug</JButton>
-        <JButton Shape="JButtonShape.BracketFrame" Color="JColor.Red">Abort</JButton>
-    </Preview>
-</DocSection>
-
-<DocSection Title="Shape 6 — Hexagonal" Description="Hexagon clip-path. Ideal for toggle states."
-            Code="@Shape6">
-    <Preview>
-        <JButton Shape="JButtonShape.Hexagonal">ON</JButton>
-        <JButton Shape="JButtonShape.Hexagonal" Color="JColor.Amber">WRN</JButton>
-        <JButton Shape="JButtonShape.Hexagonal" Color="JColor.Red">OFF</JButton>
-        <JButton Shape="JButtonShape.Hexagonal" Color="JColor.Green">OK</JButton>
-    </Preview>
-</DocSection>
-
-<DocSection Title="Shape 7 — Icon Square" Description="Small square with cut corner. Icon-only actions."
-            Code="@Shape7">
-    <Preview>
-        <JButton Shape="JButtonShape.IconSquare" Icon="⚙" />
-        <JButton Shape="JButtonShape.IconSquare" Icon="▶" />
-        <JButton Shape="JButtonShape.IconSquare" Icon="◼" />
-        <JButton Shape="JButtonShape.IconSquare" Icon="✕" Color="JColor.Red" />
-        <JButton Shape="JButtonShape.IconSquare" Icon="⚠" Color="JColor.Amber" />
-        <JButton Shape="JButtonShape.IconSquare" Icon="🎙" />
-    </Preview>
-</DocSection>
-
-<DocSection Title="Shape 8+9 — Scan Full + Sizes" Description="Full-width scan sweep, and all size variants."
-            Code="@Shape8">
-    <Preview>
-        <div style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:220px;">
-            <JButton Shape="JButtonShape.ScanFull" Variant="JVariant.Scan">Identify</JButton>
-            <JButton Shape="JButtonShape.ScanFull" Variant="JVariant.Scan" Color="JColor.Amber">Execute Scan</JButton>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+            @foreach (var (shape, label) in _shapes)
+            {
+                <JButton Shape="@shape" Color="@_btnColor" Variant="@_btnVariant" Size="@_btnSize"
+                         OnClick="@(()=>BtnClick(label))">@label</JButton>
+            }
         </div>
-        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start;">
-            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Xs">XSmall</JButton>
-            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm">Small</JButton>
-            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Md">Medium</JButton>
-            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Lg">Large</JButton>
-            <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Xl">XLarge</JButton>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center;">
+            <span style="font-size:9px;color:var(--j-text-muted);">COLOR:</span>
+            @foreach (var (c, n) in _btnColors)
+            {
+                <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Color="@c"
+                         Variant="@(_btnColor==c?JVariant.Solid:JVariant.Outline)"
+                         OnClick="@(()=>_btnColor=c)">@n</JButton>
+            }
+        </div>
+        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;align-items:center;">
+            <span style="font-size:9px;color:var(--j-text-muted);">VARIANT:</span>
+            @foreach (var (v, n) in _variants)
+            {
+                <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm"
+                         Variant="@(_btnVariant==v?JVariant.Solid:JVariant.Outline)"
+                         OnClick="@(()=>_btnVariant=v)">@n</JButton>
+            }
+            <span style="font-size:9px;color:var(--j-text-muted);margin-left:8px;">SIZE:</span>
+            @foreach (var (s, n) in _sizes)
+            {
+                <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm"
+                         Variant="@(_btnSize==s?JVariant.Solid:JVariant.Outline)"
+                         OnClick="@(()=>_btnSize=s)">@n</JButton>
+            }
         </div>
     </Preview>
 </DocSection>
 
-@code 
-{
-    string Shape1 = "<JButton Shape=\"JButtonShape.LeftNotch\">Execute</JButton>";
-    string Shape2 = "<JButton Shape=\"JButtonShape.RightNotch\">Configure</JButton>";
-    string Shape3 = "<JButton Shape=\"JButtonShape.BothNotch\">Analyze</JButton>";
-    string Shape4 = "<JButton Shape=\"JButtonShape.Parallelogram\">Scan</JButton>";
-    string Shape5 = "<JButton Shape=\"JButtonShape.BracketFrame\">Settings</JButton>";
-    string Shape6 = "<JButton Shape=\"JButtonShape.Hexagonal\">ON</JButton>";
-    string Shape7 = "<JButton Shape=\"JButtonShape.IconSquare\" Icon=\"⚙\" />";
-    string Shape8 = "<JButton Shape=\"JButtonShape.ScanFull\" Variant=\"JVariant.Scan\">Identify</JButton>";
+<!-- VARIANTS SHOWCASE -->
+<DocSection Title="Variants — Outline · Solid · Ghost · Danger · Scan"
+    Code=@(@"<JButton Variant=""JVariant.Outline"">OUTLINE</JButton>
+<JButton Variant=""JVariant.Solid"">SOLID</JButton>
+<JButton Variant=""JVariant.Ghost"">GHOST</JButton>
+<JButton Variant=""JVariant.Danger"">DANGER</JButton>
+<JButton Variant=""JVariant.Scan"">SCAN</JButton>")>
+    <Preview>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <JButton Variant="JVariant.Outline" OnClick="@(()=>BtnClick("Outline"))">OUTLINE</JButton>
+            <JButton Variant="JVariant.Solid"   OnClick="@(()=>BtnClick("Solid"))">SOLID</JButton>
+            <JButton Variant="JVariant.Ghost"   OnClick="@(()=>BtnClick("Ghost"))">GHOST</JButton>
+            <JButton Variant="JVariant.Danger"  OnClick="@(()=>BtnClick("Danger"))">DANGER</JButton>
+            <JButton Variant="JVariant.Scan"    OnClick="@(()=>BtnClick("Scan"))">SCAN</JButton>
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- SIZES -->
+<DocSection Title="Sizes — Xs through Xl"
+    Code=@(@"<JButton Size=""JSize.Xs"">XS</JButton>
+<JButton Size=""JSize.Sm"">SM</JButton>
+<JButton Size=""JSize.Md"">MD</JButton>
+<JButton Size=""JSize.Lg"">LG</JButton>
+<JButton Size=""JSize.Xl"">XL</JButton>")>
+    <Preview>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+            <JButton Size="JSize.Xs" OnClick="@(()=>BtnClick("XS"))">XS</JButton>
+            <JButton Size="JSize.Sm" OnClick="@(()=>BtnClick("SM"))">SM</JButton>
+            <JButton Size="JSize.Md" OnClick="@(()=>BtnClick("MD"))">MD</JButton>
+            <JButton Size="JSize.Lg" OnClick="@(()=>BtnClick("LG"))">LG</JButton>
+            <JButton Size="JSize.Xl" OnClick="@(()=>BtnClick("XL"))">XL</JButton>
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- WITH ICON -->
+<DocSection Title="With Icon + Disabled"
+    Code=@(@"<JButton Icon=""◎"" Shape=""JButtonShape.LeftNotch"">MAP</JButton>
+<JButton Icon=""⌨"" Variant=""JVariant.Solid"">FORM</JButton>
+<JButton Disabled=""true"">DISABLED</JButton>")>
+    <Preview>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <JButton Icon="◎" Shape="JButtonShape.LeftNotch" OnClick="@(()=>BtnClick("Map"))">MAP</JButton>
+            <JButton Icon="⌨" Variant="JVariant.Solid"       OnClick="@(()=>BtnClick("Form"))">FORM</JButton>
+            <JButton Icon="◱" Color="JColor.Amber"            OnClick="@(()=>BtnClick("Alert"))">ALERT</JButton>
+            <JButton Icon="▷" Color="JColor.Green"            OnClick="@(()=>BtnClick("Run"))">RUN</JButton>
+            <JButton Disabled="true">DISABLED</JButton>
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- COLORS -->
+<DocSection Title="All Colors"
+    Code=@(@"<JButton Color=""JColor.Cyan"">CYAN</JButton>
+<JButton Color=""JColor.Amber"">AMBER</JButton>
+<JButton Color=""JColor.Red"">RED</JButton>
+<JButton Color=""JColor.Green"">GREEN</JButton>
+<JButton Color=""JColor.Ghost"">GHOST</JButton>")>
+    <Preview>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            @foreach (var (c, n) in _btnColors)
+            {
+                <JButton Color="@c" Shape="JButtonShape.LeftNotch"
+                         OnClick="@(()=>BtnClick(n))">@n</JButton>
+            }
+            <JButton Color="JColor.Ghost" Shape="JButtonShape.LeftNotch" OnClick="@(()=>BtnClick("Ghost"))">GHOST</JButton>
+        </div>
+    </Preview>
+</DocSection>
+
+@code {
+    JColor   _btnColor   = JColor.Cyan;
+    JVariant _btnVariant = JVariant.Outline;
+    JSize    _btnSize    = JSize.Md;
+
+    void BtnClick(string lbl) => Toast.Show($"{lbl} clicked", JState.Active);
+
+    static readonly (JButtonShape, string)[] _shapes = {
+        (JButtonShape.LeftNotch,    "LEFT NOTCH"),
+        (JButtonShape.RightNotch,   "RIGHT NOTCH"),
+        (JButtonShape.BothNotch,    "BOTH NOTCH"),
+        (JButtonShape.Parallelogram,"PARALLELOGRAM"),
+        (JButtonShape.GhostSkew,    "GHOST SKEW"),
+        (JButtonShape.BracketFrame, "BRACKET"),
+        (JButtonShape.Hexagonal,    "HEXAGONAL"),
+        (JButtonShape.IconSquare,   "ICON SQ"),
+        (JButtonShape.ScanFull,     "SCAN FULL"),
+    };
+    static readonly (JColor, string)[] _btnColors = {
+        (JColor.Cyan,"CYAN"),(JColor.Amber,"AMBER"),(JColor.Red,"RED"),(JColor.Green,"GREEN")
+    };
+    static readonly (JVariant, string)[] _variants = {
+        (JVariant.Outline,"OUTLINE"),(JVariant.Solid,"SOLID"),(JVariant.Ghost,"GHOST"),(JVariant.Danger,"DANGER"),(JVariant.Scan,"SCAN")
+    };
+    static readonly (JSize, string)[] _sizes = {
+        (JSize.Xs,"XS"),(JSize.Sm,"SM"),(JSize.Md,"MD"),(JSize.Lg,"LG"),(JSize.Xl,"XL")
+    };
 }
