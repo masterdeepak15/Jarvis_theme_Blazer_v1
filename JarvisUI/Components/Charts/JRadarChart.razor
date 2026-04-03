@@ -1,0 +1,79 @@
+@* ================================================================
+   JRadarChart — Pure SVG radar / spider chart. Zero JS. CSS-var themed.
+   USAGE:
+   <JRadarChart Axes="@_axes" Size="200px" ColorVar="--j-accent" />
+================================================================ *@
+
+@namespace JarvisUI.Components
+@using JarvisUI.Components.Charts
+
+<div style="width:@Size; max-width:100%; aspect-ratio:1;">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"
+         style="width:100%; height:100%;">
+
+        @* Web rings *@
+        @for (int ring = 1; ring <= Rings; ring++)
+        {
+            double rr  = _r * ring / Rings;
+            string pts = string.Join(" ", Enumerable.Range(0, _n).Select(i => Pt(i, rr)));
+            <polygon points="@pts" class="j-chart-radar-web"/>
+        }
+
+        @* Spokes *@
+        @for (int i = 0; i < _n; i++)
+        {
+            var (ex, ey) = XY(i, _r);
+            <line x1="100" y1="100" x2="@ex" y2="@ey" class="j-chart-radar-spoke"/>
+        }
+
+        @* Data polygon *@
+        @{
+            string dataPts = string.Join(" ", Axes.Select((a, i) => {
+                double pct = a.Max > 0 ? a.Value / a.Max : 0;
+                return Pt(i, _r * Math.Min(pct, 1.0));
+            }));
+        }
+        <polygon points="@dataPts" class="j-chart-radar-data"
+                 style="fill:var(@ColorVar,var(--j-accent));stroke:var(@ColorVar,var(--j-accent));"/>
+
+        @* Data dots *@
+        @foreach (var (a, i) in Axes.Select((a,i)=>(a,i)))
+        {
+            double pct = a.Max > 0 ? a.Value / a.Max : 0;
+            var (dx, dy) = XY(i, _r * Math.Min(pct, 1.0));
+            <circle cx="@dx" cy="@dy" r="3" class="j-chart-dot"
+                    style="fill:var(@ColorVar,var(--j-accent));">
+                <title>@a.Label: @a.Value / @a.Max</title>
+            </circle>
+        }
+
+        @* Axis labels *@
+        @if (ShowLabels)
+        {
+            @foreach (var (a, i) in Axes.Select((a,i)=>(a,i)))
+            {
+                var (lx, ly) = XY(i, _r + 14);
+                string anchor = lx < 98 ? "end" : lx > 102 ? "start" : "middle";
+                <svg:text @key="@($"radar-lbl-{i}")" x="@lx" y="@(ly+4)" class="j-chart-axis-label" text-anchor="@anchor">
+                    @a.Label
+                </svg:text>
+            }
+        }
+    </svg>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public List<JRadarAxis> Axes  { get; set; } = new();
+    [Parameter] public string Size        { get; set; } = "200px";
+    [Parameter] public string ColorVar    { get; set; } = "--j-accent";
+    [Parameter] public int    Rings       { get; set; } = 4;
+    [Parameter] public bool   ShowLabels  { get; set; } = true;
+
+    int    _n  => Math.Max(Axes.Count, 3);
+    double _r  => 100 - 22.0;   // 22px margin for labels inside 200×200 viewBox
+
+    double Ang(int i) => (2 * Math.PI * i / _n) - Math.PI / 2;
+    (double x, double y) XY(int i, double radius) =>
+        (100 + radius * Math.Cos(Ang(i)), 100 + radius * Math.Sin(Ang(i)));
+    string Pt(int i, double radius) { var (x, y) = XY(i, radius); return $"{x:F2},{y:F2}"; }
+}

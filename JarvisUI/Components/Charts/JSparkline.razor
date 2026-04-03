@@ -1,0 +1,98 @@
+@* ================================================================
+   JSparkline — Tiny inline SVG sparkline. Zero JS. CSS-var themed.
+   Auto-detects trend: Up → green, Down → red, Flat → accent.
+   USAGE:
+   <JSparkline Data="@vals" Width="100px" Height="30px" ShowTrend="true" />
+================================================================ *@
+
+@namespace JarvisUI.Components
+@using JarvisUI.Components.Charts
+
+<span class="j-sparkline-wrap"
+      style="width:@Width; height:@Height; display:inline-block; position:relative;">
+    <svg viewBox="0 0 80 28" xmlns="http://www.w3.org/2000/svg"
+         style="width:100%; height:100%;" preserveAspectRatio="none">
+
+        @* Area *@
+        @if (ShowArea && _pts.Count > 1)
+        {
+            <path d="@_areaPath" class="j-sparkline-area"
+                  style="fill:var(@_colorVar);"/>
+        }
+
+        @* Line *@
+        @if (_pts.Count > 1)
+        {
+            <polyline points="@string.Join(" ", _pts.Select(p => $"{p.x:F1},{p.y:F1}"))"
+                      class="j-sparkline-line"
+                      style="stroke:var(@_colorVar);"/>
+        }
+
+        @* Last point dot *@
+        @if (_pts.Count > 0)
+        {
+            var last = _pts[^1];
+            <circle cx="@last.x" cy="@last.y" r="2" class="j-sparkline-dot"
+                    style="fill:var(@_colorVar);"/>
+        }
+    </svg>
+
+    @if (ShowTrend)
+    {
+        <span class="j-sparkline-trend @_trendClass">@_trendIcon</span>
+    }
+</span>
+
+@code {
+    [Parameter, EditorRequired] public List<double> Data  { get; set; } = new();
+    [Parameter] public string       Width     { get; set; } = "80px";
+    [Parameter] public string       Height    { get; set; } = "28px";
+    [Parameter] public bool         ShowArea  { get; set; } = true;
+    [Parameter] public bool         ShowTrend { get; set; } = false;
+    [Parameter] public JSparkTrend  Trend     { get; set; } = JSparkTrend.Auto;
+    [Parameter] public string?      ColorVar  { get; set; }
+
+    const double _vw=80, _vh=28, _pH=2, _pV=3;
+    double _innerW => _vw - _pH * 2;
+    double _innerH => _vh - _pV * 2;
+    double _min    => Data.Count > 0 ? Data.Min() : 0;
+    double _max    => Data.Count > 0 ? Data.Max() : 1;
+    double _range  => _max - _min == 0 ? 1 : _max - _min;
+
+    List<(double x, double y)> _pts => Data.Select((v, i) => (
+        x: _pH + i * (_innerW / Math.Max(Data.Count - 1, 1)),
+        y: _pV + _innerH - (_innerH * (v - _min) / _range)
+    )).ToList();
+
+    string _areaPath
+    {
+        get
+        {
+            var pts = _pts;
+            if (pts.Count < 2) return "";
+            var sb = new System.Text.StringBuilder();
+            sb.Append($"M {pts[0].x:F1} {_pV+_innerH:F1} L {pts[0].x:F1} {pts[0].y:F1}");
+            foreach (var (x, y) in pts.Skip(1)) sb.Append($" L {x:F1} {y:F1}");
+            sb.Append($" L {pts[^1].x:F1} {_pV+_innerH:F1} Z");
+            return sb.ToString();
+        }
+    }
+
+    JSparkTrend _resolved => Trend != JSparkTrend.Auto ? Trend
+        : Data.Count < 2 ? JSparkTrend.Flat
+        : Data[^1] > Data[0] + (_max - _min) * 0.05 ? JSparkTrend.Up
+        : Data[^1] < Data[0] - (_max - _min) * 0.05 ? JSparkTrend.Down
+        : JSparkTrend.Flat;
+
+    string _colorVar  => ColorVar ?? _resolved switch {
+        JSparkTrend.Up   => "--j-ok",
+        JSparkTrend.Down => "--j-err",
+        _                => "--j-accent"
+    };
+    string _trendIcon => _resolved switch {
+        JSparkTrend.Up   => "▲", JSparkTrend.Down => "▼", _ => "─"
+    };
+    string _trendClass => _resolved switch {
+        JSparkTrend.Up   => "j-text-ok", JSparkTrend.Down => "j-text-err", _ => "j-text-accent"
+    };
+}

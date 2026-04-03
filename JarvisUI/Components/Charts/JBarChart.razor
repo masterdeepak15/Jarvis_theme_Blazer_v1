@@ -1,0 +1,130 @@
+@* ================================================================
+   JBarChart — Pure SVG bar chart. Zero JS. CSS-var themed.
+   USAGE:
+   <JBarChart Data="@_pts" Height="220px" Orientation="JChartOrientation.Vertical" />
+================================================================ *@
+
+@namespace JarvisUI.Components
+@using JarvisUI.Components.Charts
+
+<div class="j-chart-wrap" style="height:@Height; position:relative;">
+    <div class="j-chart-scan"></div>
+    <svg class="j-chart-svg" viewBox="0 0 @_vw @_vh"
+         preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+
+        @if (Orientation == JChartOrientation.Vertical)
+        {
+            @* Horizontal grid lines + Y labels *@
+            @for (int i = 0; i <= GridLines; i++)
+            {
+                double gy = _padT + i * (_innerH / GridLines);
+                int gridIdx = i;
+                <line x1="@_padL" y1="@gy" x2="@(_vw-_padR)" y2="@gy" class="j-chart-grid"/>
+                @if (ShowAxisLabels)
+                {
+                    double gv = _max - gridIdx * (_max / GridLines);
+                    <svg:text @key="@($"gy-lbl-{gridIdx}")" x="@(_padL-4)" y="@(gy+3)"
+                          class="j-chart-axis-label" text-anchor="end">@Fmt(gv)</svg:text>
+                }
+            }
+
+            @* Vertical bars *@
+            @for (int i = 0; i < Data.Count; i++)
+            {
+                int barIdx = i;
+                double barW  = _innerW / Data.Count - _gap;
+                double barH  = _max > 0 ? _innerH * (Data[barIdx].Value / _max) : 0;
+                double bx    = _padL + barIdx * (_innerW / Data.Count) + _gap / 2;
+                double by    = _padT + _innerH - barH;
+                string col   = $"var({ColorVar}, var(--j-accent))";
+                <g class="j-chart-bar-group">
+                    @* notch cap *@
+                    <polygon points="@(bx),@(by+6) @(bx+4),@(by) @(bx+barW-4),@(by) @(bx+barW),@(by+6)"
+                             style="fill:@col;"/>
+                    <rect x="@bx" y="@(by+5)" width="@barW" height="@(barH-5)"
+                          class="j-chart-bar" style="fill:@col;">
+                        <title>@Data[barIdx].Label : @Data[barIdx].Value</title>
+                    </rect>
+                    <rect x="@bx" y="@(by+5)" width="@barW" height="@(barH-5)"
+                          class="j-chart-bar-glow" style="fill:@col;"/>
+                    @if (ShowAxisLabels)
+                    {
+                        <svg:text @key="@($"bar-xlbl-{barIdx}")" x="@(bx+barW/2)" y="@(_vh-2)"
+                              class="j-chart-axis-label" text-anchor="middle">@Data[barIdx].Label</svg:text>
+                    }
+                    @if (ShowValues && barH > 10)
+                    {
+                        <svg:text @key="@($"bar-val-{barIdx}")" x="@(bx+barW/2)" y="@(by-3)"
+                              class="j-chart-value-label" text-anchor="middle">@Fmt(Data[barIdx].Value)</svg:text>
+                    }
+                </g>
+            }
+        }
+
+        else  @* Horizontal *@
+        {
+            @* Vertical grid lines + X labels *@
+            @for (int i = 0; i <= GridLines; i++)
+            {
+                double gx = _padL + i * (_innerW / GridLines);
+                int gridIdx = i;
+                <line x1="@gx" y1="@_padT" x2="@gx" y2="@(_vh-_padB)" class="j-chart-grid"/>
+                @if (ShowAxisLabels)
+                {
+                    double gv = gridIdx * (_max / GridLines);
+                    <svg:text @key="@($"gx-lbl-{gridIdx}")" x="@gx" y="@(_vh-2)"
+                          class="j-chart-axis-label" text-anchor="middle">@Fmt(gv)</svg:text>
+                }
+            }
+            @* Horizontal bars *@
+            @for (int i = 0; i < Data.Count; i++)
+            {
+                int barIdx = i;
+                double rowH = _innerH / Data.Count;
+                double barH = rowH - _gap;
+                double barW = _max > 0 ? _innerW * (Data[barIdx].Value / _max) : 0;
+                double by   = _padT + barIdx * rowH + _gap / 2;
+                string col  = $"var({ColorVar}, var(--j-accent))";
+                <g class="j-chart-bar-group">
+                    <rect x="@_padL" y="@by" width="@barW" height="@barH"
+                          class="j-chart-bar" style="fill:@col;">
+                        <title>@Data[barIdx].Label : @Data[barIdx].Value</title>
+                    </rect>
+                    <rect x="@_padL" y="@by" width="@barW" height="@barH"
+                          class="j-chart-bar-glow" style="fill:@col;"/>
+
+                    @if (ShowAxisLabels)
+                    {
+                        <svg:text @key="@($"hbar-ylbl-{barIdx}")" x="@(_padL-4)" y="@(by+barH/2+4)"
+                              class="j-chart-axis-label" text-anchor="end">@Data[barIdx].Label</svg:text>
+                    }
+                    @if (ShowValues)
+                    {
+                        <svg:text @key="@($"hbar-val-{barIdx}")" x="@(_padL+barW+4)" y="@(by+barH/2+4)"
+                              class="j-chart-value-label" text-anchor="start">@Fmt(Data[barIdx].Value)</svg:text>
+                    }
+                </g>
+            }
+        }
+
+    </svg>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public List<JChartPoint> Data { get; set; } = new();
+    [Parameter] public string             Height       { get; set; } = "220px";
+    [Parameter] public string             ColorVar     { get; set; } = "--j-accent";
+    [Parameter] public JChartOrientation  Orientation  { get; set; } = JChartOrientation.Vertical;
+    [Parameter] public bool               ShowGrid     { get; set; } = true;
+    [Parameter] public bool               ShowAxisLabels { get; set; } = true;
+    [Parameter] public bool               ShowValues   { get; set; } = false;
+    [Parameter] public int                GridLines    { get; set; } = 4;
+
+    const double _vw=400, _vh=220, _padL=36, _padR=8, _padT=12, _padB=22, _gap=6;
+    double _innerW => _vw - _padL - _padR;
+    double _innerH => _vh - _padT - _padB;
+    double _max    => Data.Count > 0 ? Data.Max(p => p.Value) : 1;
+
+    static string Fmt(double v) =>
+        v >= 1_000_000 ? $"{v/1_000_000:0.#}M" : v >= 1_000 ? $"{v/1_000:0.#}K" : $"{v:0.#}";
+}

@@ -1,0 +1,112 @@
+@* ================================================================
+   JGaugeChart — Pure SVG half-arc gauge. Zero JS. CSS-var themed.
+   USAGE:
+   <JGaugeChart Value="@val" Min="0" Max="100" Size="180px" Label="POWER" />
+================================================================ *@
+
+@namespace JarvisUI.Components
+@using JarvisUI.Components.Charts
+
+<div style="width:@Size; max-width:100%;">
+    <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg"
+         style="width:100%; display:block;">
+
+        @* Track arc *@
+        <path d="@_track" fill="none"
+              stroke="var(--j-accent-10, rgba(0,229,255,.10))"
+              stroke-width="@Thickness" stroke-linecap="round"/>
+
+        @* Tick marks *@
+        @if (ShowTicks)
+        {
+            @for (int t = 0; t <= Ticks; t++)
+            {
+                double pct  = (double)t / Ticks;
+                double angR = (_startDeg + pct * _sweep) * Math.PI / 180;
+                double ir   = _r - Thickness / 2 - 2;
+                double or2  = _r + Thickness / 2 + 4;
+                <line x1="@(100 + ir  * Math.Cos(angR))"
+                      y1="@(95  + ir  * Math.Sin(angR))"
+                      x2="@(100 + or2 * Math.Cos(angR))"
+                      y2="@(95  + or2 * Math.Sin(angR))"
+                      class="j-chart-gauge-tick"/>
+            }
+        }
+
+        @* Value arc *@
+        <path d="@_valueArc" fill="none"
+              stroke="var(@ColorVar, var(--j-accent))"
+              stroke-width="@Thickness" stroke-linecap="round"
+              class="j-chart-gauge-arc"/>
+
+        @* Needle *@
+        @if (ShowNeedle)
+        {
+            double ang = (_startDeg + _pct * _sweep) * Math.PI / 180;
+            <line x1="100" y1="95"
+                  x2="@(100 + (_r-2) * Math.Cos(ang))"
+                  y2="@(95  + (_r-2) * Math.Sin(ang))"
+                  stroke="var(@ColorVar, var(--j-accent))"
+                  stroke-width="2" stroke-linecap="round"
+                  class="j-chart-gauge-needle"/>
+            <circle cx="100" cy="95" r="5"
+                    fill="var(@ColorVar, var(--j-accent))"
+                    class="j-chart-gauge-hub"/>
+        }
+
+        @* Centre value *@
+        <svg:text @key=@("gauge-val") x="100" y="100" class="j-chart-donut-center-val" text-anchor="middle">
+            @(DisplayValue ?? Fmt(Value))
+        </svg:text>
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <svg:text @key=@("gauge-lbl") x="100" y="114" class="j-chart-donut-center-lbl" text-anchor="middle">
+                @Label
+            </svg:text>
+        }
+
+        @* Min / Max labels *@
+        @if (ShowMinMax)
+        {
+            <svg:text @key=@("gauge-min") x="14" y="114" class="j-chart-axis-label" text-anchor="start">@Fmt(Min)</svg:text>
+            <svg:text @key=@("gauge-max") x="186" y="114" class="j-chart-axis-label" text-anchor="end">@Fmt(Max)</svg:text>
+        }
+    </svg>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public double Value       { get; set; }
+    [Parameter] public double  Min          { get; set; } = 0;
+    [Parameter] public double  Max          { get; set; } = 100;
+    [Parameter] public string  Size         { get; set; } = "200px";
+    [Parameter] public string  ColorVar     { get; set; } = "--j-accent";
+    [Parameter] public double  Thickness    { get; set; } = 14;
+    [Parameter] public string  Label        { get; set; } = "";
+    [Parameter] public string? DisplayValue { get; set; }
+    [Parameter] public bool    ShowNeedle   { get; set; } = true;
+    [Parameter] public bool    ShowTicks    { get; set; } = true;
+    [Parameter] public bool    ShowMinMax   { get; set; } = true;
+    [Parameter] public int     Ticks        { get; set; } = 8;
+
+    // Arc: starts at 210° (bottom-left), sweeps 120° to 330° (bottom-right)
+    // cy=95 so needle pivots slightly above the midpoint of the 200×120 viewBox
+    const double _startDeg = 210, _sweep = 120, _r = 72;
+
+    double _pct => Max > Min ? Math.Clamp((Value - Min) / (Max - Min), 0, 1) : 0;
+
+    string _track    => Arc(_startDeg, _sweep);
+    string _valueArc => Arc(_startDeg, _sweep * _pct);
+
+    string Arc(double start, double sweep)
+    {
+        if (sweep <= 0) return "";
+        double s = start * Math.PI / 180, e = (start + sweep) * Math.PI / 180;
+        double x1 = 100 + _r * Math.Cos(s), y1 = 95 + _r * Math.Sin(s);
+        double x2 = 100 + _r * Math.Cos(e), y2 = 95 + _r * Math.Sin(e);
+        int lg = sweep > 180 ? 1 : 0;
+        return $"M {x1:F2} {y1:F2} A {_r} {_r} 0 {lg} 1 {x2:F2} {y2:F2}";
+    }
+
+    static string Fmt(double v) =>
+        v >= 1_000_000 ? $"{v/1_000_000:0.#}M" : v >= 1_000 ? $"{v/1_000:0.#}K" : $"{v:0.#}";
+}

@@ -1,0 +1,106 @@
+@* ================================================================
+   JLineChart — Pure SVG line/area chart. Zero JS. CSS-var themed.
+   USAGE:
+   <JLineChart Data="@_pts" Height="180px" ShowArea="true" />
+================================================================ *@
+
+@namespace JarvisUI.Components
+@using JarvisUI.Components.Charts
+
+<div class="j-chart-wrap" style="height:@Height; position:relative;">
+    <div class="j-chart-scan"></div>
+    <svg class="j-chart-svg" viewBox="0 0 @_vw @_vh"
+         preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+
+        @* Grid lines *@
+        @if (ShowGrid)
+        {
+            @for (int i = 0; i <= GridLines; i++)
+            {
+                double gy = _padT + i * (_innerH / GridLines);
+                int gridIdx = i;
+                <line x1="@_padL" y1="@gy" x2="@(_vw - _padR)" y2="@gy" class="j-chart-grid" />
+                @if (ShowAxisLabels)
+                {
+                    double gv = _max - gridIdx * (_range / GridLines);
+                    <svg:text @key="@($"line-gy-lbl-{gridIdx}")" x="@(_padL - 4)" y="@(gy + 3)"
+                          class="j-chart-axis-label" text-anchor="end">@Fmt(gv)</svg:text>
+                }
+            }
+        }
+
+        @* Area fill *@
+        @if (ShowArea && _pts.Count > 1)
+        {
+            <path d="@_areaPath" class="j-chart-area"
+                  style="fill:var(@ColorVar, var(--j-accent));" />
+        }
+
+        @* Line *@
+        @if (_pts.Count > 1)
+        {
+            <polyline points="@string.Join(" ", _pts.Select(p => $"{p.x:F1},{p.y:F1}"))"
+                      class="j-chart-line"
+                      style="stroke:var(@ColorVar, var(--j-accent));" />
+        }
+
+        @* Dots + X labels *@
+        @for (int i = 0; i < _pts.Count; i++)
+        {
+            int ptIdx = i;
+            var (px, py) = _pts[ptIdx];
+            @if (ShowDots)
+            {
+                <circle cx="@px" cy="@py" r="3" class="j-chart-dot"
+                        style="fill:var(@ColorVar, var(--j-accent));">
+                    <title>@Data[ptIdx].Label : @Data[ptIdx].Value</title>
+                </circle>
+            }
+            @if (ShowAxisLabels)
+            {
+                <svg:text @key="@($"line-xlbl-{ptIdx}")" x="@px" y="@(_vh - 2)"
+                      class="j-chart-axis-label" text-anchor="middle">@Data[ptIdx].Label</svg:text>
+            }
+        }
+    </svg>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public List<JChartPoint> Data { get; set; } = new();
+    [Parameter] public string Height          { get; set; } = "200px";
+    [Parameter] public string ColorVar        { get; set; } = "--j-accent";
+    [Parameter] public bool   ShowArea        { get; set; } = false;
+    [Parameter] public bool   ShowDots        { get; set; } = true;
+    [Parameter] public bool   ShowAxisLabels  { get; set; } = true;
+    [Parameter] public bool   ShowGrid        { get; set; } = true;
+    [Parameter] public int    GridLines       { get; set; } = 4;
+
+    const double _vw = 400, _vh = 200, _padL = 36, _padR = 8, _padT = 10, _padB = 20;
+    double _innerW => _vw - _padL - _padR;
+    double _innerH => _vh - _padT - _padB;
+    double _min    => Data.Count > 0 ? Data.Min(p => p.Value) : 0;
+    double _max    => Data.Count > 0 ? Data.Max(p => p.Value) : 1;
+    double _range  => _max - _min == 0 ? 1 : _max - _min;
+
+    List<(double x, double y)> _pts => Data.Select((p, i) => (
+        x: _padL + i * (_innerW / Math.Max(Data.Count - 1, 1)),
+        y: _padT + _innerH - (_innerH * (p.Value - _min) / _range)
+    )).ToList();
+
+    string _areaPath
+    {
+        get
+        {
+            var pts = _pts;
+            if (pts.Count < 2) return "";
+            var sb = new System.Text.StringBuilder();
+            sb.Append($"M {pts[0].x:F1} {_padT + _innerH:F1} L {pts[0].x:F1} {pts[0].y:F1}");
+            foreach (var (x, y) in pts.Skip(1)) sb.Append($" L {x:F1} {y:F1}");
+            sb.Append($" L {pts[^1].x:F1} {_padT + _innerH:F1} Z");
+            return sb.ToString();
+        }
+    }
+
+    static string Fmt(double v) =>
+        v >= 1_000_000 ? $"{v/1_000_000:0.#}M" : v >= 1_000 ? $"{v/1_000:0.#}K" : $"{v:0.#}";
+}

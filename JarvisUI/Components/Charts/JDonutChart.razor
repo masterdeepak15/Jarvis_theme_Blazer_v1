@@ -1,0 +1,89 @@
+@* ================================================================
+   JDonutChart — Pure SVG donut chart. Zero JS. CSS-var themed.
+   USAGE:
+   <JDonutChart Data="@_segs" Size="160px" CenterValue="341" CenterLabel="TOTAL" />
+================================================================ *@
+
+@namespace JarvisUI.Components
+@using JarvisUI.Components.Charts
+
+<div class="j-chart-donut-wrap" style="width:@Size; max-width:100%;">
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"
+         style="width:100%; display:block;">
+
+        @* Track ring *@
+        <circle cx="50" cy="50" r="@_r" fill="none"
+                stroke="var(--j-accent-10, rgba(0,229,255,.10))"
+                stroke-width="@Thickness"/>
+
+        @* Segments *@
+        @{
+            double total  = Data.Sum(s => s.Value);
+            double offset = -90;
+        }
+        @foreach (var seg in Data)
+        {
+            double pct   = total > 0 ? seg.Value / total : 0;
+            double dash  = pct * _circ;
+            double gap   = _circ - dash;
+            string color = seg.Color ?? "var(--j-accent)";
+            <circle cx="50" cy="50" r="@_r" fill="none"
+                    stroke="@color"
+                    stroke-width="@Thickness"
+                    stroke-dasharray="@dash.ToString("F2") @gap.ToString("F2")"
+                    stroke-dashoffset="0"
+                    transform="rotate(@offset 50 50)"
+                    class="j-chart-donut-seg">
+                <title>@seg.Label : @seg.Value (@($"{pct*100:0.#}")%)</title>
+            </circle>
+            offset += pct * 360;
+        }
+
+        @* Centre labels *@
+        @if (!string.IsNullOrEmpty(CenterLabel))
+        {
+            <svg:text @key=@("donut-center-val") x="50" y="46" class="j-chart-donut-center-val" text-anchor="middle">
+                @CenterValue
+            </svg:text>
+            <svg:text @key=@("donut-center-lbl") x="50" y="58" class="j-chart-donut-center-lbl" text-anchor="middle">
+                @CenterLabel
+            </svg:text>
+        }
+        else if (!string.IsNullOrEmpty(CenterValue))
+        {
+            <svg:text @key=@("donut-center-val-only") x="50" y="54" class="j-chart-donut-center-val" text-anchor="middle">
+                @CenterValue
+            </svg:text>
+        }
+    </svg>
+
+    @* Legend *@
+    @if (ShowLegend)
+    {
+        double tot = Data.Sum(s => s.Value);
+        <div class="j-chart-donut-legend">
+            @foreach (var seg in Data)
+            {
+                double pct = tot > 0 ? seg.Value / tot * 100 : 0;
+                string col = seg.Color ?? "var(--j-accent)";
+                <div class="j-chart-donut-legend-row">
+                    <span class="j-chart-donut-legend-dot" style="background:@col;"></span>
+                    <span class="j-chart-donut-legend-label">@seg.Label</span>
+                    <span class="j-chart-donut-legend-pct">@($"{pct:0.#}")%</span>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public List<JDonutSegment> Data  { get; set; } = new();
+    [Parameter] public string  Size         { get; set; } = "160px";
+    [Parameter] public double  Thickness    { get; set; } = 20;
+    [Parameter] public string  CenterValue  { get; set; } = "";
+    [Parameter] public string  CenterLabel  { get; set; } = "";
+    [Parameter] public bool    ShowLegend   { get; set; } = true;
+
+    double _r    => 50 - Thickness / 2 - 2;
+    double _circ => 2 * Math.PI * _r;
+}
