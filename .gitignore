@@ -7,6 +7,11 @@ output/
 _wasm_publish_test/
 .vercel/
 
+# NuGet pack output
+_nupkg/
+*.nupkg
+*.snupkg
+
 # dotnet-install leftovers
 dotnet-install.sh
 .dotnet/

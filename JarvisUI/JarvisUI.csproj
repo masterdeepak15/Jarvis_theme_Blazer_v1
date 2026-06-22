@@ -10,17 +10,29 @@
     <!-- NuGet package metadata -->
     <PackageId>JarvisUI</PackageId>
     <Version>1.0.0</Version>
-    <Authors>Your Name</Authors>
+    <Authors>masterdeepak15</Authors>
+    <Company>Ador Power</Company>
+    <Product>JarvisUI</Product>
     <Description>
-      Cinematic JARVIS / HUD-style Blazor Server component library.
-      38 components. Full theme system with CSS variables.
+      Cinematic JARVIS / HUD-style Blazor component library (Server &amp; WebAssembly).
+      43 components. Full theme system with CSS variables.
       Google Maps + Leaflet maps. India GeoJSON drill-down.
       Zero hardcoded colors — fully customizable.
     </Description>
-    <PackageTags>blazor;hud;jarvis;sci-fi;ui;components;maps;leaflet;google-maps</PackageTags>
+    <PackageTags>blazor;hud;jarvis;sci-fi;ui;components;maps;leaflet;google-maps;webassembly</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/masterdeepak15/Jarvis_theme_Blazer_v1</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/masterdeepak15/Jarvis_theme_Blazer_v1</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes>1.0.0 — initial release. Works in Blazor Server and WebAssembly.</PackageReleaseNotes>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Ship the README on the NuGet package page -->
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="wwwroot\geojson\**" />
