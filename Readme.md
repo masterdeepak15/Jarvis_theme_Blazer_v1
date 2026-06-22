@@ -1,11 +1,17 @@
 # JarvisUI — Getting Started
 
+> Cinematic JARVIS / HUD-style Blazor component library — **open source (MIT)**.
+
+🔴 **Live demo:** https://jarvis-theme-blazer.vercel.app/
+📦 **NuGet:** `dotnet add package JarvisUI` · https://www.nuget.org/packages/JarvisUI
+
 ## What's in this package
 
 ```
 JarvisUI.sln              ← Open this in Visual Studio or Rider
 JarvisUI/                 ← The RCL component library (reference this in your app)
-JarvisUI.Docs/            ← Live docs playground (run this to explore all components)
+JarvisUI.Docs/            ← Live docs playground — Blazor Server (run locally)
+JarvisUI.Docs.Wasm/       ← Blazor WebAssembly build of the docs (deployed to Vercel)
 ```
 ---
 ## Screenshots
@@ -234,6 +240,9 @@ Toast.Show("JARVIS is online");
 ## Requirements
 
 - .NET 8.0 SDK
-- Blazor Server (not WASM)
-- No JavaScript required
+- Blazor Server **or** WebAssembly (both supported)
 - Tailwind CSS optional (all critical styles are in `jarvis-ui.css`)
+
+## License
+
+[MIT](LICENSE) — free for personal and commercial use. Contributions welcome.

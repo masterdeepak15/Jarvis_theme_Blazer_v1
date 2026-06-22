@@ -1,5 +1,8 @@
 # Deploying JarvisUI Docs to Vercel
 
+🔴 **Live demo:** https://jarvis-theme-blazer.vercel.app/
+
+
 This repo's `JarvisUI.Docs.Wasm` project is a **Blazor WebAssembly** build of the
 component showcase — it compiles to static files Vercel can serve. (The original
 `JarvisUI.Docs` is Blazor *Server* and **cannot** run on Vercel; it's left intact

@@ -1,5 +1,8 @@
 # JarvisUI — Getting Started
 
+🔴 **Live demo:** https://jarvis-theme-blazer.vercel.app/
+📦 **NuGet:** `dotnet add package JarvisUI`
+
 ## What's in this package
 
 ```
@@ -162,6 +165,5 @@ Use `j-dashboard-grid` for fixed-height panel layouts that fill the content area
 
 ## Requirements
 - .NET 8.0 SDK
-- Blazor Server (not WASM)
-- No JavaScript required
+- Blazor Server **or** WebAssembly (both supported)
 - No npm / Node required

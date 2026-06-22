@@ -1,9 +1,19 @@
-# JarvisUI — Phases 1–4 Complete
+# JarvisUI
 
-Cinematic HUD-style Blazor Server component library.
-38 components. Inspired by JARVIS / LINKS Mark II.
+Cinematic HUD-style Blazor component library (Blazor **Server & WebAssembly**).
+43 components. Inspired by JARVIS / LINKS Mark II.
 
-## Setup
+🔴 **Live demo:** https://jarvis-theme-blazer.vercel.app/
+📦 **NuGet:** https://www.nuget.org/packages/JarvisUI
+💻 **Source (MIT, open source):** https://github.com/masterdeepak15/Jarvis_theme_Blazer_v1
+
+## Install
+
+```bash
+dotnet add package JarvisUI
+```
+
+Or reference the project directly:
 
 ```xml
 <ProjectReference Include="..\JarvisUI\JarvisUI.csproj" />
