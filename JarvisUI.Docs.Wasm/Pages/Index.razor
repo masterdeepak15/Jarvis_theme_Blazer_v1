@@ -1,0 +1,103 @@
+@page "/"
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+
+<PageTitle>JarvisUI — Overview</PageTitle>
+
+<div style="display:flex;flex-direction:column;gap:20px;max-width:900px;">
+
+    <!-- Header Orb + Title -->
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:8px 0;">
+        <JOrb Size="80px" State="JState.Active" SystemName="J-UI" />
+        <div>
+            <h1 style="font-size:22px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+                       margin:0 0 4px;text-shadow:0 0 18px var(--j-accent-35);">JARVIS UI</h1>
+            <p style="font-size:11px;color:var(--j-text-muted);margin:0;line-height:1.7;max-width:500px;">
+                Cinematic JARVIS / LINKS Mark II HUD component library for Blazor Server.
+                43 components · 6 themes · Google Maps · India GeoJSON drill-down · Zero hardcoded colors.
+            </p>
+        </div>
+    </div>
+
+    <!-- Quick stats -->
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <JStatCard Title="COMPONENTS" Value="43"   Sub="Razor components" />
+        <JStatCard Title="THEMES"     Value="6"    Sub="Built-in presets" Color="JColor.Amber" />
+        <JStatCard Title="MAP DEVS"   Value="26"   Sub="NH-90 ITS devices" Color="JColor.Green" />
+        <JStatCard Title="CSS VARS"   Value="40+"  Sub="Design tokens" Color="JColor.Cyan" />
+    </div>
+
+    <!-- Quick nav cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;">
+        @foreach (var (icon, title, href, desc, col) in _navCards)
+        {
+            <a href="@href" style="text-decoration:none;">
+                <JCard Style="JCardStyle.CornerBracket" Color="@col">
+                    <div style="padding:12px 14px;">
+                        <div style="font-size:16px;margin-bottom:4px;">@icon</div>
+                        <div style="font-size:10px;font-weight:600;color:var(--j-accent);letter-spacing:.12em;">@title</div>
+                        <div style="font-size:9px;color:var(--j-text-muted);margin-top:3px;">@desc</div>
+                    </div>
+                </JCard>
+            </a>
+        }
+    </div>
+
+    <!-- Component coverage -->
+    <JCard Style="JCardStyle.SideRail" Title="COMPONENT COVERAGE">
+        <div style="padding:10px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px;">
+            @foreach (var (grp, items) in _coverage)
+            {
+                <div style="padding:6px 0;border-bottom:1px solid var(--j-accent-08);">
+                    <div style="font-size:7px;color:var(--j-accent);letter-spacing:.14em;margin-bottom:3px;">@grp</div>
+                    <div style="font-size:9px;color:var(--j-text-secondary);">@string.Join(" · ", items)</div>
+                </div>
+            }
+        </div>
+    </JCard>
+
+    <!-- Quick Start -->
+    <JCard Style="JCardStyle.Notched" Title="QUICK START">
+        <div style="padding:10px 14px;font-family:monospace;font-size:10px;line-height:1.9;color:var(--j-text-secondary);">
+            <div><span style="color:var(--j-accent-60);">// 1. Register in Program.cs</span></div>
+            <div><span style="color:var(--j-ok);">builder</span>.Services.<span style="color:var(--j-warn);">AddJarvisUI</span>();</div>
+            <br/>
+            <div><span style="color:var(--j-accent-60);">// 2. Add CSS in App.razor &lt;head&gt;</span></div>
+            <div><span style="color:var(--j-warn);">&lt;link</span> href=<span style="color:var(--j-ok);">"_content/JarvisUI/css/jarvis-theme.css"</span> /&gt;</div>
+            <div><span style="color:var(--j-warn);">&lt;link</span> href=<span style="color:var(--j-ok);">"_content/JarvisUI/css/jarvis-ui.css"</span> /&gt;</div>
+            <br/>
+            <div><span style="color:var(--j-accent-60);">// 3. Wrap in layout with theme provider</span></div>
+            <div><span style="color:var(--j-warn);">&lt;JThemeProvider</span> Preset=<span style="color:var(--j-ok);">"JThemePreset.Cyan"</span>&gt;</div>
+            <div>&nbsp;&nbsp;<span style="color:var(--j-warn);">&lt;JPageLayout</span> SystemName=<span style="color:var(--j-ok);">"JARVIS"</span>&gt;...&lt;/JPageLayout&gt;</div>
+            <div><span style="color:var(--j-warn);">&lt;/JThemeProvider&gt;</span></div>
+        </div>
+    </JCard>
+
+</div>
+
+@code {
+    static readonly (string, string, string, string, JColor)[] _navCards = {
+        ("◉", "THEME",          "/theme",      "6 presets + custom",    JColor.Cyan),
+        ("◎", "IDENTITY",       "/identity",   "Orb HUD Boot Radial",   JColor.Cyan),
+        ("▣", "CARDS",          "/cards",      "9 frame styles",        JColor.Cyan),
+        ("▷", "BUTTONS",        "/buttons",    "9 shapes × 5 variants", JColor.Cyan),
+        ("◆", "BADGE + PILL",   "/actions",    "Labels + indicators",   JColor.Cyan),
+        ("⌨", "FORMS",          "/forms",      "8 input types",         JColor.Cyan),
+        ("◱", "FEEDBACK",       "/feedback",   "Alert Toast Modal",     JColor.Cyan),
+        ("⊟", "NAV + DATA",     "/navigation", "Tabs Table Pagination", JColor.Cyan),
+        ("◎", "NH-90 ITS MAP",  "/map",        "Live Google Maps",      JColor.Green),
+    };
+
+    static readonly (string, string[])[] _coverage = {
+        ("Identity / HUD", new[]{"JOrb","JArcMeter","JSpinner","JWaveform","JHudBar","JHudFrame","JBootScreen","JRadialMenu"}),
+        ("Cards",          new[]{"JCard (9 styles)","JStatCard"}),
+        ("Actions",        new[]{"JButton (9 shapes)","JBadge","JStatusPill"}),
+        ("Forms",          new[]{"JInput","JTextArea","JSelect","JToggle","JSlider","JCheckbox","JRadio","JFormField"}),
+        ("Feedback",       new[]{"JAlert","JProgress","JToast","JModal"}),
+        ("Navigation",     new[]{"JTabs","JAccordion","JCommandPalette","JPagination"}),
+        ("Data",           new[]{"JTable","JDataRow","JDivider"}),
+        ("Theme",          new[]{"JThemeProvider","JThemePicker"}),
+        ("Layout",         new[]{"JPageLayout","JSidebar","JNavItem","JHudBar"}),
+        ("Maps",           new[]{"JGoogleMap","JLeafletMap","JMapMarker","JHeatmapPoint"}),
+    };
+}

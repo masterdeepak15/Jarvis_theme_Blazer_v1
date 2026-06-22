@@ -1,0 +1,239 @@
+@page "/datetime"
+@using System
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+@using JarvisUI.Docs.Components
+
+<PageTitle>Date + Time Pickers — JarvisUI</PageTitle>
+<DocsPageHeader Title="Date + Time Pickers" Category="Forms"
+    Description="JDatePicker · JTimePicker · JDateRangePicker — pure Blazor, no JS, no npm. HUD-styled calendar grids, scrollable time columns, dual-month range selection." />
+
+<JTabs @bind-ActiveTab="_tab">
+
+<!-- ══ TAB 1: DATE PICKER ════════════════════════════════════ -->
+<JTab Label="Date Picker" Key="date" Icon="📅">
+<div style="margin-top:12px;">
+
+<DocSection Title="JDatePicker — Inline Calendar"
+    Description="Shown inline (ShowInput=false). Click any day to select. TODAY quick-button jumps to current date."
+    Code=@(@"<JDatePicker @bind-Value=""_date"" />
+<JDatePicker @bind-Value=""_date"" Color=""JColor.Amber"" MinDate=""System.DateTime.Today"" />")>
+<Preview>
+<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;">
+    <div>
+        <div style="font-size:8px;color:var(--j-accent-50);letter-spacing:.12em;margin-bottom:6px;">CYAN (DEFAULT)</div>
+        <JDatePicker @bind-Value="_date1" />
+    </div>
+    <div>
+        <div style="font-size:8px;color:var(--j-accent-50);letter-spacing:.12em;margin-bottom:6px;">AMBER · MIN=TODAY</div>
+        <JDatePicker @bind-Value="_date2" Color="JColor.Amber" MinDate="System.DateTime.Today" />
+    </div>
+    <div>
+        <div style="font-size:8px;color:var(--j-accent-50);letter-spacing:.12em;margin-bottom:6px;">RED · MAX=TODAY</div>
+        <JDatePicker @bind-Value="_date3" Color="JColor.Red" MaxDate="System.DateTime.Today" />
+    </div>
+</div>
+@if (_date1.HasValue || _date2.HasValue || _date3.HasValue) {
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        @if(_date1.HasValue){<JBadge Color="JColor.Cyan">D1: @_date1.Value.ToString("dd MMM yyyy")</JBadge>}
+        @if(_date2.HasValue){<JBadge Color="JColor.Amber">D2: @_date2.Value.ToString("dd MMM yyyy")</JBadge>}
+        @if(_date3.HasValue){<JBadge Color="JColor.Red">D3: @_date3.Value.ToString("dd MMM yyyy")</JBadge>}
+    </div>
+}
+</Preview>
+</DocSection>
+
+<DocSection Title="JDatePicker — Input Trigger (Dropdown)"
+    Description="ShowInput=true — calendar opens on click below the input, closes after selection or clicking CLOSE."
+    Overflow="true"
+    Code=@(@"<JDatePicker @bind-Value=""_date"" ShowInput=""true"" Label=""MISSION DATE"" Width=""260px"" />")>
+<Preview>
+<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;min-height:360px;">
+    <JDatePicker @bind-Value="_dateInp1" ShowInput="true" Label="MISSION DATE"  Width="240px" />
+    <JDatePicker @bind-Value="_dateInp2" ShowInput="true" Label="REPORT DATE"   Color="JColor.Green"
+                 MinDate="System.DateTime.Today" Width="240px" />
+    <JDatePicker @bind-Value="_dateInp3" ShowInput="true" Label="ARCHIVE DATE"  Color="JColor.Red"
+                 MaxDate="System.DateTime.Today" Width="240px" />
+</div>
+</Preview>
+</DocSection>
+
+</div>
+</JTab>
+
+<!-- ══ TAB 2: TIME PICKER ════════════════════════════════════ -->
+<JTab Label="Time Picker" Key="time" Icon="⏱">
+<div style="margin-top:12px;">
+
+<DocSection Title="JTimePicker — Inline Scroll Columns"
+    Description="Scrollable hour / minute / second columns. 24-hour or 12-hour AM/PM. Click NOW for current time."
+    Code=@(@"<JTimePicker @bind-Value=""_time"" Use24Hour=""true""  ShowSeconds=""true"" />
+<JTimePicker @bind-Value=""_time"" Use24Hour=""false"" ShowSeconds=""false"" />")>
+<Preview>
+<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;">
+    <div>
+        <div style="font-size:8px;color:var(--j-accent-50);letter-spacing:.12em;margin-bottom:6px;">24HR · WITH SECONDS</div>
+        <JTimePicker @bind-Value="_time1" Use24Hour="true" ShowSeconds="true" />
+    </div>
+    <div>
+        <div style="font-size:8px;color:var(--j-accent-50);letter-spacing:.12em;margin-bottom:6px;">12HR · NO SECONDS</div>
+        <JTimePicker @bind-Value="_time2" Use24Hour="false" ShowSeconds="false" Color="JColor.Amber" />
+    </div>
+    <div>
+        <div style="font-size:8px;color:var(--j-accent-50);letter-spacing:.12em;margin-bottom:6px;">GREEN · 24HR · NO SEC</div>
+        <JTimePicker @bind-Value="_time3" Use24Hour="true" ShowSeconds="false" Color="JColor.Green" />
+    </div>
+</div>
+@if (_time1.HasValue || _time2.HasValue || _time3.HasValue) {
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        @if(_time1.HasValue){<JBadge Color="JColor.Cyan">T1: @_time1.Value.ToString(@"hh\:mm\:ss")</JBadge>}
+        @if(_time2.HasValue){<JBadge Color="JColor.Amber">T2: @_time2.Value.ToString(@"hh\:mm")</JBadge>}
+        @if(_time3.HasValue){<JBadge Color="JColor.Green">T3: @_time3.Value.ToString(@"hh\:mm")</JBadge>}
+    </div>
+}
+</Preview>
+</DocSection>
+
+<DocSection Title="JTimePicker — Input Trigger (Dropdown)"
+    Description="ShowInput=true — time panel opens on click, OK confirms and closes."
+    Overflow="true"
+    Code=@(@"<JTimePicker @bind-Value=""_time"" ShowInput=""true"" Label=""DEPARTURE TIME"" />")>
+<Preview>
+<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;min-height:280px;">
+    <JTimePicker @bind-Value="_timeInp1" ShowInput="true" Label="MISSION TIME"  Width="220px" />
+    <JTimePicker @bind-Value="_timeInp2" ShowInput="true" Label="SHIFT START"   Width="220px"
+                 Use24Hour="false" ShowSeconds="false" Color="JColor.Green" />
+</div>
+</Preview>
+</DocSection>
+
+</div>
+</JTab>
+
+<!-- ══ TAB 3: DATE RANGE ═════════════════════════════════════ -->
+<JTab Label="Date Range" Key="range" Icon="◈">
+<div style="margin-top:12px;">
+
+<DocSection Title="JDateRangePicker — Dual Month Inline"
+    Description="Click to set start, click again for end. Hover previews the range. Quick presets: WEEK · 30 · 90 · THIS MONTH."
+    Code=@(@"<JDateRangePicker @bind-Start=""_start"" @bind-End=""_end"" />")>
+<Preview>
+<JDateRangePicker @bind-Start="_rangeStart" @bind-End="_rangeEnd" />
+@if (_rangeStart.HasValue || _rangeEnd.HasValue) {
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        @if(_rangeStart.HasValue){<JBadge Color="JColor.Cyan">FROM: @_rangeStart.Value.ToString("dd MMM yyyy")</JBadge>}
+        @if(_rangeEnd.HasValue){<JBadge Color="JColor.Green">TO: @_rangeEnd.Value.ToString("dd MMM yyyy")</JBadge>}
+        @if(_rangeStart.HasValue && _rangeEnd.HasValue){
+            <JStatusPill State="JState.Success">@((_rangeEnd.Value-_rangeStart.Value).Days+1) DAYS</JStatusPill>
+        }
+    </div>
+}
+</Preview>
+</DocSection>
+
+<DocSection Title="JDateRangePicker — Input Trigger (Dropdown)"
+    Description="Collapsed to a single row showing start → end. Click to open dual-month panel. DONE to close."
+    Overflow="true"
+    Code=@(@"<JDateRangePicker @bind-Start=""_s"" @bind-End=""_e"" ShowInput=""true"" Label=""MISSION WINDOW"" />")>
+<Preview>
+<div style="min-height:360px;">
+    <JDateRangePicker @bind-Start="_rangeInpStart" @bind-End="_rangeInpEnd"
+                      ShowInput="true" Label="MISSION WINDOW" />
+    @if (_rangeInpStart.HasValue && _rangeInpEnd.HasValue) {
+        <div style="margin-top:10px;">
+            <JAlert State="JState.Success">
+                @_rangeInpStart.Value.ToString("dd MMM yyyy") → @_rangeInpEnd.Value.ToString("dd MMM yyyy")
+                · @((_rangeInpEnd.Value-_rangeInpStart.Value).Days+1) days
+            </JAlert>
+        </div>
+    }
+</div>
+</Preview>
+</DocSection>
+
+</div>
+</JTab>
+
+<!-- ══ TAB 4: COMBINED FORM ══════════════════════════════════ -->
+<JTab Label="DateTime Form" Key="combined" Icon="◉">
+<div style="margin-top:12px;">
+<DocSection Title="Mission Scheduling Form — All Three Pickers"
+    Description="Complete form combining JDatePicker, JTimePicker and JDateRangePicker. All dropdowns overlay content correctly."
+    Overflow="true">
+<Preview>
+<div style="min-height:400px;">
+<JCard Style="JCardStyle.Notched">
+    <div style="padding:8px;">
+        <div style="font-size:10px;font-weight:700;color:var(--j-accent);letter-spacing:.14em;margin-bottom:14px;">MISSION SCHEDULING FORM</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <JFormField Label="MISSION DATE">
+                <JDatePicker @bind-Value="_fDate" ShowInput="true" Placeholder="SELECT DATE" Width="100%" />
+            </JFormField>
+            <JFormField Label="DEPARTURE TIME">
+                <JTimePicker @bind-Value="_fTime" ShowInput="true" Placeholder="SELECT TIME" Width="100%" ShowSeconds="false" />
+            </JFormField>
+            <div style="grid-column:1/-1;">
+                <JFormField Label="OPERATION WINDOW">
+                    <JDateRangePicker @bind-Start="_fRangeS" @bind-End="_fRangeE" ShowInput="true" />
+                </JFormField>
+            </div>
+            <JFormField Label="OPERATOR ID">
+                <JInput Placeholder="NH90-OPR-XXXX" @bind-Value="_fOpr" />
+            </JFormField>
+            <JFormField Label="ZONE">
+                <JSelect Options="@_zoneOpts" @bind-Value="_fZone" />
+            </JFormField>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:8px;">
+            <JButton Shape="JButtonShape.BothNotch" Color="JColor.Green"     OnClick="SubmitForm">✓ SCHEDULE MISSION</JButton>
+            <JButton Shape="JButtonShape.LeftNotch" Variant="JVariant.Ghost" OnClick="ClearForm" >↺ CLEAR</JButton>
+        </div>
+        @if (!string.IsNullOrEmpty(_fMsg)) {
+            <div style="margin-top:10px;"><JAlert State="@_fState">@_fMsg</JAlert></div>
+        }
+    </div>
+</JCard>
+</div>
+</Preview>
+</DocSection>
+</div>
+</JTab>
+
+</JTabs>
+
+@code {
+    string _tab = "date";
+
+    // ── Date picker ──────────────────────────────────────────────
+    System.DateTime? _date1, _date2, _date3;
+    System.DateTime? _dateInp1, _dateInp2, _dateInp3;
+
+    // ── Time picker ──────────────────────────────────────────────
+    TimeSpan? _time1, _time2, _time3;
+    TimeSpan? _timeInp1, _timeInp2;
+
+    // ── Date range ───────────────────────────────────────────────
+    System.DateTime? _rangeStart, _rangeEnd;
+    System.DateTime? _rangeInpStart, _rangeInpEnd;
+
+    // ── Combined form ────────────────────────────────────────────
+    System.DateTime? _fDate, _fRangeS, _fRangeE;
+    TimeSpan? _fTime;
+    string _fOpr = "", _fZone = "", _fMsg = "";
+    JState _fState = JState.Active;
+
+    List<JSelect.JSelectOption> _zoneOpts = new() {
+        new("","SELECT ZONE"), new("Z1","ZONE-1 · Haridwar"),
+        new("Z2","ZONE-2 · Forest"), new("Z3","ZONE-3 · Dehradun"), new("Z4","ZONE-4 · BHEL")
+    };
+
+    void SubmitForm() {
+        if (!_fDate.HasValue)                 { _fMsg="Mission date required.";   _fState=JState.Warning; return; }
+        if (!_fTime.HasValue)                 { _fMsg="Departure time required."; _fState=JState.Warning; return; }
+        if (string.IsNullOrWhiteSpace(_fOpr)) { _fMsg="Operator ID required.";    _fState=JState.Warning; return; }
+        var dt = _fDate.Value.Add(_fTime.Value);
+        _fMsg = $"Mission scheduled: {dt:dd MMM yyyy HH:mm} · Operator: {_fOpr.ToUpper()} · Zone: {_fZone}";
+        _fState = JState.Success;
+    }
+    void ClearForm() { _fDate=null;_fTime=null;_fRangeS=null;_fRangeE=null;_fOpr="";_fZone="";_fMsg=""; }
+}

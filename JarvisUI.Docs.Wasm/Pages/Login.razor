@@ -1,0 +1,258 @@
+@page "/login"
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+@using JarvisUI.Docs.Components
+@layout DocsLayout
+
+<PageTitle>Login / Auth Pages — JarvisUI</PageTitle>
+<DocsPageHeader Title="Login + Auth Pages" Category="Pages"
+    Description="Three full-page auth UI samples. Try admin/1234, OTP 123456, PIN 123456." />
+
+<JTabs @bind-ActiveTab="_tab">
+
+<JTab Label="Terminal Login" Key="terminal" Icon="◈">
+<div style="margin-top:12px;">
+<DocSection Title="Variant 1 — JARVIS Terminal" Description="Orb identity + credential form. Try admin / 1234." NoPad="true">
+<Preview>
+<div style="min-height:520px;background:var(--j-bg);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+    <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 39px,var(--j-accent-05) 39px,var(--j-accent-05) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,var(--j-accent-05) 39px,var(--j-accent-05) 40px);pointer-events:none;"></div>
+    <div style="position:absolute;top:16px;left:16px;width:32px;height:32px;border-top:2px solid var(--j-accent);border-left:2px solid var(--j-accent);animation:j-corner-blink 3s ease-in-out infinite;"></div>
+    <div style="position:absolute;top:16px;right:16px;width:32px;height:32px;border-top:2px solid var(--j-accent);border-right:2px solid var(--j-accent);animation:j-corner-blink 3s ease-in-out infinite .4s;"></div>
+    <div style="position:absolute;bottom:16px;left:16px;width:32px;height:32px;border-bottom:2px solid var(--j-accent);border-left:2px solid var(--j-accent);animation:j-corner-blink 3s ease-in-out infinite .8s;"></div>
+    <div style="position:absolute;bottom:16px;right:16px;width:32px;height:32px;border-bottom:2px solid var(--j-accent);border-right:2px solid var(--j-accent);animation:j-corner-blink 3s ease-in-out infinite 1.2s;"></div>
+    <div style="width:100%;max-width:380px;padding:0 20px;z-index:2;">
+        <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:28px;gap:10px;">
+            <JOrb Size="80px" State="@(_t1State)" SystemName="JARVIS" Listening="@(_t1Listening)" />
+            <div style="font-size:8px;color:var(--j-accent-70);letter-spacing:.22em;text-align:center;">JARVIS · INTEGRATED TRANSPORT SYSTEM</div>
+            <div style="font-size:10px;color:var(--j-text-muted);letter-spacing:.12em;">AUTHENTICATION REQUIRED</div>
+        </div>
+        @if (!string.IsNullOrEmpty(_t1Msg))
+        {
+            <div style="margin-bottom:12px;"><JAlert State="@(_t1MsgState)" Title="@(_t1MsgTitle)">@_t1Msg</JAlert></div>
+        }
+        <div style="display:flex;flex-direction:column;gap:10px;">
+            <JInput Label="OPERATOR ID" Placeholder="e.g. OPR-2491" @bind-Value="_t1User" State="@_t1InputState" />
+            <JInput Label="ACCESS CODE" Type="password" Placeholder="••••••••" @bind-Value="_t1Pass" State="@_t1InputState" />
+            <div style="display:flex;align-items:center;gap:8px;">
+                <JToggle @bind-Value="_t1Remember" />
+                <span style="font-size:9px;color:var(--j-text-muted);letter-spacing:.10em;">REMEMBER THIS TERMINAL</span>
+            </div>
+            <JButton Shape="JButtonShape.ScanFull" Color="JColor.Cyan" OnClick="T1Login">
+                @(_t1Loading ? "AUTHENTICATING..." : "AUTHENTICATE →")
+            </JButton>
+        </div>
+        <div style="margin-top:20px;display:flex;justify-content:space-between;font-size:8px;color:var(--j-text-dim);letter-spacing:.10em;">
+            <span>NH-90 · ITS CONTROL v4.1</span>
+            <span style="color:var(--j-accent-35);">SECURE CHANNEL</span>
+        </div>
+    </div>
+</div>
+</Preview>
+</DocSection>
+</div>
+</JTab>
+
+<JTab Label="Biometric / MFA" Key="bio" Icon="◎">
+<div style="margin-top:12px;">
+<DocSection Title="Variant 2 — Two-Step MFA" Description="Credentials → OTP with 60s timer. Try OTP 123456." NoPad="true">
+<Preview>
+<div style="min-height:520px;background:var(--j-bg);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--j-accent),transparent);animation:j-scan-v 4s ease-in-out infinite;"></div>
+    <div style="width:100%;max-width:400px;padding:0 20px;z-index:2;">
+        @if (!_t2Step2)
+        {
+            <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:24px;">
+                <JArcMeter Level="@_t2ArcLevel" TotalArcs="6" Label="SIGNAL" ShowLabel="true" />
+                <div style="font-size:11px;font-weight:700;color:var(--j-accent);letter-spacing:.14em;">OPERATOR SIGN-IN</div>
+                <JStatusPill State="JState.Active">SECURE SESSION</JStatusPill>
+            </div>
+            <JCard Style="JCardStyle.Notched">
+                <div style="display:flex;flex-direction:column;gap:10px;padding:4px;">
+                    <JFormField Label="OPERATOR EMAIL" Helper="Use your .gov or .nic.in address">
+                        <JInput Placeholder="operator@nh90.nic.in" @bind-Value="_t2Email" />
+                    </JFormField>
+                    <JFormField Label="PASSWORD">
+                        <JInput Type="password" Placeholder="••••••••••" @bind-Value="_t2Pass" />
+                    </JFormField>
+                    <JButton Shape="JButtonShape.BothNotch" Color="JColor.Cyan" OnClick="T2Step1">
+                        CONTINUE → VERIFY
+                    </JButton>
+                </div>
+            </JCard>
+        }
+        else
+        {
+            <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:24px;">
+                <div style="width:64px;height:64px;border-radius:50%;border:2px solid var(--j-accent);display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px var(--j-accent-25);font-size:22px;animation:j-pulse 2s ease-in-out infinite;">🔐</div>
+                <div style="font-size:11px;font-weight:700;color:var(--j-accent);letter-spacing:.14em;">MFA VERIFICATION</div>
+                <div style="font-size:9px;color:var(--j-text-muted);">OTP sent to @_t2Email</div>
+            </div>
+            <JCard Style="JCardStyle.SideRail">
+                <div style="display:flex;flex-direction:column;gap:12px;padding:4px;">
+                    <div style="display:flex;gap:8px;justify-content:center;">
+                        @for (int i = 0; i < 6; i++)
+                        {
+                            int idx = i;
+                            <div style="width:40px;height:48px;border:1px solid @(idx<_t2Otp.Length?"var(--j-accent)":"var(--j-accent-35)");background:var(--j-accent-05);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--j-accent);font-family:'Courier New',monospace;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);">
+                                @(idx < _t2Otp.Length ? _t2Otp[idx].ToString() : "")
+                            </div>
+                        }
+                    </div>
+                    <JInput Placeholder="Enter 6-digit OTP" MaxLength="6" @bind-Value="_t2Otp" />
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <JProgress Value="@_t2TimerPct" ProgressStyle="JProgress.JProgressStyle.Bar"
+                                   Color="@(_t2TimerPct < 30 ? JColor.Red : JColor.Cyan)" />
+                        <span style="font-size:9px;color:var(--j-text-muted);white-space:nowrap;">@_t2Timer s</span>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <JButton Shape="JButtonShape.LeftNotch" Variant="JVariant.Ghost" OnClick="T2GoBack">← BACK</JButton>
+                        <JButton Shape="JButtonShape.RightNotch" Color="JColor.Green" OnClick="T2Verify">VERIFY CODE</JButton>
+                    </div>
+                </div>
+            </JCard>
+        }
+        @if (!string.IsNullOrEmpty(_t2Msg))
+        {
+            <div style="margin-top:10px;"><JAlert State="@_t2MsgState">@_t2Msg</JAlert></div>
+        }
+    </div>
+</div>
+</Preview>
+</DocSection>
+</div>
+</JTab>
+
+<JTab Label="Access Panel" Key="panel" Icon="▣">
+<div style="margin-top:12px;">
+<DocSection Title="Variant 3 — HUD Access Panel" Description="Three-panel layout with role selector + PIN pad. Try PIN 123456." NoPad="true">
+<Preview>
+<div style="min-height:560px;background:var(--j-bg);display:flex;position:relative;overflow:hidden;">
+    <div style="width:190px;flex-shrink:0;border-right:1px solid var(--j-accent-18);padding:20px 16px;display:flex;flex-direction:column;gap:6px;">
+        <div style="font-size:8px;color:var(--j-accent-50);letter-spacing:.14em;margin-bottom:8px;">SYSTEM STATUS</div>
+        <JDataRow Key="NETWORK" Value="LIVE" />
+        <JDataRow Key="AUTH SRV" Value="UP" BarPercent="100" />
+        <JDataRow Key="DB CONN" Value="OK" BarPercent="98" />
+        <JDataRow Key="LATENCY" Value="12ms" BarPercent="90" />
+        <JDataRow Key="SESSIONS" Value="4/20" BarPercent="20" />
+        <div style="margin-top:12px;"><JStatusPill State="JState.Active">ALL SYSTEMS GO</JStatusPill></div>
+        <div style="margin-top:auto;padding-top:12px;"><JWaveform Active="true" BarCount="14" Height="24px" /></div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;">
+        <div style="font-size:9px;color:var(--j-accent-50);letter-spacing:.18em;margin-bottom:4px;">NH-90 · INTEGRATED TRANSPORT SYSTEM</div>
+        <div style="font-size:20px;font-weight:700;color:var(--j-accent);letter-spacing:.10em;text-shadow:0 0 20px var(--j-accent-35);margin-bottom:20px;">ACCESS CONTROL</div>
+        <div style="margin-bottom:16px;width:100%;max-width:300px;">
+            <div style="font-size:8px;color:var(--j-accent-50);letter-spacing:.14em;margin-bottom:6px;">SELECT ROLE</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                @foreach (var (role, col) in _t3Roles)
+                {
+                    <JButton Shape="JButtonShape.LeftNotch" Color="@col" Size="JSize.Sm"
+                             Variant="@(_t3Role==role?JVariant.Solid:JVariant.Outline)"
+                             OnClick="@(()=>_t3Role=role)">@role</JButton>
+                }
+            </div>
+        </div>
+        <div style="width:100%;max-width:300px;display:flex;flex-direction:column;gap:10px;">
+            <JInput Label="BADGE ID" Placeholder="NH90-OPR-XXXX" @bind-Value="_t3User" />
+            <div style="font-size:9px;color:var(--j-accent-70);letter-spacing:.12em;">PIN: @(new string('•',_t3Pin.Length))@(new string('_',Math.Max(0,6-_t3Pin.Length)))</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;">
+                @foreach (var d in new[]{"1","2","3","4","5","6","7","8","9","←","0","✓"})
+                {
+                    var digit = d;
+                    var dstyle = digit=="✓" ? "background:var(--j-ok-12);border-color:var(--j-ok);color:var(--j-ok);" :
+                                 digit=="←" ? "background:var(--j-err-12);border-color:var(--j-err);color:var(--j-err);" : "";
+                    <button @onclick="@(()=>T3PinPad(digit))"
+                            style="padding:10px;background:var(--j-accent-05);border:1px solid var(--j-accent-18);color:var(--j-accent);font-family:'Courier New',monospace;font-size:13px;font-weight:600;cursor:pointer;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);transition:all .12s;@dstyle">
+                        @digit
+                    </button>
+                }
+            </div>
+            @if (!string.IsNullOrEmpty(_t3Msg)) { <JAlert State="@_t3MsgState">@_t3Msg</JAlert> }
+        </div>
+    </div>
+    <div style="width:170px;flex-shrink:0;border-left:1px solid var(--j-accent-18);padding:20px 14px;display:flex;flex-direction:column;gap:4px;">
+        <div style="font-size:8px;color:var(--j-accent-50);letter-spacing:.14em;margin-bottom:6px;">ACCESS LOG</div>
+        @foreach (var log in _t3Log.TakeLast(8))
+        {
+            <div style="font-size:8px;border-left:2px solid @(log.Ok?"var(--j-ok)":"var(--j-err)");padding-left:6px;line-height:1.6;">
+                <div style="color:@(log.Ok?"var(--j-ok)":"var(--j-err)");">@log.Id</div>
+                <div style="color:var(--j-text-muted);">@log.Time</div>
+            </div>
+        }
+    </div>
+</div>
+</Preview>
+</DocSection>
+</div>
+</JTab>
+
+</JTabs>
+
+@code {
+    string _tab = "terminal";
+
+    // ── T1: Terminal Login ───────────────────────────────────────
+    string _t1User="",_t1Pass=""; bool _t1Remember,_t1Loading,_t1Listening;
+    string _t1Msg="",_t1MsgTitle="";
+    JState _t1State=JState.Idle,_t1MsgState=JState.Active,_t1InputState=JState.Active;
+
+    async Task T1Login() {
+        if(string.IsNullOrWhiteSpace(_t1User)||string.IsNullOrWhiteSpace(_t1Pass))
+        { _t1Msg="Operator ID and Access Code required.";_t1MsgTitle="VALIDATION";_t1MsgState=JState.Warning;return; }
+        _t1Loading=true;_t1State=JState.Processing;_t1Listening=true;_t1Msg=""; StateHasChanged();
+        await Task.Delay(1800);
+        if(_t1User=="admin"&&_t1Pass=="1234") {
+            _t1State=JState.Active;_t1Listening=false;_t1Loading=false;
+            _t1Msg="Authentication successful. Welcome, "+_t1User.ToUpper();
+            _t1MsgTitle="ACCESS GRANTED";_t1MsgState=JState.Success;_t1InputState=JState.Active;
+        } else {
+            _t1State=JState.Error;_t1Listening=false;_t1Loading=false;
+            _t1Msg="Invalid credentials. Access denied.";
+            _t1MsgTitle="ACCESS DENIED";_t1MsgState=JState.Error;_t1InputState=JState.Error;
+            await Task.Delay(2000);_t1State=JState.Idle;_t1InputState=JState.Active;
+        }
+    }
+
+    // ── T2: Biometric + MFA ──────────────────────────────────────
+    string _t2Email="",_t2Pass="",_t2Otp=""; bool _t2Step2;
+    string _t2Msg=""; JState _t2MsgState=JState.Active;
+    int _t2Timer=60,_t2ArcLevel=4;
+    int _t2TimerPct=>(int)((_t2Timer/60.0)*100);
+
+    void T2GoBack(){_t2Step2=false;_t2Otp="";_t2Msg="";}
+    void T2Step1() {
+        if(string.IsNullOrWhiteSpace(_t2Email)||string.IsNullOrWhiteSpace(_t2Pass))
+        {_t2Msg="Email and password required.";_t2MsgState=JState.Warning;return;}
+        _t2Msg="OTP dispatched to "+_t2Email;_t2MsgState=JState.Success;
+        _t2Step2=true;_t2Timer=60;_t2Otp="";_=T2StartTimer();
+    }
+    async Task T2StartTimer() {
+        while(_t2Timer>0&&_t2Step2){await Task.Delay(1000);_t2Timer--;await InvokeAsync(StateHasChanged);}
+        if(_t2Timer<=0&&_t2Step2){_t2Msg="OTP expired. Go back and try again.";_t2MsgState=JState.Error;}
+    }
+    void T2Verify() {
+        if(_t2Otp=="123456"){_t2Msg="✓ Verified! Redirecting...";_t2MsgState=JState.Success;}
+        else{_t2Msg="Invalid OTP. Attempts remaining: 2";_t2MsgState=JState.Error;}
+    }
+
+    // ── T3: Access Panel ─────────────────────────────────────────
+    string _t3User="",_t3Pin="",_t3Role="OPERATOR";
+    string _t3Msg=""; JState _t3MsgState=JState.Active;
+    static readonly (string,JColor)[] _t3Roles={
+        ("OPERATOR",JColor.Cyan),("SUPERVISOR",JColor.Amber),("ADMIN",JColor.Red),("VIEWER",JColor.Green)};
+    record AccessLog(string Id,string Time,bool Ok);
+    List<AccessLog> _t3Log=new(){new("OPR-2491","08:12",true),new("OPR-1182","08:09",true),new("OPR-0019","08:01",false),new("ADM-0001","07:58",true)};
+
+    void T3PinPad(string d){
+        if(d=="←"){if(_t3Pin.Length>0)_t3Pin=_t3Pin[..^1];return;}
+        if(d=="✓"){T3Auth();return;}
+        if(_t3Pin.Length<6)_t3Pin+=d;
+    }
+    void T3Auth(){
+        if(string.IsNullOrWhiteSpace(_t3User)){_t3Msg="Badge ID required.";_t3MsgState=JState.Warning;return;}
+        if(_t3Pin.Length<4){_t3Msg="PIN must be ≥ 4 digits.";_t3MsgState=JState.Warning;return;}
+        var ok=_t3Pin is "123456" or "0000";
+        _t3Log.Add(new(_t3User.ToUpper()[..Math.Min(8,_t3User.Length)],DateTime.Now.ToString("HH:mm"),ok));
+        if(ok){_t3Msg=$"ACCESS GRANTED · {_t3Role} · {_t3User.ToUpper()}";_t3MsgState=JState.Success;}
+        else{_t3Msg="ACCESS DENIED · Invalid PIN";_t3MsgState=JState.Error;_t3Pin="";}
+    }
+}

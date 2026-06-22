@@ -1,0 +1,134 @@
+@page "/actions"
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+@using JarvisUI.Docs.Components
+
+<PageTitle>Actions — JarvisUI</PageTitle>
+<DocsPageHeader Title="Badge · Pill · Data" Category="Interaction"
+    Description="JBadge · JStatusPill · JDivider · JDataRow — inline labeling, state indicators and data display." />
+
+<!-- JBADGE ALL VARIANTS -->
+<DocSection Title="JBadge — Colors × Shapes × Sizes"
+    Code=@(@"<JBadge Color=""JColor.Cyan"">ONLINE</JBadge>
+<JBadge Color=""JColor.Green"" Shape=""JBadge.JBadgeShape.Pill"">OK</JBadge>
+<JBadge Color=""JColor.Amber"" Shape=""JBadge.JBadgeShape.Hex"">WRN</JBadge>
+<JBadge Color=""JColor.Red""   Blink=""true"">ALERT</JBadge>")>
+    <Preview>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <span style="font-size:8px;color:var(--j-text-muted);min-width:50px;">COLORS</span>
+                <JBadge Color="JColor.Cyan">CYAN</JBadge>
+                <JBadge Color="JColor.Green">GREEN</JBadge>
+                <JBadge Color="JColor.Amber">AMBER</JBadge>
+                <JBadge Color="JColor.Red">RED</JBadge>
+                <JBadge Color="JColor.Ghost">GHOST</JBadge>
+                <JBadge Color="JColor.Cyan" Blink="true">● LIVE</JBadge>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <span style="font-size:8px;color:var(--j-text-muted);min-width:50px;">SHAPES</span>
+                <JBadge Color="JColor.Cyan"  Shape="JBadge.JBadgeShape.Angular">ANGULAR</JBadge>
+                <JBadge Color="JColor.Amber" Shape="JBadge.JBadgeShape.Pill">PILL</JBadge>
+                <JBadge Color="JColor.Green" Shape="JBadge.JBadgeShape.Hex">HEX</JBadge>
+                <JBadge Color="JColor.Red"   Shape="JBadge.JBadgeShape.Diamond">◆</JBadge>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <span style="font-size:8px;color:var(--j-text-muted);min-width:50px;">SIZES</span>
+                <JBadge Color="JColor.Cyan" Size="JSize.Xs">XS</JBadge>
+                <JBadge Color="JColor.Cyan" Size="JSize.Sm">SM</JBadge>
+                <JBadge Color="JColor.Cyan" Size="JSize.Md">MD</JBadge>
+                <JBadge Color="JColor.Cyan" Size="JSize.Lg">LG</JBadge>
+            </div>
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- JSTATUSPILL -->
+<DocSection Title="JStatusPill — All States + Blink"
+    Code=@(@"<JStatusPill State=""JState.Active"">ACTIVE</JStatusPill>
+<JStatusPill State=""JState.Warning"">WARNING</JStatusPill>
+<JStatusPill State=""JState.Error"" Blink=""true"">CRITICAL</JStatusPill>")>
+    <Preview>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+            <JStatusPill State="JState.Active">ACTIVE</JStatusPill>
+            <JStatusPill State="JState.Processing">PROCESSING</JStatusPill>
+            <JStatusPill State="JState.Warning">WARNING</JStatusPill>
+            <JStatusPill State="JState.Error">ERROR</JStatusPill>
+            <JStatusPill State="JState.Success">SUCCESS</JStatusPill>
+            <JStatusPill State="JState.Idle">IDLE</JStatusPill>
+            <JStatusPill State="JState.Error" Blink="true">CRITICAL</JStatusPill>
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- LIVE STATUS CYCLER -->
+<DocSection Title="JStatusPill — Live State Cycler"
+    Description="Click the pill to cycle through all states.">
+    <Preview>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <div @onclick="CyclePill" style="cursor:pointer;">
+                <JStatusPill State="@_pillState">@_pillState.ToString().ToUpper()</JStatusPill>
+            </div>
+            <span style="font-size:9px;color:var(--j-text-muted);">← Click to cycle states</span>
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- JDIVIDER -->
+<DocSection Title="JDivider — Horizontal and Vertical"
+    Code=@(@"<JDivider />
+<JDivider Label=""SECTION"" />
+<JDivider Label=""MAPS"" Color=""JColor.Amber"" />")>
+    <Preview>
+        <div style="display:flex;flex-direction:column;gap:14px;width:100%;">
+            <JDivider />
+            <JDivider Label="FOUNDATION" />
+            <JDivider Label="MAPS" Color="JColor.Amber" />
+            <JDivider Label="ALERTS" Color="JColor.Red" ShowDot="false" />
+            <div style="display:flex;gap:16px;height:60px;align-items:center;">
+                <span style="font-size:10px;color:var(--j-text-muted);">A</span>
+                <JDivider Orientation="JDivider.JDividerOrientation.Vertical" />
+                <span style="font-size:10px;color:var(--j-text-muted);">B</span>
+                <JDivider Orientation="JDivider.JDividerOrientation.Vertical" Color="JColor.Amber" />
+                <span style="font-size:10px;color:var(--j-text-muted);">C</span>
+            </div>
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- JDATAROW -->
+<DocSection Title="JDataRow — Key/Value with Bar"
+    Code=@(@"<JDataRow Key=""CPU""    Value=""72%""    BarPercent=""72"" />
+<JDataRow Key=""MEMORY"" Value=""4.2 GB"" BarPercent=""55"" />
+<JDataRow Key=""STATUS"" Value=""ONLINE"" />")>
+    <Preview>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+            <div style="width:220px;">
+                <div style="font-size:8px;color:var(--j-accent);letter-spacing:.12em;margin-bottom:6px;">WITH BAR</div>
+                <JDataRow Key="CPU"      Value="72%"    BarPercent="72" />
+                <JDataRow Key="MEMORY"   Value="4.2 GB" BarPercent="55" />
+                <JDataRow Key="NETWORK"  Value="91%"    BarPercent="91" />
+                <JDataRow Key="STORAGE"  Value="38%"    BarPercent="38" />
+            </div>
+            <div style="width:220px;">
+                <div style="font-size:8px;color:var(--j-accent);letter-spacing:.12em;margin-bottom:6px;">NO BAR</div>
+                <JDataRow Key="LOCATION" Value="Haridwar" />
+                <JDataRow Key="STATUS"   Value="ONLINE" />
+                <JDataRow Key="VERSION"  Value="v4.1.2" />
+                <JDataRow Key="KM MARK"  Value="KM 0" />
+            </div>
+            <div style="width:220px;">
+                <div style="font-size:8px;color:var(--j-accent);letter-spacing:.12em;margin-bottom:6px;">STATE COLORS</div>
+                <JDataRow Key="OK"       Value="99.8%"  BarPercent="99" State="JState.Active" />
+                <JDataRow Key="WARN"     Value="74.2%"  BarPercent="74" State="JState.Warning" />
+                <JDataRow Key="CRITICAL" Value="0.0%"   BarPercent="0"  State="JState.Error" />
+            </div>
+        </div>
+    </Preview>
+</DocSection>
+
+@code {
+    JState _pillState = JState.Active;
+    readonly JState[] _pillCycle = { JState.Active, JState.Processing, JState.Warning, JState.Error, JState.Success, JState.Idle };
+    int _pillIdx = 0;
+    void CyclePill() { _pillIdx = (_pillIdx + 1) % _pillCycle.Length; _pillState = _pillCycle[_pillIdx]; }
+}

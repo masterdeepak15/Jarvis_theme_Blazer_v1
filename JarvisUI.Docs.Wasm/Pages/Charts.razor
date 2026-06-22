@@ -1,0 +1,318 @@
+@page "/charts"
+@using JarvisUI.Components
+@using JarvisUI.Components.Charts
+@using JarvisUI.Tokens
+@using JarvisUI.Docs.Components
+
+<PageTitle>Charts — JarvisUI</PageTitle>
+<DocsPageHeader Title="Charts" Category="Data"
+    Description="Pure SVG charts — zero JS, zero third-party libraries. All colors read from CSS custom properties and react instantly to theme switching. Add jarvis-charts.css to your App.razor head." />
+
+@* ── LINE CHART ─────────────────────────────────────────────────────────── *@
+<DocSection Title="JLineChart — Line / Area" Code="@_cLine">
+    <Preview>
+        <div style="width:100%;">
+            <JCard Style="JCardStyle.CornerBracket">
+                <div style="padding:12px 8px 6px;">
+                    <div class="j-text-xs" style="margin-bottom:6px;">SYSTEM LOAD — LAST 12 HRS</div>
+                    <JLineChart Data="@_lineData" Height="180px" ShowArea="true" ShowDots="true"/>
+                </div>
+            </JCard>
+            <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;">
+                <JCard Style="JCardStyle.SideRail" Style_Css="flex:1;min-width:180px;">
+                    <div style="padding:12px 8px 6px;">
+                        <div class="j-text-xs j-text-warn" style="margin-bottom:6px;">WARNINGS — AMBER</div>
+                        <JLineChart Data="@_lineData2" Height="130px" ColorVar="--j-warn"
+                                    ShowArea="true" ShowDots="false" GridLines="3"/>
+                    </div>
+                </JCard>
+                <JCard Style="JCardStyle.SideRail" Style_Css="flex:1;min-width:180px;">
+                    <div style="padding:12px 8px 6px;">
+                        <div class="j-text-xs j-text-ok" style="margin-bottom:6px;">UPTIME — GREEN</div>
+                        <JLineChart Data="@_lineData3" Height="130px" ColorVar="--j-ok"
+                                    ShowArea="false" ShowDots="true" GridLines="3"/>
+                    </div>
+                </JCard>
+            </div>
+        </div>
+    </Preview>
+</DocSection>
+
+@* ── BAR CHART ──────────────────────────────────────────────────────────── *@
+<DocSection Title="JBarChart — Vertical / Horizontal" Code="@_cBar">
+    <Preview>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+            <JCard Style="JCardStyle.Notched" Style_Css="flex:1;min-width:200px;">
+                <div style="padding:12px 8px 6px;">
+                    <div class="j-text-xs" style="margin-bottom:6px;">MISSIONS PER ZONE</div>
+                    <JBarChart Data="@_barData" Height="200px" ShowValues="true"/>
+                </div>
+            </JCard>
+            <JCard Style="JCardStyle.Notched" Style_Css="flex:1;min-width:200px;">
+                <div style="padding:12px 8px 6px;">
+                    <div class="j-text-xs j-text-warn" style="margin-bottom:6px;">RESOURCE ALLOC</div>
+                    <JBarChart Data="@_barData2" Height="200px"
+                               Orientation="JChartOrientation.Horizontal"
+                               ColorVar="--j-warn"/>
+                </div>
+            </JCard>
+        </div>
+    </Preview>
+</DocSection>
+
+@* ── DONUT CHART ────────────────────────────────────────────────────────── *@
+<DocSection Title="JDonutChart" Code="@_cDonut">
+    <Preview>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+            <JCard Style="JCardStyle.GlowBorder" Style_Css="padding:16px;display:inline-flex;">
+                <JDonutChart Data="@_donutData"
+                             Size="160px"
+                             CenterValue="@($"{_donutData.Sum(s=>s.Value):0}")"
+                             CenterLabel="TOTAL OPS"
+                             ShowLegend="true"/>
+            </JCard>
+            <JCard Style="JCardStyle.GlowBorder" Style_Css="padding:16px;display:inline-flex;">
+                <JDonutChart Data="@_donutData2"
+                             Size="160px"
+                             CenterValue="72%"
+                             CenterLabel="CAPACITY"
+                             Thickness="14"
+                             ShowLegend="true"/>
+            </JCard>
+        </div>
+    </Preview>
+</DocSection>
+
+@* ── SPARKLINE ──────────────────────────────────────────────────────────── *@
+<DocSection Title="JSparkline — Inline Trend Line" Code="@_cSpark">
+    <Preview>
+        <div style="display:flex;flex-direction:column;gap:6px;width:100%;max-width:420px;">
+            @foreach (var row in _sparkRows)
+            {
+                <JCard Style="JCardStyle.PartialBorder">
+                    <div style="padding:7px 14px;display:flex;align-items:center;gap:16px;">
+                        <span class="j-text-xs" style="width:90px;flex-shrink:0;">@row.Label</span>
+                        <JSparkline Data="@row.Values" Width="100px" Height="28px"
+                                    ShowArea="true" ShowTrend="true"/>
+                        <span class="j-text-val" style="font-size:13px;margin-left:auto;">@row.Values[^1]</span>
+                    </div>
+                </JCard>
+            }
+        </div>
+    </Preview>
+</DocSection>
+
+@* ── RADAR CHART ────────────────────────────────────────────────────────── *@
+<DocSection Title="JRadarChart — Spider / Polar" Code="@_cRadar">
+    <Preview>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">
+            <JCard Style="JCardStyle.Hexagonal" Style_Css="padding:16px;">
+                <div class="j-text-xs" style="margin-bottom:8px;">UNIT CAPABILITY</div>
+                <JRadarChart Axes="@_radarAxes" />
+            </JCard>
+            <JCard Style="JCardStyle.Hexagonal" Style_Css="padding:16px;">
+                <div class="j-text-xs j-text-warn" style="margin-bottom:8px;">THREAT PROFILE</div>
+                <JRadarChart Axes="@_radarAxes2" Size="200px" ColorVar="--j-warn"/>
+            </JCard>
+        </div>
+    </Preview>
+</DocSection>
+
+@* ── GAUGE CHART ────────────────────────────────────────────────────────── *@
+<DocSection Title="JGaugeChart — Half-Arc Gauge" Code="@_cGauge">
+    <Preview>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;">
+            <JCard Style="JCardStyle.Radar" Style_Css="padding:12px;">
+                <JGaugeChart Value="@_g1" Min="0" Max="100" Size="176px"
+                             Label="POWER CORE" DisplayValue="@($"{_g1:0}%")"/>
+            </JCard>
+            <JCard Style="JCardStyle.Radar" Style_Css="padding:12px;">
+                <JGaugeChart Value="@_g2" Min="0" Max="120" Size="176px"
+                             Label="THERMAL" ColorVar="--j-warn"
+                             DisplayValue="@($"{_g2:0}°C")"/>
+            </JCard>
+            <JCard Style="JCardStyle.Radar" Style_Css="padding:12px;">
+                <JGaugeChart Value="@_g3" Min="0" Max="100" Size="176px"
+                             Label="SHIELDS" ColorVar="--j-err"
+                             DisplayValue="@($"{_g3:0}%")"
+                             ShowTicks="false" ShowMinMax="false"/>
+            </JCard>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;">
+            <div style="flex:1;min-width:140px;">
+                <div class="j-text-xs" style="margin-bottom:4px;">POWER CORE</div>
+                <JSlider @bind-Value="_g1" Min="0" Max="100" Step="1"/>
+            </div>
+            <div style="flex:1;min-width:140px;">
+                <div class="j-text-xs" style="margin-bottom:4px;">THERMAL</div>
+                <JSlider @bind-Value="_g2" Min="0" Max="120" Step="1"/>
+            </div>
+            <div style="flex:1;min-width:140px;">
+                <div class="j-text-xs" style="margin-bottom:4px;">SHIELDS</div>
+                <JSlider @bind-Value="_g3" Min="0" Max="100" Step="1"/>
+            </div>
+        </div>
+    </Preview>
+</DocSection>
+
+@* ── DASHBOARD COMPOSITION ──────────────────────────────────────────────── *@
+<DocSection Title="Dashboard Composition" Code="@_cDash">
+    <Preview>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;">
+            <JStatCard Title="NET THROUGHPUT" Value="4.2 GB/s" Sub="+12% vs prior">
+                <JSparkline Data="@_spark1" Width="80px" Height="24px" ShowTrend="true"/>
+            </JStatCard>
+            <JStatCard Title="ACTIVE NODES" Value="118" Sub="of 128 total">
+                <JSparkline Data="@_spark2" Width="80px" Height="24px" ShowTrend="true"/>
+            </JStatCard>
+            <JStatCard Title="ERROR RATE" Value="0.4%" Sub="below threshold" Color="JColor.Green">
+                <JSparkline Data="@_spark3" Width="80px" Height="24px" ColorVar="--j-ok"/>
+            </JStatCard>
+            <div style="grid-column:span 2;">
+                <JCard Style="JCardStyle.CornerBracket">
+                    <div style="padding:12px 8px 6px;">
+                        <div class="j-text-xs" style="margin-bottom:6px;">PACKET FLOW — 24H</div>
+                        <JLineChart Data="@_lineData" Height="145px" ShowArea="true"/>
+                    </div>
+                </JCard>
+            </div>
+            <JCard Style="JCardStyle.GlowBorder" Style_Css="padding:16px;display:flex;justify-content:center;align-items:center;">
+                <JDonutChart Data="@_donutData" Size="140px"
+                             CenterValue="341" CenterLabel="TOTAL"
+                             ShowLegend="true"/>
+            </JCard>
+        </div>
+    </Preview>
+</DocSection>
+
+@* ── CSS SETUP ──────────────────────────────────────────────────────────── *@
+<DocSection Title="CSS Setup" Code="@_cSetup">
+    <Preview>
+        <JAlert State="JState.Active">
+            Add <strong>jarvis-charts.css</strong> to your App.razor &lt;head&gt; after jarvis-ui.css.
+            No JavaScript required for any chart component.
+        </JAlert>
+    </Preview>
+</DocSection>
+
+@code {
+    // ── Line data ────────────────────────────────────────────────────────────
+    List<JChartPoint> _lineData = new() {
+        new("00h",22),new("02h",38),new("04h",31),new("06h",45),
+        new("08h",67),new("10h",82),new("12h",74),new("14h",91),
+        new("16h",88),new("18h",76),new("20h",63),new("22h",54)
+    };
+    List<JChartPoint> _lineData2 = new() {
+        new("M",4),new("T",7),new("W",3),new("T",9),new("F",6),new("S",2),new("S",5)
+    };
+    List<JChartPoint> _lineData3 = new() {
+        new("W1",99.8),new("W2",99.9),new("W3",98.4),new("W4",99.7),
+        new("W5",99.9),new("W6",100),new("W7",99.5),new("W8",99.8)
+    };
+
+    // ── Bar data ─────────────────────────────────────────────────────────────
+    List<JChartPoint> _barData = new() {
+        new("Z-01",34),new("Z-02",58),new("Z-03",22),
+        new("Z-04",71),new("Z-05",45),new("Z-06",63)
+    };
+    List<JChartPoint> _barData2 = new() {
+        new("COMPUTE",84),new("STORAGE",62),new("NETWORK",48),new("MEMORY",91)
+    };
+
+    // ── Donut data ───────────────────────────────────────────────────────────
+    List<JDonutSegment> _donutData = new() {
+        new("ALPHA",142,"var(--j-accent)"), new("BETA",98,"var(--j-ok)"),
+        new("GAMMA",63,"var(--j-warn)"),    new("DELTA",38,"var(--j-err)")
+    };
+    List<JDonutSegment> _donutData2 = new() {
+        new("USED",72,"var(--j-accent)"),
+        new("FREE",28,"var(--j-accent-20, rgba(0,229,255,.2))")
+    };
+
+    // ── Sparkline data ────────────────────────────────────────────────────────
+    record SparkRow(string Label, List<double> Values);
+    List<SparkRow> _sparkRows = new() {
+        new("CPU LOAD",    new(){40,45,42,58,63,71,68,75}),
+        new("MEM USAGE",   new(){62,60,64,61,65,68,67,66}),
+        new("NET I/O",     new(){90,70,85,60,40,55,45,35}),
+        new("DISK OPS",    new(){20,22,25,30,28,32,35,38})
+    };
+    List<double> _spark1 = new(){3.1,3.4,3.8,3.6,4.0,4.1,4.2};
+    List<double> _spark2 = new(){108,110,112,109,114,116,118};
+    List<double> _spark3 = new(){1.2,0.9,0.8,0.6,0.5,0.4,0.4};
+
+    // ── Radar data ────────────────────────────────────────────────────────────
+    List<JRadarAxis> _radarAxes = new() {
+        new("FIREPOWER",82), new("DEFENSE",65), new("SPEED",91),
+        new("INTEL",74),     new("STEALTH",58), new("ENDURANCE",70)
+    };
+    List<JRadarAxis> _radarAxes2 = new() {
+        new("KINETIC",75), new("CYBER",90), new("BIO",40),
+        new("EMP",85),     new("RECON",60), new("DECOY",55)
+    };
+
+    // ── Gauge values (live via sliders) ──────────────────────────────────────
+    double _g1 = 68, _g2 = 87, _g3 = 23;
+
+    // ── Code snippets ─────────────────────────────────────────────────────────
+    string _cLine = @"<JLineChart Data=""@_data"" Height=""180px""
+             ShowArea=""true"" ShowDots=""true"" ColorVar=""--j-accent"" />
+
+@code {
+    List<JChartPoint> _data = new() {
+        new(""00h"", 22), new(""06h"", 45), new(""12h"", 74), new(""18h"", 63)
+    };
+}";
+
+    string _cBar = @"@* Vertical (default) *@
+<JBarChart Data=""@_data"" Height=""200px"" ShowValues=""true"" />
+
+@* Horizontal with warning color *@
+<JBarChart Data=""@_data"" Orientation=""JChartOrientation.Horizontal""
+           ColorVar=""--j-warn"" Height=""200px"" />";
+
+    string _cDonut = @"<JDonutChart Data=""@_segs"" Size=""160px""
+             CenterValue=""341"" CenterLabel=""TOTAL OPS""
+             ShowLegend=""true"" />
+
+@code {
+    List<JDonutSegment> _segs = new() {
+        new(""ALPHA"", 142, ""var(--j-accent)""),
+        new(""BETA"",   98, ""var(--j-ok)""),
+        new(""GAMMA"",  63, ""var(--j-warn)""),
+        new(""DELTA"",  38, ""var(--j-err)"")
+    };
+}";
+
+    string _cSpark = @"@* Auto trend: Up → green, Down → red, Flat → accent *@
+<JSparkline Data=""@vals"" Width=""100px"" Height=""28px""
+            ShowArea=""true"" ShowTrend=""true"" />
+
+@* Pin a color *@
+<JSparkline Data=""@vals"" ColorVar=""--j-warn"" />";
+
+    string _cRadar = @"<JRadarChart Axes=""@_axes"" Size=""200px"" ColorVar=""--j-accent"" />
+
+@code {
+    List<JRadarAxis> _axes = new() {
+        new(""FIREPOWER"", 82), new(""DEFENSE"", 65), new(""SPEED"", 91),
+        new(""INTEL"", 74),    new(""STEALTH"", 58), new(""ENDURANCE"", 70)
+    };
+}";
+
+    string _cGauge = @"<JGaugeChart Value=""@_val"" Min=""0"" Max=""100""
+             Size=""176px"" Label=""POWER CORE""
+             DisplayValue=""@($""{_val:0}%"")""
+             ShowTicks=""true"" ShowNeedle=""true"" />
+
+@* Bind a JSlider for live updates *@
+<JSlider @bind-Value=""_val"" Min=""0"" Max=""100"" />";
+
+    string _cDash = @"@* Stat card with embedded sparkline *@
+<JStatCard Title=""NET THROUGHPUT"" Value=""4.2 GB/s"" Sub=""+12% vs prior"">
+    <JSparkline Data=""@_spark"" Width=""80px"" Height=""24px"" ShowTrend=""true"" />
+</JStatCard>";
+
+    string _cSetup = @"<!-- App.razor <head> — after jarvis-ui.css -->
+<link rel=""stylesheet"" href=""_content/JarvisUI/css/jarvis-charts.css"" />";
+}

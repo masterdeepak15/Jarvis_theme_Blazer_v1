@@ -1,0 +1,134 @@
+@page "/cards"
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+@using JarvisUI.Docs.Components
+
+<PageTitle>Cards — JarvisUI</PageTitle>
+<DocsPageHeader Title="Cards" Category="Visual"
+    Description="9 JCard frame styles. JStatCard pre-built metric card. All states, colors and animation speeds." />
+
+<!-- ALL 9 JCARD STYLES -->
+<DocSection Title="JCard — All 9 Frame Styles">
+    <Preview>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;width:100%;">
+            @foreach (var (style, label) in _cardStyles)
+            {
+                <JCard Style="@style" Color="@_cardColor" State="@_cardState">
+                    <div style="padding:14px 16px;">
+                        <div style="font-size:8px;color:var(--j-accent);letter-spacing:.14em;margin-bottom:4px;">@style</div>
+                        <div style="font-size:12px;color:var(--j-text-primary);">@label</div>
+                    </div>
+                </JCard>
+            }
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center;">
+            <span style="font-size:9px;color:var(--j-text-muted);">COLOR:</span>
+            @foreach (var (c, n) in _colors)
+            {
+                <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Color="@c"
+                         Variant="@(_cardColor==c?JVariant.Solid:JVariant.Outline)"
+                         OnClick="@(()=>_cardColor=c)">@n</JButton>
+            }
+            <span style="font-size:9px;color:var(--j-text-muted);margin-left:8px;">STATE:</span>
+            @foreach (var (s, n) in _states)
+            {
+                <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm"
+                         Variant="@(_cardState==s?JVariant.Solid:JVariant.Outline)"
+                         OnClick="@(()=>_cardState=s)">@n</JButton>
+            }
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- JCARD WITH TITLE + CONTENT -->
+<DocSection Title="JCard — With Title, Badge and Rich Content"
+    Code=@(@"<JCard Style=""JCardStyle.CornerBracket"" Title=""SENSOR NODE"">
+    <JDataRow Key=""TEMP""   Value=""38.2 °C"" BarPercent=""38"" />
+    <JDataRow Key=""UPTIME"" Value=""99.8%""   BarPercent=""99"" />
+    <JStatusPill State=""JState.Active"">ONLINE</JStatusPill>
+</JCard>")>
+    <Preview>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <JCard Style="JCardStyle.CornerBracket" Title="SENSOR NODE">
+                <div style="padding:10px 14px;">
+                    <JDataRow Key="TEMP"    Value="38.2 °C" BarPercent="38" />
+                    <JDataRow Key="HUMIDITY" Value="62%"    BarPercent="62" />
+                    <JDataRow Key="UPTIME"  Value="99.8%"   BarPercent="99" />
+                    <div style="margin-top:8px;"><JStatusPill State="JState.Active">ONLINE</JStatusPill></div>
+                </div>
+            </JCard>
+            <JCard Style="JCardStyle.GlowBorder" Title="NETWORK" State="JState.Warning">
+                <div style="padding:10px 14px;">
+                    <JDataRow Key="LATENCY" Value="142ms"  BarPercent="71" />
+                    <JDataRow Key="PKT LOSS" Value="4.2%" BarPercent="4" />
+                    <div style="margin-top:8px;"><JStatusPill State="JState.Warning">DEGRADED</JStatusPill></div>
+                </div>
+            </JCard>
+            <JCard Style="JCardStyle.DangerPulse" Title="FAULT" State="JState.Error">
+                <div style="padding:10px 14px;">
+                    <JDataRow Key="SENSOR-5" Value="OFFLINE" />
+                    <JDataRow Key="SINCE"    Value="14:32:01" />
+                    <div style="margin-top:8px;"><JStatusPill State="JState.Error">CRITICAL</JStatusPill></div>
+                </div>
+            </JCard>
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- JSTATCARD -->
+<DocSection Title="JStatCard — Metric Cards"
+    Code=@(@"<JStatCard Title=""DEVICES"" Value=""26"" Sub=""NH-90 Corridor"" />
+<JStatCard Title=""ONLINE"" Value=""22"" Sub=""Operational"" Color=""JColor.Green"" />
+<JStatCard Title=""OFFLINE"" Value=""2"" Sub=""Critical"" Color=""JColor.Red"" State=""JState.Error"" />")>
+    <Preview>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <JStatCard Title="DEVICES"   Value="26"    Sub="NH-90 Corridor" />
+            <JStatCard Title="ONLINE"    Value="22"    Sub="Operational"  Color="JColor.Green" />
+            <JStatCard Title="WARNING"   Value="4"     Sub="Degraded"     Color="JColor.Amber" />
+            <JStatCard Title="OFFLINE"   Value="2"     Sub="Critical"     Color="JColor.Red"   State="JState.Error" />
+            <JStatCard Title="UPTIME"    Value="99.8%" Sub="Last 30 days" />
+            <JStatCard Title="TOLL RATE" Value="₹ 80"  Sub="Per axle ECB" Color="JColor.Cyan" />
+        </div>
+    </Preview>
+</DocSection>
+
+<!-- ANIMATION SPEEDS -->
+<DocSection Title="JCard — Animation Speed Control"
+    Code=@(@"<JCard AnimSpeed=""JAnimSpeed.Slow"" Style=""JCardStyle.SideRail"">Slow</JCard>
+<JCard AnimSpeed=""JAnimSpeed.Normal"" Style=""JCardStyle.SideRail"">Normal</JCard>
+<JCard AnimSpeed=""JAnimSpeed.Fast""   Style=""JCardStyle.SideRail"">Fast</JCard>
+<JCard AnimSpeed=""JAnimSpeed.Off""    Style=""JCardStyle.SideRail"">Off</JCard>")>
+    <Preview>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            @foreach (var (sp, lbl) in new[]{(JAnimSpeed.Slow,"SLOW"),(JAnimSpeed.Normal,"NORMAL"),(JAnimSpeed.Fast,"FAST"),(JAnimSpeed.Off,"OFF")})
+            {
+                <JCard Style="JCardStyle.SideRail" AnimSpeed="@sp">
+                    <div style="padding:10px 14px;font-size:10px;color:var(--j-accent);">@lbl</div>
+                </JCard>
+            }
+        </div>
+    </Preview>
+</DocSection>
+
+@code {
+    JColor _cardColor = JColor.Cyan;
+    JState _cardState = JState.Active;
+
+    static readonly (JCardStyle, string)[] _cardStyles = {
+        (JCardStyle.CornerBracket, "Corner Bracket"),
+        (JCardStyle.Notched,       "Notched"),
+        (JCardStyle.SideRail,      "Side Rail"),
+        (JCardStyle.GlowBorder,    "Glow Border"),
+        (JCardStyle.PartialBorder, "Partial Border"),
+        (JCardStyle.DangerPulse,   "Danger Pulse"),
+        (JCardStyle.Hexagonal,     "Hexagonal"),
+        (JCardStyle.Radar,         "Radar"),
+        (JCardStyle.DoubleFrame,   "Double Frame"),
+    };
+    static readonly (JColor, string)[] _colors = {
+        (JColor.Cyan,"CYAN"),(JColor.Amber,"AMBER"),(JColor.Red,"RED"),(JColor.Green,"GREEN")
+    };
+    static readonly (JState, string)[] _states = {
+        (JState.Active,"ACTIVE"),(JState.Warning,"WARN"),(JState.Error,"ERROR"),(JState.Idle,"IDLE")
+    };
+}

@@ -1,0 +1,72 @@
+@namespace JarvisUI.Docs.Components
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+
+<div style="margin-bottom:28px;padding-bottom:16px;
+            border-bottom:1px solid var(--j-border-dim);">
+
+    @* Breadcrumb *@
+    <div style="font-size:8px;color:var(--j-text-dim);letter-spacing:0.14em;
+                text-transform:uppercase;margin-bottom:8px;">
+        JarvisUI › @Category
+    </div>
+
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+            <h1 style="font-size:20px;font-weight:600;color:var(--j-text-primary);
+                       letter-spacing:0.10em;text-transform:uppercase;
+                       margin:0 0 4px;text-shadow:0 0 16px var(--j-accent-35);
+                       animation:j-glitch 10s ease-in-out infinite;">
+                @Title
+            </h1>
+            @if (!string.IsNullOrWhiteSpace(Description))
+            {
+                <p style="font-size:11px;color:var(--j-text-muted);letter-spacing:0.04em;
+                          line-height:1.6;margin:0;max-width:560px;">
+                    @Description
+                </p>
+            }
+        </div>
+
+        @* Component tag badge *@
+        @if (!string.IsNullOrWhiteSpace(ComponentTag))
+        {
+            <div style="flex-shrink:0;">
+                <JBadge Color="JColor.Cyan">@ComponentTag</JBadge>
+            </div>
+        }
+    </div>
+
+    @* Parameter quick-ref *@
+    @if (Parameters != null && Parameters.Count > 0)
+    {
+        <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;">
+            @foreach (var p in Parameters)
+            {
+                <div style="font-size:9px;background:var(--j-accent-05);
+                            border:1px solid var(--j-accent-18);
+                            padding:3px 8px;color:var(--j-accent-50);letter-spacing:0.06em;
+                            font-family:'Courier New',monospace;">
+                    <span style="color:var(--j-accent);">@p.Name</span>
+                    <span style="color:var(--j-text-dim);"> : </span>
+                    <span style="color:var(--j-text-secondary);">@p.Type</span>
+                    @if (!string.IsNullOrWhiteSpace(p.Default))
+                    {
+                        <span style="color:var(--j-text-dim);"> = @p.Default</span>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+</div>
+
+@code {
+    public record DocParam(string Name, string Type, string? Default = null);
+
+    [Parameter] public string             Title        { get; set; } = "";
+    [Parameter] public string?            Description  { get; set; }
+    [Parameter] public string             Category     { get; set; } = "Component";
+    [Parameter] public string?            ComponentTag { get; set; }
+    [Parameter] public List<DocParam>?    Parameters   { get; set; }
+}

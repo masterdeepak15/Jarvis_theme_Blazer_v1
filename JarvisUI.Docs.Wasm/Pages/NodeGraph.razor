@@ -1,0 +1,271 @@
+@page "/nodegraph"
+@using JarvisUI.Components
+@using JarvisUI.Tokens
+@using JarvisUI.Docs.Components
+
+<PageTitle>Node Graph — JarvisUI</PageTitle>
+<DocsPageHeader Title="Node Graph" Category="Data"
+    Description="JNodeGraph — draggable node-relation graph. Nodes connect via animated SVG bezier curves. Drag any node; all connections follow in real-time." />
+
+<JTabs @bind-ActiveTab="_tab">
+
+    <!-- ═══ VARIANT 1: NH-90 ITS DEVICE FLOW (image-1 style) ════ -->
+    <JTab Label="ITS Device Flow" Key="its" Icon="◎">
+        <div style="margin-top:12px;">
+            <DocSection Title="NH-90 ITS — Device → Hub → Control Room Flow"
+                        Description="Drag any node to reposition. Connections redraw in real-time."
+                        NoPad="true">
+                <Preview>
+                    <JNodeGraph Title="NH-90 ITS · DEVICE FLOW" Nodes="@_itsNodes" Edges="@_itsEdges"
+                                Height="420px" ShowLegend="true" />
+                </Preview>
+            </DocSection>
+            <div style="margin-top:10px;">
+                <DocSection Title="Usage Code"
+                    Code=@(@"var nodes = new List<JNodeGraph.NodeDef> {
+    new(""cctv1"", ""CCTV-000"", X:60,  Y:60,  Sub:""Haridwar Entry""),
+    new(""cctv2"", ""CCTV-001"", X:60,  Y:130, Sub:""Bypass Junction""),
+    new(""hub"",   ""NH-90"",   X:320, Y:180, Type:JNodeGraph.NType.Hub),
+    new(""ctrl"",  ""ECB CTRL"",X:560, Y:180, Type:JNodeGraph.NType.Hex, Color:JColor.Amber),
+};
+var edges = new List<JNodeGraph.EdgeDef> {
+    new(""cctv1"", ""hub""),
+    new(""cctv2"", ""hub""),
+    new(""hub"",   ""ctrl"", Color:JColor.Amber, AnimDur:1.5),
+};
+<JNodeGraph Nodes=""@nodes"" Edges=""@edges"" Title=""NH-90 ITS"" Height=""420px"" />")>
+                    <Preview>
+                        <div style="font-size:10px;color:var(--j-text-secondary);line-height:1.8;">
+                            <div>• Drag any node → connections follow instantly</div>
+                            <div>• <code style="color:var(--j-accent)">NType.Hub</code> = circle · <code style="color:var(--j-accent)">NType.Hex</code> = hexagon · <code style="color:var(--j-accent)">NType.Diamond</code> = diamond · default = chip</div>
+                            <div>• <code style="color:var(--j-accent)">EdgeStyle.Dashed</code> / <code style="color:var(--j-accent)">Dotted</code> for different connection styles</div>
+                            <div>• <code style="color:var(--j-accent)">Animated=true</code> = traveling dot along path · <code style="color:var(--j-accent)">AnimDur</code> = speed in seconds</div>
+                        </div>
+                    </Preview>
+                </DocSection>
+            </div>
+        </div>
+    </JTab>
+
+    <!-- ═══ VARIANT 2: DATA PIPELINE ════════════════════════════ -->
+    <JTab Label="Data Pipeline" Key="pipe" Icon="▷">
+        <div style="margin-top:12px;">
+            <DocSection Title="Data Pipeline — Source → Process → Output"
+                        Description="Left-to-right data flow with colored edge types."
+                        NoPad="true">
+                <Preview>
+                    <JNodeGraph Title="DATA PIPELINE · PROCESSING FLOW" Nodes="@_pipeNodes" Edges="@_pipeEdges"
+                                Height="380px" ShowLegend="true" />
+                </Preview>
+            </DocSection>
+        </div>
+    </JTab>
+
+    <!-- ═══ VARIANT 3: NETWORK TOPOLOGY ════════════════════════ -->
+    <JTab Label="Network Topology" Key="net" Icon="⊞">
+        <div style="margin-top:12px;">
+            <DocSection Title="Network Topology — Mixed Node Types"
+                        Description="Hub-and-spoke with diamonds for routers, hexagons for servers."
+                        NoPad="true">
+                <Preview>
+                    <JNodeGraph Title="NETWORK TOPOLOGY · ZONE-4" Nodes="@_netNodes" Edges="@_netEdges"
+                                Height="440px" ShowLegend="true" />
+                </Preview>
+            </DocSection>
+        </div>
+    </JTab>
+
+    <!-- ═══ VARIANT 4: ALERT TREE (Error states) ════════════════ -->
+    <JTab Label="Alert Tree" Key="alert" Icon="⚠">
+        <div style="margin-top:12px;">
+            <DocSection Title="Alert Propagation Tree — Error & Warning States"
+                        Description="Red/amber edges show fault propagation. Dashed = degraded path."
+                        NoPad="true">
+                <Preview>
+                    <JNodeGraph Title="FAULT PROPAGATION · NH-90" Nodes="@_alertNodes" Edges="@_alertEdges"
+                                Height="400px" ShowLegend="true" />
+                </Preview>
+            </DocSection>
+        </div>
+    </JTab>
+
+    <!-- ═══ VARIANT 5: CUSTOM / INTERACTIVE ═════════════════════ -->
+    <JTab Label="Interactive" Key="live" Icon="◈">
+        <div style="margin-top:12px;">
+            <DocSection Title="Interactive — Add Nodes and Edges Live"
+                        NoPad="false">
+                <Preview>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                        <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" OnClick="AddChipNode">+ CHIP NODE</JButton>
+                        <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Color="JColor.Amber" OnClick="AddHubNode">+ HUB</JButton>
+                        <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Color="JColor.Green" OnClick="AddHexNode">+ HEX</JButton>
+                        <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Color="JColor.Red" OnClick="ConnectRandom">⇄ CONNECT RANDOM</JButton>
+                        <JButton Shape="JButtonShape.LeftNotch" Size="JSize.Sm" Variant="JVariant.Ghost" OnClick="ResetLive">↺ RESET</JButton>
+                        <JBadge Color="JColor.Cyan">@_liveNodes.Count NODES</JBadge>
+                        <JBadge Color="JColor.Amber">@_liveEdges.Count EDGES</JBadge>
+                    </div>
+                </Preview>
+            </DocSection>
+            <JNodeGraph Title="LIVE GRAPH · DRAG NODES · ADD CONNECTIONS"
+                        Nodes="@_liveNodes" Edges="@_liveEdges"
+                        Height="420px" ShowLegend="true" />
+        </div>
+    </JTab>
+
+</JTabs>
+
+@code {
+    string _tab = "its";
+
+    // ══ VARIANT 1: NH-90 ITS Device Flow ════════════════════════
+    List<JNodeGraph.NodeDef> _itsNodes = new() {
+        new("c0",  "CCTV-000", 40,  40,  Sub:"Haridwar Entry",  Pulse:true),
+        new("c1",  "CCTV-001", 40,  100, Sub:"Bypass Junction"),
+        new("c2",  "CCTV-002", 40,  160, Sub:"Shivalik Overpass", Color:JColor.Amber, Pulse:true),
+        new("c3",  "CCTV-003", 40,  220, Sub:"BHEL Junction"),
+        new("v1",  "VMS-001",  40,  280, Sub:"Forest Zone",      Color:JColor.Amber),
+        new("p1",  "PTZ-001",  40,  340, Sub:"BHEL Intersection", Color:JColor.Green),
+        new("hub", "NH-90",    300, 190, JNodeGraph.NType.Hub),
+        new("toll","ECB TOLL", 520, 110, JNodeGraph.NType.Hex,  JColor.Red, "Haridwar"),
+        new("ctrl","CTRL ROOM",520, 270, JNodeGraph.NType.Hub,  JColor.Amber, "Monitor"),
+    };
+    List<JNodeGraph.EdgeDef> _itsEdges = new() {
+        new("c0","hub", Animated:true, AnimDur:1.8),
+        new("c1","hub", Animated:true, AnimDur:2.2),
+        new("c2","hub", JColor.Amber,  Animated:true, AnimDur:1.5),
+        new("c3","hub", Animated:true, AnimDur:2.5),
+        new("v1","hub", JColor.Amber,  Style:JNodeGraph.EdgeStyle.Dashed, Animated:true, AnimDur:2.0),
+        new("p1","hub", JColor.Green,  Animated:true, AnimDur:1.6),
+        new("hub","toll", JColor.Red,    Animated:true, AnimDur:1.2),
+        new("hub","ctrl", JColor.Amber,  Animated:true, AnimDur:1.4),
+    };
+
+    // ══ VARIANT 2: Data Pipeline ════════════════════════════════
+    List<JNodeGraph.NodeDef> _pipeNodes = new() {
+        new("s1","RAW DATA",   40,  60,  Value:"4.2 TB"),
+        new("s2","SENSOR FEED",40,  130, Value:"26 ch",  Color:JColor.Green),
+        new("s3","GPS STREAM", 40,  200, Value:"1Hz",    Color:JColor.Amber),
+        new("p1","INGEST",     220, 60,  JNodeGraph.NType.Diamond),
+        new("p2","PROCESS",    220, 160, JNodeGraph.NType.Diamond, JColor.Amber),
+        new("p3","VALIDATE",   220, 260, JNodeGraph.NType.Diamond, JColor.Green),
+        new("agg","AGGREGATE", 380, 160, JNodeGraph.NType.Hub),
+        new("db", "DATABASE",  560, 80,  Sub:"PostgreSQL", Color:JColor.Cyan),
+        new("dash","DASHBOARD",560, 180, Sub:"Real-time",  Color:JColor.Green),
+        new("alert","ALERTS",  560, 280, Sub:"PagerDuty",  Color:JColor.Red),
+    };
+    List<JNodeGraph.EdgeDef> _pipeEdges = new() {
+        new("s1","p1"), new("s2","p2",JColor.Green), new("s3","p3",JColor.Amber),
+        new("p1","agg",AnimDur:1.5), new("p2","agg",JColor.Amber,AnimDur:1.8),
+        new("p3","agg",JColor.Green,AnimDur:2.0),
+        new("agg","db"), new("agg","dash",JColor.Green),
+        new("agg","alert",JColor.Red,JNodeGraph.EdgeStyle.Dashed,AnimDur:1.0),
+    };
+
+    // ══ VARIANT 3: Network Topology ═════════════════════════════
+    List<JNodeGraph.NodeDef> _netNodes = new() {
+        new("inet","INTERNET", 220, 20,  JNodeGraph.NType.Diamond),
+        new("fw",  "FIREWALL", 220, 100, JNodeGraph.NType.Diamond, JColor.Red),
+        new("sw1", "SWITCH-1", 100, 200, JNodeGraph.NType.Hex),
+        new("sw2", "SWITCH-2", 340, 200, JNodeGraph.NType.Hex,  JColor.Amber),
+        new("srv1","WEB SRV",  40,  310, Sub:"nginx",    Color:JColor.Green),
+        new("srv2","API SRV",  140, 310, Sub:"ASP.NET"),
+        new("srv3","DB SRV",   240, 310, Sub:"Postgres", Color:JColor.Cyan),
+        new("cam1","CCTV-A",   360, 310, Sub:"Zone 1",   Color:JColor.Amber, Pulse:true),
+        new("cam2","CCTV-B",   460, 310, Sub:"Zone 2",   Color:JColor.Amber, Pulse:true),
+        new("mon", "MONITOR",  540, 200, JNodeGraph.NType.Hub,  JColor.Green, "NMS"),
+    };
+    List<JNodeGraph.EdgeDef> _netEdges = new() {
+        new("inet","fw",  JColor.Red,  Style:JNodeGraph.EdgeStyle.Dashed, AnimDur:0.8),
+        new("fw",  "sw1"), new("fw","sw2"),
+        new("sw1", "srv1",JColor.Green), new("sw1","srv2"), new("sw1","srv3",JColor.Cyan),
+        new("sw2", "cam1",JColor.Amber), new("sw2","cam2",JColor.Amber),
+        new("sw2", "mon", JColor.Green, AnimDur:1.5),
+        new("sw1", "mon", Label:"HEARTBEAT", AnimDur:2.0),
+    };
+
+    // ══ VARIANT 4: Alert Tree ════════════════════════════════════
+    List<JNodeGraph.NodeDef> _alertNodes = new() {
+        new("root","CCTV-005", 40,  180, Sub:"Forest Zone", Color:JColor.Red, Pulse:true),
+        new("z3",  "ZONE-3",   200, 180, JNodeGraph.NType.Diamond, JColor.Red),
+        new("vms", "VMS-001",  40,  80,  Sub:"Forest VMS",  Color:JColor.Amber, Pulse:true),
+        new("z3v", "ZONE-3 VMS",200,80, JNodeGraph.NType.Diamond, JColor.Amber),
+        new("nh",  "NH-90 HUB",380, 130, JNodeGraph.NType.Hub, JColor.Amber),
+        new("ops", "OPS CENTER",560, 80,  Sub:"Alert raised", Color:JColor.Red),
+        new("log", "LOG SRV",  560, 180, Sub:"Recorded",     Color:JColor.Amber),
+        new("ok1", "CCTV-006", 40,  300, Sub:"Motichur OK",  Color:JColor.Green),
+        new("ok2", "PTZ-001",  40,  360, Sub:"BHEL OK",      Color:JColor.Green),
+        new("okz", "ZONE-1",   200, 330, JNodeGraph.NType.Diamond, JColor.Green),
+    };
+    List<JNodeGraph.EdgeDef> _alertEdges = new() {
+        new("root","z3",  JColor.Red,  Style:JNodeGraph.EdgeStyle.Solid,  AnimDur:0.8, Label:"OFFLINE"),
+        new("vms", "z3v", JColor.Amber,Style:JNodeGraph.EdgeStyle.Dashed, AnimDur:1.2, Label:"DEGRADED"),
+        new("z3",  "nh",  JColor.Red,  AnimDur:0.9),
+        new("z3v", "nh",  JColor.Amber, AnimDur:1.1),
+        new("nh",  "ops", JColor.Red,  AnimDur:0.8),
+        new("nh",  "log", JColor.Amber),
+        new("ok1", "okz", JColor.Green, AnimDur:2.5),
+        new("ok2", "okz", JColor.Green, AnimDur:3.0),
+        new("okz", "nh",  JColor.Green, Style:JNodeGraph.EdgeStyle.Dotted, AnimDur:3.0),
+    };
+
+    // ══ VARIANT 5: Live interactive ══════════════════════════════
+    List<JNodeGraph.NodeDef> _liveNodes = new() {
+        new("l1","NODE-001", 80,  80,  Pulse:true),
+        new("l2","NODE-002", 80,  200),
+        new("l3","NODE-003", 80,  320),
+        new("lh","HUB",      320, 200, JNodeGraph.NType.Hub),
+        new("lo","OUTPUT",   520, 200, JNodeGraph.NType.Hex, JColor.Green, "Target"),
+    };
+    List<JNodeGraph.EdgeDef> _liveEdges = new() {
+        new("l1","lh"), new("l2","lh"), new("l3","lh"),
+        new("lh","lo", JColor.Green, AnimDur:1.2),
+    };
+    int _liveCounter = 5;
+
+    void AddChipNode() {
+        _liveCounter++;
+        var rnd = new Random();
+        _liveNodes.Add(new($"ln{_liveCounter}", $"NODE-{_liveCounter:D3}",
+            rnd.Next(40,160), rnd.Next(40,360)));
+        _liveNodes = _liveNodes.ToList(); // force Blazor diff
+    }
+    void AddHubNode() {
+        _liveCounter++;
+        _liveNodes.Add(new($"lh{_liveCounter}", $"HUB-{_liveCounter}",
+            new Random().Next(200,400), new Random().Next(100,300),
+            JNodeGraph.NType.Hub, JColor.Amber));
+        _liveNodes = _liveNodes.ToList();
+    }
+    void AddHexNode() {
+        _liveCounter++;
+        _liveNodes.Add(new($"lx{_liveCounter}", $"SRV-{_liveCounter}",
+            new Random().Next(420,560), new Random().Next(60,360),
+            JNodeGraph.NType.Hex, JColor.Green));
+        _liveNodes = _liveNodes.ToList();
+    }
+    void ConnectRandom() {
+        if (_liveNodes.Count < 2) return;
+        var rnd = new Random();
+        var a = _liveNodes[rnd.Next(_liveNodes.Count)];
+        var b = _liveNodes[rnd.Next(_liveNodes.Count)];
+        if (a.Id == b.Id) return;
+        if (_liveEdges.Any(e=>e.From==a.Id&&e.To==b.Id)) return;
+        var colors = new[]{ JColor.Cyan, JColor.Amber, JColor.Green, JColor.Red };
+        _liveEdges.Add(new(a.Id, b.Id, colors[rnd.Next(colors.Length)],
+            AnimDur: 1.0+rnd.NextDouble()*2));
+        _liveEdges = _liveEdges.ToList();
+    }
+    void ResetLive() {
+        _liveCounter = 5;
+        _liveNodes = new() {
+            new("l1","NODE-001",80,80,Pulse:true), new("l2","NODE-002",80,200),
+            new("l3","NODE-003",80,320),
+            new("lh","HUB",320,200,JNodeGraph.NType.Hub),
+            new("lo","OUTPUT",520,200,JNodeGraph.NType.Hex,JColor.Green,"Target"),
+        };
+        _liveEdges = new() {
+            new("l1","lh"), new("l2","lh"), new("l3","lh"),
+            new("lh","lo",JColor.Green,AnimDur:1.2),
+        };
+    }
+}

@@ -17,11 +17,10 @@
 ================================================================ *@
 
 @using JarvisUI.Tokens
-@using Microsoft.AspNetCore.Http
 @namespace JarvisUI.Components
 @inject IJSRuntime JS
 @inject IHttpClientFactory HttpFactory
-@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager Nav
 @implements IAsyncDisposable
 
 <div style="@_wrapStyle">
@@ -220,16 +219,12 @@
             {
                 _loadingLabel = "Loading Map Data...";
                 StateHasChanged();
-                // Build absolute URL — Blazor Server named HttpClient has no base address
+                // Build absolute URL — named HttpClient has no base address.
+                // NavigationManager works in both Blazor Server and WebAssembly.
                 var http = HttpFactory.CreateClient("JarvisUI");
-                var ctx  = HttpContextAccessor.HttpContext;
-                string absoluteUrl;
-                if (GeoJsonUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                    absoluteUrl = GeoJsonUrl;
-                else if (ctx != null)
-                    absoluteUrl = $"{ctx.Request.Scheme}://{ctx.Request.Host}{GeoJsonUrl}";
-                else
-                    absoluteUrl = GeoJsonUrl; // fallback
+                string absoluteUrl = GeoJsonUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                    ? GeoJsonUrl
+                    : Nav.ToAbsoluteUri(GeoJsonUrl).ToString();
                 var geoJson = await http.GetStringAsync(absoluteUrl);
                 var layerOpts = LayerOptions with { FitBounds = FitBoundsOnLoad || LayerOptions.FitBounds };
                 await LoadGeoJsonAsync("base", geoJson, layerOpts);

@@ -1,0 +1,16 @@
+# .NET build artifacts
+bin/
+obj/
+
+# Vercel build output
+output/
+_wasm_publish_test/
+.vercel/
+
+# dotnet-install leftovers
+dotnet-install.sh
+.dotnet/
+
+# IDE
+.vs/
+*.user

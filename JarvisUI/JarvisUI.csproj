@@ -31,7 +31,6 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.24" />
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
     <!-- Google Maps interop — optional, only needed if using JGoogleMap -->
     <PackageReference Include="BlazorGoogleMaps" Version="4.15.1" />
