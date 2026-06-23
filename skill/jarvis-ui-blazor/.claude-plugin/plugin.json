@@ -1,0 +1,9 @@
+{
+  "name": "jarvis-ui-blazor",
+  "description": "JARVIS UI for Blazor — cinematic HUD-style Blazor (.NET/C#/Razor) component library skill with full per-component reference docs for the JarvisUI NuGet package.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Deepak Chougale",
+    "email": "mailboxdeepak15@gmail.com"
+  }
+}
